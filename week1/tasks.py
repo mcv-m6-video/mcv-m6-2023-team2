@@ -62,30 +62,32 @@ def task1_2():
     print(f'Recall: {rec}')
 
 
-def task3_1_2(gt_path, estimated_path, frame):
+def task3_1_2(gt, estimated_flow, frame: str):
     print("--> Tasks 3.1 and 3.2 - Quantitatively evaluating optical flow - KITTI Dataset")
 
-    gt = load_optical_flow(os.path.join(gt_path, frame))
-    estimated_flow = load_optical_flow(os.path.join(estimated_path, "LKflow_" + frame))
+    msen, sen = OF_MSEN(gt, estimated_flow, frame=frame, verbose=False)
+    pepn = OF_PEPN(sen)
 
-    msen, sen = OF_MSEN(gt, estimated_flow)
-    pepn = OF_PEPN(gt, estimated_flow, sen)
-
-    print(f"MSEN: {msen}\n PEPN: {pepn} %")
+    print(f"MSEN: {msen}\nPEPN: {pepn} %")
 
     return msen, pepn, sen
 
 
-def task3_3(sen, frame):
+# def task3_3(sen, frame):
+def task3_3(GT, OF_pred, frame):
     print("--> Task 3.3 - Visualize Error in Optical Flow")
 
-    max_range = int(math.ceil(np.amax(sen)))
-    plt.title('Distribution of the Mean Square Error in Non-Occluded Areas')
-    plt.ylabel('Density')
-    plt.xlabel('MSEN')
-    plt.hist(x=sen, bins=30, range=(0.0, max_range))
-    plt.savefig('MSEN_hist_' + frame)
-    plt.clf()
+    error_dist = u_diff, v_diff = GT[:, :, 0] - OF_pred[:, :, 0], GT[:, :, 1] - OF_pred[:, :, 1]
+    error_dist = np.sqrt(u_diff ** 2 + v_diff ** 2)
+
+    max_range = int(math.ceil(np.amax(error_dist)))
+
+    plt.figure(figsize=(12, 5))
+    plt.hist(error_dist[GT[...,2] == 1].ravel(), bins=30, range=(0.0, max_range))
+    plt.title('MSEN Distribution')
+    plt.ylabel('Count')
+    plt.xlabel('Mean Square Error in Non-Occluded Areas')
+    plt.savefig(f'./results/MSEN_hist_{frame}.png')
 
 
 def task3():
@@ -94,6 +96,10 @@ def task3():
     frames = ["000045_10.png", "000157_10.png"]
 
     for frame in frames:
-        _, _, sen = task3_1_2(gt_dir, preds_dir, frame)
+        print(f"--> Processing frame: {frame}...")
+        gt = load_optical_flow(os.path.join(gt_dir, frame))
+        estimated_flow = load_optical_flow(os.path.join(preds_dir, "LKflow_" + frame))
 
-        task3_3(sen, frame)
+        _, _, sen = task3_1_2(gt, estimated_flow, frame=frame.split('.')[0])
+        task3_3(gt, estimated_flow, frame.split('.')[0])
+        print(f"--> Finished processing frame: {frame}!\n")
