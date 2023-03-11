@@ -7,9 +7,9 @@ from utils import (
     load_predictions,
     load_annotations,
     group_annotations_by_frame,
-    create_fake_track_predictions,
     load_optical_flow,
 )
+from noise import create_fake_track_predictions
 from metrics import (
     voc_eval,
     OF_MSEN,
