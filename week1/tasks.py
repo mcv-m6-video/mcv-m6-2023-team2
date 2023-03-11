@@ -1,5 +1,8 @@
 import os
-from tqdm import tqdm
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+
 from utils import (
     load_predictions,
     load_annotations,
@@ -9,10 +12,9 @@ from utils import (
 )
 from metrics import (
     voc_eval,
-    MSEN,
-    PEPN,
+    OF_MSEN,
+    OF_PEPN,
 )
-import matplotlib.pyplot as plt
 
 
 def task1_1():
@@ -60,10 +62,10 @@ def task3_1_2(gt_path, estimated_path, frame):
     gt = load_optical_flow(os.path.join(gt_path, frame))
     estimated_flow = load_optical_flow(os.path.join(estimated_path, "LKflow_" + frame))
 
-    msen, sen = MSEN(gt, estimated_flow)
-    pepn = PEPN(gt, estimated_flow, sen)
+    msen, sen = OF_MSEN(gt, estimated_flow)
+    pepn = OF_PEPN(gt, estimated_flow, sen)
 
-    print(msen, pepn)
+    print(f"MSEN: {msen}\n PEPN: {pepn} %")
 
     return msen, pepn, sen
 
@@ -71,19 +73,21 @@ def task3_1_2(gt_path, estimated_path, frame):
 def task3_3(sen, frame):
     print("--> Task 3.3 - Visualize Error in Optical Flow")
 
-    plt.hist(x=sen, bins=50)
-    plt.savefig(frame)
+    max_range = int(math.ceil(np.amax(sen)))
+    plt.title('Distribution of the Mean Square Error in Non-Occluded Areas')
+    plt.ylabel('Density')
+    plt.xlabel('MSEN')
+    plt.hist(x=sen, bins=30, range=(0.0, max_range))
+    plt.savefig('MSEN_hist_' + frame)
     plt.clf()
-
-    return
 
 
 def task3():
-    gt_path = "../data/GT_OF"
-    estimated_path = "../data/LK_OF"
+    gt_dir = "../data/GT_OF"
+    preds_dir = "../data/LK_OF"
     frames = ["000045_10.png", "000157_10.png"]
 
     for frame in frames:
-        msen, pepn, sen = task3_1_2(gt_path, estimated_path, frame)
+        _, _, sen = task3_1_2(gt_dir, preds_dir, frame)
 
         task3_3(sen, frame)
