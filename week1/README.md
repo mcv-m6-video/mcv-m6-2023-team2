@@ -13,7 +13,7 @@ In this week, we carry out the following tasks:
     * Percentage of Erroneous Pixels in Non-occluded areas (PEPN)
 
 * **Evaluate and Analyze:**
-    * Effect of additive noise
+    * Effect of additive Gaussian noise
     * Tempral evolution of mIoU
     * Optical Flow
 
