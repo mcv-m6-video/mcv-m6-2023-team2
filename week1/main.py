@@ -9,7 +9,7 @@ from tasks import (
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PROJECT NAME. MCV-M6-Project. Team 2')
 
-    parser.add_argument('--t1', action='store_true',
+    parser.add_argument('--t1', action='store_true', 
                         help='Task1 - produce noisy bounding boxes from GT annotations and calculate mIoU/AP')
 
     parser.add_argument('--t2', action='store_true',
@@ -27,17 +27,17 @@ if __name__ == "__main__":
 
     if args.t1:
         print('Launching Task 1')
-        task1_2()
+        task1_1()
 
     if args.t2:
         print('Launching Task 2')
-        t2_run()
+        task1_2()
 
     if args.t3:
         print('Launching Task 3')
         task3()
 
-    if args.t4:
-        print('Launching Task 4')
-        t4_run()
+    # if args.t4:
+    #     print('Launching Task 4')
+    #     t4_run()
 

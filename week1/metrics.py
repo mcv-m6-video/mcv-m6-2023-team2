@@ -1,4 +1,6 @@
+import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def voc_ap(rec, prec):
@@ -69,19 +71,21 @@ def voc_eval(preds, gt, ovthresh=0.5):
 
     # read dets
     image_ids = []
+    confidence = []
     BB = []
 
     for i, frame in enumerate(preds):
         image_ids += [i] * len(preds[i])
+        confidence += [bbox.confidence for bbox in preds[i]]
         BB += [bbox.coordinates for bbox in preds[i]]
 
+    confidence = np.array(confidence)
     BB = np.array(BB).reshape(-1, 4)
 
-    # TODO: add confidence
-    # sort by jm
-    # sorted_ind = np.argsort(-confidence)
-    # BB = BB[sorted_ind, :]
-    # image_ids = [image_ids[x] for x in sorted_ind]
+    if np.all(confidence != None): # Podria haver-hi algun confidence = None?
+        sorted_ind = np.argsort(-confidence)
+        BB = BB[sorted_ind, :]
+        image_ids = [image_ids[x] for x in sorted_ind]
 
     # go down dets and mark TPs and FPs
     nd = len(image_ids)
@@ -119,14 +123,6 @@ def voc_eval(preds, gt, ovthresh=0.5):
     ap = voc_ap(rec, prec)
 
     return rec, prec, ap
-
-
-import cv2, sys
-import numpy as np
-import matplotlib.pyplot as plt
-
-sys.path.append('../W1')
-from flow_reader import read_flow
 
 
 def MSEN(GT, pred, verbose=True, visualize=True):

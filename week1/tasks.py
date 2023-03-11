@@ -1,5 +1,6 @@
 import os
-from tqdm import tqdm
+import matplotlib.pyplot as plt
+
 from utils import (
     load_predictions,
     load_annotations,
@@ -12,14 +13,19 @@ from metrics import (
     MSEN,
     PEPN,
 )
-import matplotlib.pyplot as plt
+import global_config as cfg
 
 
 def task1_1():
     # TODO: Reformat and make it prettier
-    annotations = load_annotations('data/AICity_data/train/S03/c010/ai_challenge_s03_c010-full_annotation.xml')
+    annotations = load_annotations(cfg.ANNOTATIONS_PATH)
     grouped_annotations = group_annotations_by_frame(annotations)
-    annotations_with_noise = create_fake_track_predictions(annotations, noise=0.1, prob_generate=0.1, prob_delete=0.1)
+    annotations_with_noise = create_fake_track_predictions(
+        annotations, 
+        noise=0.1, 
+        prob_generate=0.1, 
+        prob_delete=0.1
+    )
     grouped_annotations_with_noise = group_annotations_by_frame(annotations_with_noise)
 
     n_frames = len(grouped_annotations)
@@ -36,9 +42,9 @@ def task1_1():
 
 
 def task1_2():
-    annotations = load_annotations('data/AICity_data/train/S03/c010/ai_challenge_s03_c010-full_annotation.xml')
+    annotations = load_annotations(cfg.ANNOTATIONS_PATH)
     grouped_annotations = group_annotations_by_frame(annotations)
-    predictions = load_predictions('data/AICity_data/train/S03/c010/det/det_mask_rcnn.txt')
+    predictions = load_predictions(cfg.PREDICTIONS_PATH)
     grouped_predictions = group_annotations_by_frame(predictions)
 
     n_frames = len(grouped_annotations)
