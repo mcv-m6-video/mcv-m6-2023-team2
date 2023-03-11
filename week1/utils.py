@@ -1,8 +1,6 @@
-import xml.etree.ElementTree as ET
 import xmltodict
 import numpy as np
 
-from copy import deepcopy
 from typing import List
 
 from class_utils import BoundingBox
