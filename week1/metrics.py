@@ -146,7 +146,7 @@ def OF_MSEN(GT, pred, frame: str, verbose=False, visualize=True):
 
     if visualize:
         se[GT[:, :, 2] == 0] = 0  # Exclude non-valid pixels
-        plt.figure(figsize=(14, 5))
+        plt.figure(figsize=(11, 4))
         img_plot = plt.imshow(se)
         img_plot.set_cmap("Blues")
         plt.title(f"Mean Square Error in Non-Occluded Areas - {frame}")
@@ -155,7 +155,7 @@ def OF_MSEN(GT, pred, frame: str, verbose=False, visualize=True):
         plt.clf()
 
         pred, _ = cv2.cartToPolar(pred[:, :, 0], pred[:, :, 1])
-        plt.figure(figsize=(14, 5))
+        plt.figure(figsize=(11, 4))
         img_plot = plt.imshow(pred)
         plt.clim(0,4)
         img_plot.set_cmap("YlOrRd")

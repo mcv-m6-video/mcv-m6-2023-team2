@@ -82,7 +82,7 @@ def task3_3(GT, OF_pred, frame):
 
     max_range = int(math.ceil(np.amax(error_dist)))
 
-    plt.figure(figsize=(12, 5))
+    plt.figure(figsize=(8, 5))
     plt.hist(error_dist[GT[...,2] == 1].ravel(), bins=30, range=(0.0, max_range))
     plt.title('MSEN Distribution')
     plt.ylabel('Count')
