@@ -7,7 +7,9 @@ from tasks import (
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='PROJECT NAME. MCV-M6-Project. Team 2')
+    parser = argparse.ArgumentParser(
+        description='Road Traffic Monitoring Analysis for Video Surveillance. MCV-M6-Project. Team 2'
+    )
 
     parser.add_argument('--t1', action='store_true', 
                         help='Task1 - produce noisy bounding boxes from GT annotations and calculate mIoU/AP')
