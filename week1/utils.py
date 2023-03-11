@@ -1,8 +1,9 @@
+import math
+from typing import List
 import cv2
 import xmltodict
 import numpy as np
-
-from typing import List
+import matplotlib.pyplot as plt
 
 from class_utils import BoundingBox
 
@@ -107,9 +108,9 @@ def add_noise_to_bbox(box, noise: float = 0.1) -> BoundingBox:
 
 
 def create_fake_track_predictions(
-        bboxes: List[BoundingBox], 
-        noise: float = 0.1, 
-        prob_generate: float = 0.1, 
+        bboxes: List[BoundingBox],
+        noise: float = 0.1,
+        prob_generate: float = 0.1,
         prob_delete: float = 0.1
         ):
     """
@@ -139,7 +140,7 @@ def create_fake_track_predictions(
         if np.random.random() < prob_generate:
             extra_box = new_box.clone()
             extra_box = add_noise_to_bbox(box, noise)
-            new_bboxes.append(extra_box)    
+            new_bboxes.append(extra_box)
     
     # TODO: Add new predictions randomly
 
@@ -170,3 +171,12 @@ def load_optical_flow(file_path: str):
     optical_flow = np.dstack((img_u, img_v, img_available))
 
     return optical_flow
+
+
+def histogram_error_distribution(error, GT):
+    max_range = int(math.ceil(np.amax(error)))
+
+    plt.title('Mean square error distribution')
+    plt.ylabel('Density')
+    plt.xlabel('Mean square error')
+    plt.hist(error[GT[2] == 1].ravel(), bins=30, range=(0.0, max_range))
