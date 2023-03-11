@@ -30,5 +30,13 @@ class BoundingBox:
     def __hash__(self):
         return hash((self.x1, self.y1, self.x2, self.y2, self.frame, self.track_id, self.label))
     
+    @property
+    def coordinates(self):
+        return [self.x1, self.y1, self.x2, self.y2]
+    
+    @property
+    def coordinates_dim(self):
+        return [self.x1, self.y1, self.width, self.height]
+    
     def clone(self):
         return BoundingBox(self.x1, self.y1, self.x2, self.y2, self.track_id, self.frame, self.label, self.parked)
