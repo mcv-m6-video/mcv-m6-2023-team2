@@ -68,7 +68,7 @@ def load_predictions(csv_file_path: str) -> List[BoundingBox]:
     bboxes = []
 
     for line in lines:
-        frame, track_id, xtl, ytl, width, height, _, _, _, _ = line.split(',')
+        frame, track_id, xtl, ytl, width, height, confidence, _, _, _ = line.split(',')
         xbr = float(xtl) + float(width)
         ybr = float(ytl) + float(height)
         bboxes.append(BoundingBox(
@@ -79,7 +79,8 @@ def load_predictions(csv_file_path: str) -> List[BoundingBox]:
             frame=int(frame)-1,
             track_id=int(track_id),
             label='car',
-            parked=False
+            parked=False,
+            confidence=float(confidence),
         ))
 
     return bboxes

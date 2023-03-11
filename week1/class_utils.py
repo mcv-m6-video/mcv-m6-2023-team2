@@ -11,6 +11,7 @@ class BoundingBox:
     frame: int
     label: str
     parked: bool
+    confidence: float = 0.0
 
     def __post_init__(self):
         self.width = self.x2 - self.x1
