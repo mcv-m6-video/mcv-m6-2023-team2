@@ -119,3 +119,69 @@ def voc_eval(preds, gt, ovthresh=0.5):
     ap = voc_ap(rec, prec)
 
     return rec, prec, ap
+
+
+import cv2, sys
+import numpy as np
+import matplotlib.pyplot as plt
+
+sys.path.append('../W1')
+from flow_reader import read_flow
+
+
+def MSEN(GT, pred, verbose=True, visualize=True):
+    """
+    Computes "Mean Square Error in Non-occluded areas"
+    """
+
+    u_diff, v_diff = GT[:, :, 0] - pred[:, :, 0], GT[:, :, 1] - pred[:, :, 1]
+    se = np.sqrt(u_diff ** 2 + v_diff ** 2)
+    sen = se[GT[:, :, 2] == 1]
+    msen = np.mean(sen)
+
+    if verbose:
+        print(GT[0, -1])
+        print(pred[0, -1])
+        print(u_diff[0, -1])
+        print(v_diff[0, -1])
+        print(se[0, -1])
+
+    if visualize:
+        se[GT[:, :, 2] == 0] = 0  # Exclude non-valid pixels
+        plt.figure(figsize=(22, 9))
+        img_plot = plt.imshow(se)
+        img_plot.set_cmap("nipy_spectral")
+        plt.title("MSEN")
+        plt.colorbar()
+        plt.show()
+
+        pred, _ = cv2.cartToPolar(pred[:, :, 0], pred[:, :, 1])
+        plt.figure(figsize=(20, 8))
+        img_plot = plt.imshow(pred)
+        img_plot.set_cmap("nipy_spectral")
+        plt.title("Optical Flow Prediction")
+        plt.colorbar()
+        plt.show()
+
+    return msen, sen
+
+
+def PEPN(sen, th=3):
+    """
+    Compute "Percentage of Erroneous Pixels in Non-Occluded Areas"
+    """
+
+    n_pixels_n = len(sen)
+    error_count = np.sum(sen > th)
+    pepn = 100 * (1 / n_pixels_n) * error_count
+
+    return pepn
+
+
+def eval_optical_flow(optical_flow, gt_path, plot_error):
+    gt_optical_flow = read_flow(gt_path)
+
+    msen, sen = MSEN(gt_optical_flow, optical_flow, verbose=False, visualize=plot_error)
+    pepn = PEPN(sen)
+
+    return msen, pepn, sen
