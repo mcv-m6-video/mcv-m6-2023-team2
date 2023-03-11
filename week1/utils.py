@@ -22,14 +22,18 @@ def group_annotations_by_frame(annotations: List[BoundingBox]) -> List[List[Boun
 
     for box in annotations:
         if len(grouped_annotations) <= box.frame:
-            grouped_annotations.append([])
+            for _ in range(box.frame - len(grouped_annotations) + 1):
+                grouped_annotations.append([])
             
         grouped_annotations[box.frame].append(box)
 
     return grouped_annotations
 
 
-def load_annotations(xml_file_path: str):
+def load_annotations(xml_file_path: str) -> List[BoundingBox]:
+    """
+    Loads the annotations from the given XML file.
+    """
     with open(xml_file_path) as f:
         annotations = xmltodict.parse(f.read())
 
@@ -39,15 +43,46 @@ def load_annotations(xml_file_path: str):
     for track in tracks:
         for box in track['box']:
             bboxes.append(BoundingBox(
-                x1=int(box['@xtl']),
-                y1=int(box['@ytl']),
-                x2=int(box['@xbr']),
-                y2=int(box['@ybr']),
+                x1=float(box['@xtl']),
+                y1=float(box['@ytl']),
+                x2=float(box['@xbr']),
+                y2=float(box['@ybr']),
                 frame=int(box['@frame']),
                 track_id=int(track['@id']),
                 label=track['@label'],
-                parked=box['attribute']['#text'] == 'true'
+                parked='attribute' in box and box['attribute']['#text'] == 'true'
             ))
+
+    return bboxes
+
+
+def load_predictions(csv_file_path: str) -> List[BoundingBox]:
+    """
+    Loads the predictions from the given CSV file.
+
+    Format: <frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, <conf>, <x>, <y>, <z>
+    We checked the format in https://github.com/mcv-m6-video/mcv-m6-2021-team4/blob/main/W1/aicity_reader.py
+    Also, solved the frame-1 issue :)
+    """
+    with open(csv_file_path) as f:
+        lines = f.readlines()
+
+    bboxes = []
+
+    for line in lines:
+        frame, track_id, xtl, ytl, width, height, _, _, _, _ = line.split(',')
+        xbr = float(xtl) + float(width)
+        ybr = float(ytl) + float(height)
+        bboxes.append(BoundingBox(
+            x1=float(xtl),
+            y1=float(ytl),
+            x2=xbr,
+            y2=ybr,
+            frame=int(frame)-1,
+            track_id=int(track_id),
+            label='car',
+            parked=False
+        ))
 
     return bboxes
 
@@ -64,10 +99,10 @@ def add_noise_to_bbox(box, noise: float = 0.1) -> BoundingBox:
     A new list of coordinates with noise added to the bounding box size and position.
     """
     xtl, ytl, xbr, ybr = box.x1, box.y1, box.x2, box.y2
-    xtl = int(xtl + np.random.normal(0, noise))
-    ytl = int(ytl + np.random.normal(0, noise))
-    xbr = int(xbr + np.random.normal(0, noise))
-    ybr = int(ybr + np.random.normal(0, noise))
+    xtl = xtl + np.random.normal(0, noise)
+    ytl = ytl + np.random.normal(0, noise)
+    xbr = xbr + np.random.normal(0, noise)
+    ybr = ybr + np.random.normal(0, noise)
     return BoundingBox(xtl, ytl, xbr, ybr, box.track_id, box.frame, box.label, box.parked)
 
 

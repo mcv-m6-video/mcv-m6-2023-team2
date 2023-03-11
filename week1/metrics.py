@@ -8,6 +8,7 @@ def voc_ap(rec, prec):
     Original code from https://github.com/facebookresearch/detectron2/blob/main/detectron2/evaluation/pascal_voc_evaluation.py
     """
     ap = 0.0
+    
     for t in np.arange(0.0, 1.1, 0.1):
         if np.sum(rec >= t) == 0:
             p = 0
@@ -18,24 +19,40 @@ def voc_ap(rec, prec):
     return ap
 
 
-def voc_eval(gt, preds, ovthresh=0.5):
+def voc_iou(pred, gt):
     """
-    rec, prec, ap = voc_eval(detpath,
-                            annopath,
-                            imagesetfile,
-                            classname,
+    Calculate IoU between detect box and gt boxes.
+    """
+    # compute overlaps
+    # intersection
+    ixmin = np.maximum(gt[:, 0], pred[0])
+    iymin = np.maximum(gt[:, 1], pred[1])
+    ixmax = np.minimum(gt[:, 2], pred[2])
+    iymax = np.minimum(gt[:, 3], pred[3])
+    iw = np.maximum(ixmax - ixmin + 1.0, 0.0)
+    ih = np.maximum(iymax - iymin + 1.0, 0.0)
+    inters = iw * ih
+
+    # union
+    uni = (
+        (pred[2] - pred[0] + 1.0) * (pred[3] - pred[1] + 1.0)
+        + (gt[:, 2] - gt[:, 0] + 1.0) * (gt[:, 3] - gt[:, 1] + 1.0)
+        - inters
+    )
+
+    return inters / uni
+
+
+def voc_eval(preds, gt, ovthresh=0.5):
+    """
+    rec, prec, ap = voc_eval(preds,
+                            gt,
                             [ovthresh],
-                            [use_07_metric])
+                            )
     Top level function that does the PASCAL VOC evaluation.
-    detpath: Path to detections
-        detpath.format(classname) should produce the detection results file.
-    annopath: Path to annotations
-        annopath.format(imagename) should be the xml annotations file.
-    imagesetfile: Text file containing the list of images, one image per line.
-    classname: Category name (duh)
+    gt: Ground truth bounding boxes grouped by frames.
+    preds: Predicted bounding boxes grouped by frames.
     [ovthresh]: Overlap threshold (default = 0.5)
-    [use_07_metric]: Whether to use VOC07's 11 point AP computation
-        (default False)
 
     Original code from https://github.com/facebookresearch/detectron2/blob/main/detectron2/evaluation/pascal_voc_evaluation.py
     """
@@ -43,23 +60,24 @@ def voc_eval(gt, preds, ovthresh=0.5):
     class_recs = {}
     npos = 0
     
-    for frame in gt:
+    for i, frame in enumerate(gt):
         bbox = np.array([bbox.coordinates for bbox in frame])
         difficult = np.array([False for bbox in frame]).astype(bool)
         det = [False] * len(frame)
         npos = npos + sum(~difficult)
-        class_recs[frame] = {"bbox": bbox, "difficult": difficult, "det": det}
+        class_recs[i] = {"bbox": bbox, "difficult": difficult, "det": det}
 
     # read dets
     image_ids = []
     BB = []
 
-    for frame in preds:
-        image_ids += [frame] * len(preds[frame])
-        BB += [bbox.coordinates for bbox in preds[frame]]
+    for i, frame in enumerate(preds):
+        image_ids += [i] * len(preds[i])
+        BB += [bbox.coordinates for bbox in preds[i]]
 
     BB = np.array(BB).reshape(-1, 4)
 
+    # TODO: add confidence
     # sort by jm
     # sorted_ind = np.argsort(-confidence)
     # BB = BB[sorted_ind, :]
@@ -77,24 +95,7 @@ def voc_eval(gt, preds, ovthresh=0.5):
         BBGT = R["bbox"].astype(float)
 
         if BBGT.size > 0:
-            # compute overlaps
-            # intersection
-            ixmin = np.maximum(BBGT[:, 0], bb[0])
-            iymin = np.maximum(BBGT[:, 1], bb[1])
-            ixmax = np.minimum(BBGT[:, 2], bb[2])
-            iymax = np.minimum(BBGT[:, 3], bb[3])
-            iw = np.maximum(ixmax - ixmin + 1.0, 0.0)
-            ih = np.maximum(iymax - iymin + 1.0, 0.0)
-            inters = iw * ih
-
-            # union
-            uni = (
-                (bb[2] - bb[0] + 1.0) * (bb[3] - bb[1] + 1.0)
-                + (BBGT[:, 2] - BBGT[:, 0] + 1.0) * (BBGT[:, 3] - BBGT[:, 1] + 1.0)
-                - inters
-            )
-
-            overlaps = inters / uni
+            overlaps = voc_iou(bb, BBGT)
             ovmax = np.max(overlaps)
             jmax = np.argmax(overlaps)
 
