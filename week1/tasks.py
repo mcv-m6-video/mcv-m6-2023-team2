@@ -17,16 +17,22 @@ from metrics import (
 )
 import global_config as cfg
 
-
+# frame 500
 def task1_1():
-    # TODO: Reformat and make it prettier
     annotations = load_annotations(cfg.ANNOTATIONS_PATH)
     grouped_annotations = group_annotations_by_frame(annotations)
     annotations_with_noise = create_fake_track_predictions(
         annotations, 
-        noise=0.1, 
-        prob_generate=0.1, 
-        prob_delete=0.1
+        height=1080,
+        width=1920,
+        std_size=0.1,
+        std_position=0.1,
+        prob_delete=0.3,
+        prob_similar=0.1,
+        std_similar=0.2,
+        min_random=1,
+        max_random=1,
+        similar_statistic="mean",
     )
     grouped_annotations_with_noise = group_annotations_by_frame(annotations_with_noise)
 
@@ -36,11 +42,10 @@ def task1_1():
     print(f'Number of annotations: {len(annotations)}')
     print(f'Number of annotations with noise: {len(annotations_with_noise)}')
 
-    rec, prec, ap = voc_eval(grouped_annotations_with_noise, grouped_annotations)
+    _, _, ap, iou = voc_eval(grouped_annotations_with_noise, grouped_annotations)
 
+    print(f'IoU: {iou}')
     print(f'AP: {ap}')
-    print(f'Precision: {prec}')
-    print(f'Recall: {rec}')
 
 
 def task1_2():
@@ -55,11 +60,10 @@ def task1_2():
     print(f'Number of annotations: {len(annotations)}')
     print(f'Number of predictions: {len(predictions)}')
 
-    rec, prec, ap = voc_eval(grouped_predictions, grouped_annotations)
+    _, _, ap, iou = voc_eval(grouped_predictions, grouped_annotations)
 
+    print(f'IoU: {iou}')
     print(f'AP: {ap}')
-    print(f'Precision: {prec}')
-    print(f'Recall: {rec}')
 
 
 def task3_1_2(gt, estimated_flow, frame: str):

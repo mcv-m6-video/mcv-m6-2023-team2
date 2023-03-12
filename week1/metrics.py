@@ -93,6 +93,7 @@ def voc_eval(preds, gt, ovthresh=0.5):
     nd = len(image_ids)
     tp = np.zeros(nd)
     fp = np.zeros(nd)
+    iou = np.zeros(nd)
     
     for d in range(nd):
         R = class_recs[image_ids[d]]
@@ -104,6 +105,7 @@ def voc_eval(preds, gt, ovthresh=0.5):
             overlaps = voc_iou(bb, BBGT)
             ovmax = np.max(overlaps)
             jmax = np.argmax(overlaps)
+            iou[d] = ovmax
 
         if ovmax > ovthresh:
             if not R["difficult"][jmax]:
@@ -123,8 +125,9 @@ def voc_eval(preds, gt, ovthresh=0.5):
     # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
     ap = voc_ap(rec, prec)
+    iou = np.mean(iou)
 
-    return rec, prec, ap
+    return rec, prec, ap, iou
 
 
 def OF_MSEN(GT, pred, frame: str, verbose=False, visualize=True):
