@@ -104,7 +104,6 @@ ENV/
 .vscode
 
 /reports/
-/data/
 /dataset/
 /models/
 /runs/
