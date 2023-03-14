@@ -6,6 +6,70 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from class_utils import BoundingBox
+from metrics import frame_voc_iou
+
+
+def iou_over_time(video_path: str, annotations: List[BoundingBox], predictions: List[BoundingBox], show_video=False) \
+        -> float:
+    """
+    Shows the given annotations and predictions in the given video and returns the mean IoU.
+
+    :param video_path: Path to the video.
+    :param annotations: List of annotations.
+    :param predictions: List of predictions.
+
+    """
+    grouped_annotations = group_annotations_by_frame(annotations)
+    grouped_predictions = group_annotations_by_frame(predictions)
+
+    video = cv2.VideoCapture(video_path)
+    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float `height`
+
+    my_dpi = 96
+    fig = plt.figure(figsize=(width/my_dpi, height/my_dpi), dpi=my_dpi)
+    plot, = plt.plot(np.arange(total_frames), np.ones(total_frames))
+
+    miou = []
+    for idx_frame in range(total_frames):
+        ret, frame = video.read()
+        if not ret:
+            break
+
+        if show_video:
+            for box in annotations:
+                if box.frame == idx_frame:
+                    cv2.rectangle(frame, (int(box.x1), int(box.y1)), (int(box.x2), int(box.y2)), (0, 255, 0), 2)
+
+            for box in predictions:
+                if box.frame == idx_frame:
+                    cv2.rectangle(frame, (int(box.x1), int(box.y1)), (int(box.x2), int(box.y2)), (0, 0, 255), 2)
+
+            # progress bar
+            cv2.rectangle(frame, (0, height - 25), (int(idx_frame * (width / total_frames)), width), (0, 255, 0), -1)
+
+            # cv2.imshow('frame', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        iou = frame_voc_iou(grouped_annotations[idx_frame], grouped_predictions[idx_frame])
+        miou.append(iou)
+
+        plot.set_ydata(miou)
+        fig.canvas.draw()
+        plot_img = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+        plot_img = plot_img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+        plot_img = cv2.cvtColor(plot_img, cv2.COLOR_RGB2BGR)
+        # cv2.imshow("plot", plot_img)
+
+        side_by_side = np.concatenate((frame, plot_img), axis=1)
+        cv2.imshow("plot", side_by_side)
+
+    video.release()
+    cv2.destroyAllWindows()
+
+    return np.mean(miou)
 
 
 def group_annotations_by_frame(annotations: List[BoundingBox]) -> List[List[BoundingBox]]:

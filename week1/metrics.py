@@ -2,7 +2,8 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-from utils import load_optical_flow
+from typing import List
+from class_utils import BoundingBox
 
 
 def voc_ap(rec, prec):
@@ -23,9 +24,34 @@ def voc_ap(rec, prec):
     return ap
 
 
-def voc_iou(pred, gt):
+def frame_voc_iou(annotations: List[BoundingBox], predictions: List[BoundingBox]) -> float:
+    """
+    Calculate the Mean IoU of all bounding boxes in a frame.
+
+    :param annotations: List of BoundingBox objects
+    :param predictions: List of BoundingBox objects
+    :return: Mean IoU of all bounding boxes in a frame.
+    """
+    ious = []
+    for annotation in annotations:
+        max_iou = 0
+        annotation = np.array(annotation.coordinates).reshape(-1, 4)
+        for prediction in predictions:
+            iou = voc_iou(prediction.coordinates, annotation)
+            if iou > max_iou:
+                max_iou = iou
+
+        if max_iou != 0:
+            ious.append(max_iou)
+
+    return np.mean(ious)
+
+
+def voc_iou(pred: List[int], gt: np.ndarray):
     """
     Calculate IoU between detect box and gt boxes.
+    :param pred: Predicted bounding box coordinates [x1, y1, x2, y2].
+    :param gt: Ground truth bounding box coordinates [[x1, y1, x2, y2]].
     """
     # compute overlaps
     # intersection
