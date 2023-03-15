@@ -6,13 +6,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from class_utils import BoundingBox
-from metrics import frame_voc_iou
 from metrics import voc_eval
 import os
 
 import imageio
-
-from matplotlib import animation
 
 
 def iou_over_time(
@@ -21,7 +18,8 @@ def iou_over_time(
         predictions: List[BoundingBox],
         show_video: bool = False,
         max_frames: int = 9999,
-        save_plots: bool = False,
+        frame_sampling_each: int = 4,
+        save_plots: bool = True,
         save_path: str = "week1/results/",
 ) -> float:
     """
@@ -30,7 +28,11 @@ def iou_over_time(
     :param video_path: Path to the video.
     :param annotations: List of annotations.
     :param predictions: List of predictions.
-
+    :param show_video: If True, the video will be shown.
+    :param max_frames: Maximum number of frames to show and process.
+    :param frame_sampling_each: Process every n-th frame.
+    :param save_plots: If True, the plots will be saved.
+    :param save_path: Path to save the plots, and both plot and video GIFs.
     """
     grouped_annotations = group_annotations_by_frame(annotations)
     grouped_predictions = group_annotations_by_frame(predictions)
@@ -38,13 +40,14 @@ def iou_over_time(
     video = cv2.VideoCapture(video_path)
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
     width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float `height`
+    height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     miou = []
     frames = []
     max_frames = min(max_frames, total_frames)
+    steps = []
 
-    for idx_frame in range(0, max_frames, 100):
+    for idx_frame in range(0, max_frames, frame_sampling_each):
         video.set(cv2.CAP_PROP_POS_FRAMES, idx_frame)
         ret, frame = video.read()
         if not ret:
@@ -69,12 +72,11 @@ def iou_over_time(
 
         frame = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), (int(width/10), int(height/10)))
         frames.append(frame)
+        steps.append(idx_frame)
         print(idx_frame)
 
-        # iou = frame_voc_iou(grouped_annotations[idx_frame], grouped_predictions[idx_frame])
         _, _, _, iou = voc_eval([grouped_annotations[idx_frame]], [grouped_predictions[idx_frame]])
         miou.append(iou)
-        # print(iou)
 
         if save_plots:
 
@@ -83,7 +85,7 @@ def iou_over_time(
             os.makedirs(plots_folder, exist_ok=True)
             os.makedirs(plots_folder+"/static", exist_ok=True)
 
-            plt.plot(miou, c="red")
+            plt.plot(steps, miou, c="red")
             plt.xlabel('Frame number')
             plt.ylabel('Mean IoU')
             plt.locator_params(axis='y', nbins=11)
@@ -110,8 +112,6 @@ def iou_over_time(
     print(f"Saving GIF...")
     imageio.mimsave(os.path.join(plots_folder, f"video_small_{max_frames}.gif"), frames, duration=0.05)
     print(f"GIF saved at {save_path}")
-
-    # mean_miou = np.mean(miou)
 
     _, _, _, mean_miou = voc_eval(grouped_annotations, grouped_predictions)
     with open(os.path.join(plots_folder, 'mean_iou.txt'), 'w') as f:
