@@ -11,6 +11,7 @@ from utils import (
     load_annotations,
     group_annotations_by_frame,
     load_optical_flow,
+    iou_over_time,
 )
 from noise import create_fake_track_predictions
 from metrics import (
@@ -19,6 +20,7 @@ from metrics import (
     OF_PEPN,
 )
 import global_config as cfg
+
 
 # frame 500
 def task1_1(
@@ -35,7 +37,7 @@ def task1_1(
     annotations = load_annotations(cfg.ANNOTATIONS_PATH)
     grouped_annotations = group_annotations_by_frame(annotations)
     annotations_with_noise = create_fake_track_predictions(
-        annotations, 
+        annotations,
         height=1080,
         width=1920,
         std_size=std_size,
@@ -96,6 +98,36 @@ def task1_2():
 
     print(f'IoU: {iou}')
     print(f'AP: {ap}')
+
+
+def task2():
+    annotations = load_annotations(cfg.ANNOTATIONS_PATH)
+    predictions = load_predictions(cfg.PREDICTIONS_PATH)
+
+    # annotations_with_noise = create_fake_track_predictions(
+    #     annotations,
+    #     height=1080,
+    #     width=1920,
+    #     std_size=0.1,
+    #     std_position=0.1,
+    #     prob_delete=0.3,
+    #     prob_similar=0.1,
+    #     std_similar=0.2,
+    #     min_random=0,
+    #     max_random=1,
+    #     similar_statistic=None,
+    # )
+
+    miou = iou_over_time(
+        video_path=cfg.VIDEO_PATH,
+        annotations=annotations,
+        predictions=predictions,
+        # predictions=annotations_with_noise,
+        show_video=False,
+        # max_frames=5,
+        save_plots=True,
+    )
+    print(f'Mean IoU: {miou}')
 
 
 def task3_1_2(gt, estimated_flow, frame: str):

@@ -2,6 +2,7 @@ import argparse
 from tasks import (
     task1_1,
     task1_2,
+    task2,
     task3,
 )
 
@@ -33,7 +34,8 @@ if __name__ == "__main__":
 
     if args.t2:
         print('Launching Task 2')
-        task1_2()
+        # task1_2()
+        task2()
 
     if args.t3:
         print('Launching Task 3')
