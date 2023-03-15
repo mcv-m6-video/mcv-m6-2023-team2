@@ -1,7 +1,10 @@
 import os
 import math
+import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+
+from typing import Optional
 
 from utils import (
     load_predictions,
@@ -20,27 +23,43 @@ import global_config as cfg
 
 
 # frame 500
-def task1_1():
+def task1_1(
+        frame: Optional[int] = 500,
+        std_size: float = 0.1,
+        std_position: float = 0.1,
+        prob_delete: float = 0.3,
+        prob_similar: float = 0.1,
+        std_similar: float = 0.2,
+        min_random: int = 1,
+        max_random: int = 1,
+        similar_statistic: Optional[str] = None
+    ):
     annotations = load_annotations(cfg.ANNOTATIONS_PATH)
     grouped_annotations = group_annotations_by_frame(annotations)
     annotations_with_noise = create_fake_track_predictions(
         annotations,
         height=1080,
         width=1920,
-        std_size=0.1,
-        std_position=0.1,
-        prob_delete=0.3,
-        prob_similar=0.1,
-        std_similar=0.2,
-        min_random=1,
-        max_random=1,
-        similar_statistic="mean",
+        std_size=std_size,
+        std_position=std_position,
+        prob_delete=prob_delete,
+        prob_similar=prob_similar,
+        std_similar=std_similar,
+        min_random=min_random,
+        max_random=max_random,
+        similar_statistic=similar_statistic,
     )
     grouped_annotations_with_noise = group_annotations_by_frame(annotations_with_noise)
 
     n_frames = len(grouped_annotations)
 
     print(f'Number of frames: {n_frames}')
+    print(f'Selected frame: {frame}')
+
+    if frame:
+        grouped_annotations = [grouped_annotations[frame]]
+        grouped_annotations_with_noise = [grouped_annotations_with_noise[frame]]
+
     print(f'Number of annotations: {len(annotations)}')
     print(f'Number of annotations with noise: {len(annotations_with_noise)}')
 
@@ -49,6 +68,19 @@ def task1_1():
     print(f'IoU: {iou}')
     print(f'AP: {ap}')
 
+    if frame:
+        cap = cv2.VideoCapture(cfg.VIDEO_PATH)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame)
+        _, frame_image = cap.read()
+
+        for box in grouped_annotations[0]:
+            cv2.rectangle(frame_image, (int(box.x1), int(box.y1)), (int(box.x2), int(box.y2)), (0, 255, 0), 2)
+
+        for box in grouped_annotations_with_noise[0]:
+            cv2.rectangle(frame_image, (int(box.x1), int(box.y1)), (int(box.x2), int(box.y2)), (0, 0, 255), 2)
+
+        cv2.imwrite(f'frame_{frame}_iou_{iou:.4f}_ap_{ap:.4f}_std_size_{std_size}_std_position_{std_position}_prob_delete_{prob_delete}_prob_similar_{prob_similar}_std_similar_{std_similar}_min_random_{min_random}_max_random_{max_random}_similar_statistic_{similar_statistic}.png', frame_image)
+        cap.release()
 
 def task1_2():
     annotations = load_annotations(cfg.ANNOTATIONS_PATH)
