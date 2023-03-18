@@ -21,7 +21,6 @@ def task1(args, alpha=3):
         'voting': None,  # simple voting
     }
 
-
     video = cv2.VideoCapture(args['path_video'])
 
     N = int(video.get(cv2.CAP_PROP_FRAME_COUNT))

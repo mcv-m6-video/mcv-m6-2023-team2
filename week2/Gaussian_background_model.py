@@ -56,7 +56,7 @@ method_Gaussian_background = {
 
 
 def eval(video_cv2, H_W, mean, std, args):
-    GT = load_annotations(args['path_GT'], grouped=True, use_parked=False)
+    GT = load_annotations(args['path_GT'], select_label_types=['car'], grouped=True, use_parked=False)
     init_frame_id = int(video_cv2.get(cv2.CAP_PROP_POS_FRAMES))
     frame_id = init_frame_id
     detections, annotations = [], {}
@@ -72,7 +72,7 @@ def eval(video_cv2, H_W, mean, std, args):
         if args['color_space'] == 'CbCr':
             Y, Cb, Cr = np.split(frame, 3, axis=2)
             frame = np.dstack((Cb, Cr))
-            
+
         segmentation, mean, std = method_Gaussian_background[args['bg_model']](frame, H_W, mean, std, args)
         roi = cv2.imread(args['path_roi'], cv2.IMREAD_GRAYSCALE) / 255
         segmentation = segmentation * roi
@@ -89,7 +89,7 @@ def eval(video_cv2, H_W, mean, std, args):
             gt_bboxes = GT[frame_id]
         annotations[frame_id] = gt_bboxes
 
-        if args['show_boxes']:
+        if args['viz_bboxes']:
             segmentation = cv2.cvtColor(segmentation.astype(np.uint8), cv2.COLOR_GRAY2RGB)
             segmentation_boxes = draw_boxes(image=segmentation, boxes=detected_bboxes, color='r', linewidth=3)
             segmentation_boxes = draw_boxes(image=segmentation_boxes, boxes=gt_bboxes, color='g', linewidth=3)

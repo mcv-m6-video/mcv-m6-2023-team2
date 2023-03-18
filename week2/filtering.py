@@ -65,7 +65,7 @@ def extract_foreground(img, frame_ID, args):
 
         x, y, w, h = rect
 
-        # TODO: pillar bicis a gt
+        # TODO: take bikes from GT
         BBs.append(
             BoundingBox(
                 x1=x,
@@ -74,7 +74,7 @@ def extract_foreground(img, frame_ID, args):
                 y2=y+h,
                 frame=frame_ID,
                 track_id=-1,
-                label='car',  # careful, we are assuming only cars were detected
+                label='car',  # we are assuming only cars were detected
             )
         )
 
