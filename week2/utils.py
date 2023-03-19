@@ -73,7 +73,6 @@ def iou_over_time(
         frame = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), (int(width/10), int(height/10)))
         frames.append(frame)
         steps.append(idx_frame)
-        print(idx_frame)
 
         _, _, _, iou = voc_eval([grouped_annotations[idx_frame]], [grouped_predictions[idx_frame]])
         miou.append(iou)
@@ -130,10 +129,10 @@ def group_by_frame(boxes):
 def group_annotations_by_frame(annotations: List[BoundingBox]) -> List[List[BoundingBox]]:
     """
     Groups the given list of annotations by frame.
-    
+
     Parameters:
     annotations (list): List of annotations to group by frame.
-    
+
     Returns:
     A list of lists of annotations grouped by frame.
     """
@@ -143,7 +142,7 @@ def group_annotations_by_frame(annotations: List[BoundingBox]) -> List[List[Boun
         if len(grouped_annotations) <= box.frame:
             for _ in range(box.frame - len(grouped_annotations) + 1):
                 grouped_annotations.append([])
-            
+
         grouped_annotations[box.frame].append(box)
 
     return grouped_annotations
@@ -183,7 +182,7 @@ def load_annotations(
             ))
 
     if grouped:
-        return group_by_frame(annotations)
+        return group_annotations_by_frame(bboxes)
 
     return bboxes
 

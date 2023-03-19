@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     if args.t1:
         print('Launching Task 1')
-        task1()
+        task1(args)
 
     # if args.t2:
     #     print('Launching Task 2')

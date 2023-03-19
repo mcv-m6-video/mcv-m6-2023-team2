@@ -150,10 +150,11 @@ def voc_eval(preds, gt, ovthresh=0.5):
     # avoid divide by zero in case the first detection matches a difficult
     # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
+    f1 = 2 * prec * rec / (prec + rec)
     ap = voc_ap(rec, prec)
     iou = np.mean(iou)
 
-    return rec, prec, ap, iou
+    return rec, prec, f1, ap, iou
 
 
 def OF_MSEN(GT, pred, frame: str, verbose=False, visualize=True):

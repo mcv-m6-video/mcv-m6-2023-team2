@@ -4,7 +4,7 @@ import sys
 from Gaussian_background_model import fit, eval
 
 
-def task1(args, alpha=3):
+def task1(args):
 
     args_t1 = {
         'path_video': args.path_video,
@@ -15,13 +15,13 @@ def task1(args, alpha=3):
         'viz_bboxes': args.viz_bboxes,
         'store_results': args.store_results,
         'bg_model': 'non_adaptive',
-        'alpha': alpha,
+        'alpha': args.alpha,
         'rho': 0,
         'color_space': 'grayscale',
         'voting': None,  # simple voting
     }
 
-    video = cv2.VideoCapture(args['path_video'])
+    video = cv2.VideoCapture(args_t1['path_video'])
 
     N = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
     print("Video length (frames): ", N)
@@ -40,4 +40,5 @@ def task1(args, alpha=3):
     mean, std = fit(video, frame_size, N_train, args_t1)
 
     # Evaluate
-    return eval(video, frame_size, mean, std, args_t1)
+    recall, precision, F1, AP, IoU = eval(video, frame_size, mean, std, args_t1)
+    print(f'alpha: {args.alpha}, recall: {recall[-1]}, precision: {precision[-1]}, F1: {F1[-1]}, AP: {AP}, IoU: {IoU}')

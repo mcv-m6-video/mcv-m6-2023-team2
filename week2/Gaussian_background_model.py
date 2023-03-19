@@ -6,6 +6,7 @@ from utils import (
     load_annotations,
     draw_boxes,
     group_by_frame,
+    group_annotations_by_frame,
 )
 from filtering import (
     spatial_morphology,
@@ -46,7 +47,7 @@ def fixed_Gaussian_background(img, H_W, mean, std, args):
 
         segmentation[votes] = 255
 
-    return segmentation, mean
+    return segmentation, mean, std
 
 
 method_Gaussian_background = {
@@ -59,7 +60,8 @@ def eval(video_cv2, H_W, mean, std, args):
     GT = load_annotations(args['path_GT'], select_label_types=['car'], grouped=True, use_parked=False)
     init_frame_id = int(video_cv2.get(cv2.CAP_PROP_POS_FRAMES))
     frame_id = init_frame_id
-    detections, annotations = [], {}
+    detections, annotations = [], []
+    i_GT = frame_id
     for t in tqdm(range(args['N_eval'])):
         _, frame = video_cv2.read()
         frame = cv2.cvtColor(frame, COLOR_SPACES[args['color_space']][0])
@@ -82,12 +84,27 @@ def eval(video_cv2, H_W, mean, std, args):
             cv2.imwrite(args['path_results'] + f"seg_{str(frame_id)}_pp_{str(args['alpha'])}.bmp", segmentation.astype(int))
 
         detected_bboxes = extract_foreground(segmentation, frame_id, args)
-        detections += detected_bboxes
+        detections += [detected_bboxes]
 
         gt_bboxes = []
-        if frame_id in GT:
-            gt_bboxes = GT[frame_id]
-        annotations[frame_id] = gt_bboxes
+        if len(GT[i_GT]) == 0:
+            gt_bboxes = []
+            print('if len(GT[i_GT]) == 0:')
+        else:
+            gt_bboxes = GT[i_GT]
+        annotations += [gt_bboxes]
+        i_GT += 1
+        # if frame_id < GT[i_GT][0].frame:  # GT is assumed to be sorted by frame id
+        #     print('if frame_id < GT[i_GT][0].frame:' * 3)
+        #     gt_bboxes = []
+        # elif GT[i_GT][0].frame < frame_id:
+        #     while GT[i_GT][0].frame < frame_id:
+        #         i_GT += 1
+        #     gt_bboxes = []
+        # if frame_id == GT[i_GT][0].frame:
+        #     print(frame_id, GT[i_GT][0].frame)
+        #     gt_bboxes = GT[i_GT]
+        #     i_GT += 1
 
         if args['viz_bboxes']:
             segmentation = cv2.cvtColor(segmentation.astype(np.uint8), cv2.COLOR_GRAY2RGB)
@@ -101,10 +118,12 @@ def eval(video_cv2, H_W, mean, std, args):
 
         frame_id += 1
 
-    detections = filter_detections_temporal(group_by_frame(detections), init=init_frame_id, end=frame_id)
-    recall, precision, AP, IoU = voc_eval(detections, annotations, ovthresh=0.5, use_confidence=False)
+    assert frame_id == i_GT
+    assert len(annotations) == len(detections)
 
-    return AP
+    recall, precision, F1, AP, IoU = voc_eval(detections, annotations, ovthresh=0.5)
+
+    return recall, precision, F1, AP, IoU
 
 
 def fit(video_cv2, H_W, N_train, args):
@@ -141,7 +160,7 @@ def fit(video_cv2, H_W, N_train, args):
 
     print("Mean and std have been calculated!")
 
-    if args['save_results']:
+    if args['store_results']:
         cv2.imwrite(args['path_results'] + "mean_train.png", avg)
         cv2.imwrite(args['path_results'] + "std_train.png", std)
 

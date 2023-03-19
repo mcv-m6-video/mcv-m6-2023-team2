@@ -34,8 +34,8 @@ def eliminate_overlapping_boxes(BBs):
 
         _d = 0
         for d in sorted(discarded_idx):
-            del BBs[d-discarded]
-            discarded += 1
+            del BBs[d-_d]
+            _d += 1
 
         _d = 0
         for d in sorted(discarded_tmp):
@@ -100,28 +100,27 @@ def filter_detections_temporal(detects, init_id, end_id):
     Discards those predictions that are not consistent (have low IoU)
     with the detections in the previous and next frames.
     """
+
     accepted_detects = []
 
-    if init_id in detects:
-        for d in detects[init_id]:
-            accepted_detects.append(d)
+    accepted_detects.append(detects[0])
 
-    if end_id - 1 in detects:
-        for d in detects[end_id - 1]:
-            accepted_detects.append(d)
+    iou_thr = 0.5
+    for i in range(1, len(detects) - 1):
 
-    iou_thr = 0.55
-    for curr_frame in range(init_id + 1, end_id - 1):
-        if curr_frame not in detects:
+        detect_curr = detects[i]
+        if len(detect_curr) == 0:
+            accepted_detects.append(detect_curr)
             continue
-        detect_curr = detects[curr_frame]
+
         detect_prev = []
         detect_next = []
-        if curr_frame - 1 in detects:
-            detect_prev = detects[curr_frame - 1]
-        if curr_frame + 1 in detects:
-            detect_next = detects[curr_frame + 1]
+        if detects[i-1][0].frame == detect_curr[0].frame - 1:
+            detect_prev = detects[i-1]
+        if detects[i+1][0].frame == detect_curr[0].frame + 1:
+            detect_next = detects[i+1]
 
+        _detect_curr = []
         for d_curr in detect_curr:
             max_iou_prev = 0
             max_iou_next = 0
@@ -135,6 +134,13 @@ def filter_detections_temporal(detects, init_id, end_id):
                 max_iou_next = max(max_iou_next, iou_next)
 
             if max_iou_prev >= iou_thr or max_iou_next >= iou_thr:
-                accepted_detects.append(d_curr)
+                _detect_curr.append(d_curr)
+            else:
+                print(f"Filtering out prediction for frame {d_curr.frame}")
+
+        accepted_detects.append(_detect_curr)
+
+    if len(detects) > 1:
+        accepted_detects.append(detects[-1])
 
     return accepted_detects
