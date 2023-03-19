@@ -2,6 +2,7 @@ import cv2
 import sys
 
 from Gaussian_background_model import fit, eval
+from utils import save_metrics
 
 
 def task1(args):
@@ -11,14 +12,15 @@ def task1(args):
         'path_roi': args.path_roi,
         'path_GT': args.path_GT,
         'path_results': args.path_results,
-        'N_eval': args.N_eval,
         'viz_bboxes': args.viz_bboxes,
         'store_results': args.store_results,
-        'bg_model': 'non_adaptive',
+        'bg_model': args.bg_model,
         'alpha': args.alpha,
-        'rho': 0,
+        'rho': args.rho,
         'color_space': 'grayscale',
-        'voting': None,  # simple voting
+        'voting': args.voting,
+        'frames_range': args.frames_range,
+        'make_gifs': args.make_gifs,
     }
 
     video = cv2.VideoCapture(args_t1['path_video'])
@@ -40,5 +42,6 @@ def task1(args):
     mean, std = fit(video, frame_size, N_train, args_t1)
 
     # Evaluate
-    recall, precision, F1, AP, IoU = eval(video, frame_size, mean, std, args_t1)
+    recall, precision, F1, AP, IoU = eval(video, frame_size, mean, std, N_val, args_t1)
+    save_metrics(args_t1, recall, precision, F1, AP, IoU)
     print(f'alpha: {args.alpha}, recall: {recall[-1]}, precision: {precision[-1]}, F1: {F1[-1]}, AP: {AP}, IoU: {IoU}')

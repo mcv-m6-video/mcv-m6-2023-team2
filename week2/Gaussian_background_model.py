@@ -5,6 +5,9 @@ from tqdm import tqdm
 from utils import (
     load_annotations,
     draw_boxes,
+    draw_legend,
+    save_image,
+    create_gif,
     group_by_frame,
     group_annotations_by_frame,
 )
@@ -50,19 +53,47 @@ def fixed_Gaussian_background(img, H_W, mean, std, args):
     return segmentation, mean, std
 
 
+def adaptive_Gaussian_background(img, H_W, mean, std, args):
+    alpha = args['alpha']
+    rho = args['rho']
+    h, w = H_W
+    mask = abs(img - mean) >= alpha * (std + 2)
+
+    segmentation = np.zeros((h, w))
+    N_channels = COLOR_SPACES[args['color_space']][1]
+
+    if N_channels == 1:
+        segmentation[mask] = 255
+    else:
+        if args['voting'] == 'unanimous' or N_channels == 2:
+            voting = (np.count_nonzero(mask, axis=2) / N_channels) >= 1
+        elif args['voting'] == 'simple':
+            voting = (np.count_nonzero(mask, axis=2) / (N_channels // 2 + 1)) >= 1
+        else:
+            raise ValueError('Voting method does not exist')
+
+        segmentation[voting] = 255
+
+    # Try update the background every N frames
+    mean = np.where(mask, mean, rho * img + (1 - rho) * mean)
+    std = np.where(mask, std, np.sqrt(rho * (img - mean) ** 2 + (1 - rho) * std ** 2))
+
+    return segmentation, mean, std
+
+
 method_Gaussian_background = {
     'non_adaptive': fixed_Gaussian_background,
-    # 'adaptive': # TODO: implement adaptive Gaussian background model
+    'adaptive': adaptive_Gaussian_background,
 }
 
 
-def eval(video_cv2, H_W, mean, std, args):
+def eval(video_cv2, H_W, mean, std, N_val, args):
     GT = load_annotations(args['path_GT'], select_label_types=['car'], grouped=True, use_parked=False)
     init_frame_id = int(video_cv2.get(cv2.CAP_PROP_POS_FRAMES))
     frame_id = init_frame_id
     detections, annotations = [], []
     i_GT = frame_id
-    for t in tqdm(range(args['N_eval'])):
+    for t in tqdm(range(N_val), desc='Evaluating Gaussian background model... (this may take a while)'):
         _, frame = video_cv2.read()
         frame = cv2.cvtColor(frame, COLOR_SPACES[args['color_space']][0])
         if args['color_space'] == 'H':
@@ -80,8 +111,8 @@ def eval(video_cv2, H_W, mean, std, args):
         segmentation = segmentation * roi
         segmentation = spatial_morphology(segmentation)
 
-        if args['store_results'] and frame_id >= 1169 and frame_id < 1229 : # if frame_id >= 535 and frame_id < 550
-            cv2.imwrite(args['path_results'] + f"seg_{str(frame_id)}_pp_{str(args['alpha'])}.bmp", segmentation.astype(int))
+        if args['store_results'] and args['frames_range'][0] <= frame_id < args['frames_range'][1]:
+            save_image(segmentation.astype(int), frame_id, args, subfolder='segm', extension='.bmp')
 
         detected_bboxes = extract_foreground(segmentation, frame_id, args)
         detections += [detected_bboxes]
@@ -89,7 +120,7 @@ def eval(video_cv2, H_W, mean, std, args):
         gt_bboxes = []
         if len(GT[i_GT]) == 0:
             gt_bboxes = []
-            print('if len(GT[i_GT]) == 0:')
+            # print('if len(GT[i_GT]) == 0:')
         else:
             gt_bboxes = GT[i_GT]
         annotations += [gt_bboxes]
@@ -106,11 +137,15 @@ def eval(video_cv2, H_W, mean, std, args):
         #     gt_bboxes = GT[i_GT]
         #     i_GT += 1
 
-        if args['viz_bboxes']:
-            segmentation = cv2.cvtColor(segmentation.astype(np.uint8), cv2.COLOR_GRAY2RGB)
-            segmentation_boxes = draw_boxes(image=segmentation, boxes=detected_bboxes, color='r', linewidth=3)
-            segmentation_boxes = draw_boxes(image=segmentation_boxes, boxes=gt_bboxes, color='g', linewidth=3)
+        segmentation = cv2.cvtColor(segmentation.astype(np.uint8), cv2.COLOR_GRAY2RGB)
+        segmentation_boxes = draw_boxes(image=segmentation, boxes=detected_bboxes, color='r', linewidth=3)
+        segmentation_boxes = draw_boxes(image=segmentation_boxes, boxes=gt_bboxes, color='g', linewidth=3)
+        segmentation_boxes = draw_legend(image=segmentation_boxes, labels=['Ground truth', 'Detected'], colors=['g','r'])
 
+        if args['store_results'] and args['frames_range'][0] <= frame_id < args['frames_range'][1]:
+            save_image(segmentation_boxes.astype(int), frame_id, args, subfolder='segm_bbox', extension='.png')
+
+        if args['viz_bboxes']:
             cv2.imshow("Segmentation mask with detected and GT bboxes", segmentation_boxes)
             if cv2.waitKey() == 113:
                 # press 'q' to exit
@@ -120,6 +155,11 @@ def eval(video_cv2, H_W, mean, std, args):
 
     assert frame_id == i_GT
     assert len(annotations) == len(detections)
+
+    # Create GIFs
+    if args['make_gifs']:
+        create_gif(args, subfolder='segm', extension='.bmp')
+        create_gif(args, subfolder='segm_bbox', extension='.png')
 
     recall, precision, F1, AP, IoU = voc_eval(detections, annotations, ovthresh=0.5)
 
@@ -138,18 +178,18 @@ def fit(video_cv2, H_W, N_train, args):
         SS = np.zeros((h, w, num_ch))
 
     # Compute average and std
-    for t in tqdm(range(N_train)):
+    for t in tqdm(range(N_train), desc='Fitting Gaussian background model... (computing mean and std)'):
         _, frame = video_cv2.read()
         frame = cv2.cvtColor(frame, COLOR_SPACES[args['color_space']][0])
         if args['color_space'] == 'H':
-            H, S, V = np.split(frame,3,axis=2)
+            H, S, V = np.split(frame, 3, axis=2)
             frame = np.squeeze(H)
         if args['color_space'] == 'L':
-            L, A, B = np.split(frame,3,axis=2)
+            L, A, B = np.split(frame, 3, axis=2)
             frame = np.squeeze(L)
         if args['color_space'] == 'CbCr':
-            Y, Cb, Cr = np.split(frame,3,axis=2)
-            frame = np.dstack((Cb,Cr))
+            Y, Cb, Cr = np.split(frame, 3, axis=2)
+            frame = np.dstack((Cb, Cr))
         count += 1
         dev_avg = frame - avg
         avg += dev_avg / count
@@ -161,7 +201,7 @@ def fit(video_cv2, H_W, N_train, args):
     print("Mean and std have been calculated!")
 
     if args['store_results']:
-        cv2.imwrite(args['path_results'] + "mean_train.png", avg)
-        cv2.imwrite(args['path_results'] + "std_train.png", std)
+        save_image(avg, 'mean_train', args, subfolder=None, extension='.png')
+        save_image(std, 'std_train', args, subfolder=None, extension='.png')
 
     return avg, std
