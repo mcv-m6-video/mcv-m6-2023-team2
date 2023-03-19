@@ -30,11 +30,8 @@ if __name__ == "__main__":
     parser.add_argument('--path_GT', type=str, default="../data/AICity_S03_c010/ai_challenge_s03_c010-full_annotation.xml",
                         help='The path to the ground truth file corresponding to the video to be processed.')
 
-    parser.add_argument('--path_results', type=str, default="./output/",
+    parser.add_argument('--path_results', type=str, default="./results/",
                         help='The path to the directory where the results will be stored.')
-
-    parser.add_argument('--N_eval', type=int, default=1606,
-                        help='Number of frames to be evaluated.')
 
     parser.add_argument('--bg_model', type=str, default='non_adaptive',
                         help='Model to be used for background estimation.')
@@ -56,6 +53,12 @@ if __name__ == "__main__":
 
     parser.add_argument('--store_results', action='store_true',
                         help='Whether to store the intermediate results.')
+
+    parser.add_argument('--make_gifs', action='store_true',
+                        help='Whether to store make GIFs of the intermediate results.')
+
+    parser.add_argument('--frames_range', type=tuple, default=(1169, 1229),
+                        help='Start and end frame bitmaps to be saved (eg. for GIF creation).')  # default=(1169, 1229)
 
     args = parser.parse_args()
 

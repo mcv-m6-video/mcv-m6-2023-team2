@@ -254,41 +254,98 @@ def histogram_error_distribution(error, GT):
     plt.hist(error[GT[2] == 1].ravel(), bins=30, range=(0.0, max_range))
 
 
+def get_experiment_path(args):
+    rho_str = f"_rho_{args['rho']}" if args['bg_model'] == 'adaptive' else ''
+    experiment_path = os.path.join(
+        args['path_results'],
+        f"bg_{args['bg_model']}",
+        f"vote_{args['voting']}",
+        f"color_{args['color_space']}",
+        f"alpha_{args['alpha']}{rho_str}",
+    )
+    return experiment_path
+
+
+def save_metrics(args, recall, precision, F1, AP, IoU, filename="metrics.txt"):
+    experiment_path = os.path.join(get_experiment_path(args), filename)
+    with open(experiment_path, 'w') as f:
+        f.write(f"Recall: {recall[-1]}\nPrecision: {precision[-1]}\nF1: {F1[-1]}\nAP: {AP}\nIoU: {IoU}")
+
+
+def create_gif(args, subfolder, extension, duration=0.05, remove_images=False):
+    experiment_path = os.path.join(get_experiment_path(args), subfolder)
+    if not os.path.exists(experiment_path):
+        return
+    files = [x for x in os.listdir(experiment_path) if x.endswith(extension)]
+    images = []
+    for filename in sorted(files, key=lambda x: int(os.path.basename(x).replace(extension, ''))):
+        full_filename = os.path.join(experiment_path, filename)
+        images.append(cv2.cvtColor(cv2.imread(full_filename), cv2.COLOR_BGR2RGB))
+        if remove_images:
+            os.remove(full_filename)
+    imageio.mimsave(os.path.join(experiment_path, "video.gif"), images, duration=duration)
+
+
+def save_image(img, name, args, subfolder=None, extension='.bmp'):
+    experiment_path = get_experiment_path(args)
+    if subfolder is not None:
+        experiment_path = os.path.join(experiment_path, subfolder)
+    os.makedirs(experiment_path, exist_ok=True)
+    filename = f"{str(name)}{extension}"
+    cv2.imwrite(os.path.join(experiment_path, filename), img)
+
+
+def draw_legend(image, labels=None, colors=None, linewidth=2):
+    list_colors = {
+        'r': (0, 0, 255),
+        'g': (0, 255, 0),
+        'b': (255, 0, 0),
+        'w': (255, 255, 255),
+    }
+    cv2.putText(image, labels[0], (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, list_colors[colors[0]], linewidth)
+    cv2.putText(image, labels[1], (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, list_colors[colors[1]], linewidth)
+    return image
+
+
 def draw_boxes(image, boxes, tracker=None, color='g', linewidth=2, det=False, boxIds=False, old=False):
     colors = {
         'r': (0, 0, 255),
         'g': (0, 255, 0),
         'b': (255, 0, 0),
-        'w': (255,255,255),
+        'w': (255, 255, 255),
     }
     color_ids = {}
 
     rgb = colors[color]
     for box in boxes:
-        print('box.id: ', box.id)
+        # print('box.track_id: ', box.track_id)
         if boxIds:
-            if box.id in list(color_ids.keys()):
+            if box.track_id in list(color_ids.keys()):
                 pass
             else:
-                color_ids[box.id]=np.random.uniform(0,256,size=3)
+                color_ids[box.track_id] = np.random.uniform(0, 256, size=3)
             if old:
-                cv2.putText(image, str(box.id), (int(box.xtl), int(box.ytl) + 120), cv2.FONT_ITALIC, 0.6, color_ids[box.id], linewidth)
+                cv2.putText(image, str(box.track_id), (int(box.x1), int(box.y1) + 120), cv2.FONT_ITALIC, 0.6,
+                            color_ids[box.track_id], linewidth)
             else:
-                cv2.putText(image, str(box.id), (int(box.xtl), int(box.ytl) + 20), cv2.FONT_ITALIC, 0.6, color_ids[box.id], linewidth)
+                cv2.putText(image, str(box.track_id), (int(box.x1), int(box.y1) + 20), cv2.FONT_ITALIC, 0.6,
+                            color_ids[box.track_id], linewidth)
 
             if tracker is not None:
-                if box.id in tracker:
-                    if len(tracker[box.id])>2:
-                        image =cv2.polylines(image,[np.array(tracker[box.id])],False,color_ids[box.id],linewidth)
+                if box.track_id in tracker:
+                    if len(tracker[box.track_id]) > 2:
+                        image = cv2.polylines(image, [np.array(tracker[box.track_id])], False, color_ids[box.track_id], linewidth)
 
             # if len(kalman_predictions[box.id])>2:
             #     image =cv2.polylines(image,[np.array(kalman_predictions[box.id])],False,color_ids[box.id],linewidth)
 
-            image = cv2.rectangle(image, (int(box.xtl), int(box.ytl)), (int(box.xbr), int(box.ybr)), color_ids[box.id], linewidth)
+            image = cv2.rectangle(image, (int(box.x1), int(box.y1)), (int(box.x2), int(box.y2)), color_ids[box.track_id],
+                                  linewidth)
         else:
-            image = cv2.rectangle(image, (int(box.xtl), int(box.ytl)), (int(box.xbr), int(box.ybr)), rgb, linewidth)
+            image = cv2.rectangle(image, (int(box.x1), int(box.y1)), (int(box.x2), int(box.y2)), rgb, linewidth)
 
         if det:
-            cv2.putText(image, str(box.confidence), (int(box.xtl), int(box.ytl) - 5), cv2.FONT_ITALIC, 0.6, rgb, linewidth)
+            cv2.putText(image, str(box.confidence), (int(box.x1), int(box.y1) - 5), cv2.FONT_ITALIC, 0.6, rgb,
+                        linewidth)
 
     return image
