@@ -94,7 +94,7 @@ def spatial_morphology(img, iterations=1):
     return img
 
 
-def filter_detections_temporal(detects, init_id, end_id):
+def filter_detections_temporal(detects):
     """
     Filter detections along temporal axis.
     Discards those predictions that are not consistent (have low IoU)

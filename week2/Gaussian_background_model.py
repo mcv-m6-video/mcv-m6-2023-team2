@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 import cv2
 import numpy as np
 from tqdm import tqdm
@@ -91,6 +92,7 @@ def eval(video_cv2, H_W, mean, std, N_val, args):
     GT = load_annotations(args['path_GT'], select_label_types=['car'], grouped=True, use_parked=False)
     init_frame_id = int(video_cv2.get(cv2.CAP_PROP_POS_FRAMES))
     frame_id = init_frame_id
+    print("initial frame id: ", init_frame_id)
     detections, annotations = [], []
     i_GT = frame_id
     for t in tqdm(range(N_val), desc='Evaluating Gaussian background model... (this may take a while)'):
@@ -109,10 +111,11 @@ def eval(video_cv2, H_W, mean, std, N_val, args):
         segmentation, mean, std = method_Gaussian_background[args['bg_model']](frame, H_W, mean, std, args)
         roi = cv2.imread(args['path_roi'], cv2.IMREAD_GRAYSCALE) / 255
         segmentation = segmentation * roi
-        segmentation = spatial_morphology(segmentation)
+        # segmentation = spatial_morphology(segmentation)
 
-        if args['store_results'] and args['frames_range'][0] <= frame_id < args['frames_range'][1]:
-            save_image(segmentation.astype(int), frame_id, args, subfolder='segm', extension='.bmp')
+        # if args['store_results']:  # and (frame_id >= 535 and frame_id < 550) or (frame_id >= 1169 and frame_id < 1229):
+            # cv2.imwrite(args['path_results'] + '/frames_fit/' + f"{t:04d}.png", frame)
+            # cv2.imwrite(args['path_results'] + f"seg_{str(frame_id)}_pp_{str(args['alpha'])}.png", segmentation.astype(int))
 
         detected_bboxes = extract_foreground(segmentation, frame_id, args)
         detections += [detected_bboxes]
@@ -153,6 +156,8 @@ def eval(video_cv2, H_W, mean, std, N_val, args):
 
         frame_id += 1
 
+    # detections = filter_detections_temporal(detections)
+
     assert frame_id == i_GT
     assert len(annotations) == len(detections)
 
@@ -177,6 +182,9 @@ def fit(video_cv2, H_W, N_train, args):
         avg = np.zeros((h, w, num_ch))
         SS = np.zeros((h, w, num_ch))
 
+
+
+    pixel_avg, pixel_std, pixel_val, (h_p, w_p) = [], [], [], (180, 742)
     # Compute average and std
     for t in tqdm(range(N_train), desc='Fitting Gaussian background model... (computing mean and std)'):
         _, frame = video_cv2.read()
@@ -195,6 +203,35 @@ def fit(video_cv2, H_W, N_train, args):
         avg += dev_avg / count
         dev_frame = frame - avg
         SS += dev_avg * dev_frame
+
+        # if args['store_results'] and t >= 390:
+        #     cv2.imwrite(args['path_results'] + '/frames_fit/' + f"{t:04d}.png", frame)
+
+        #     pixel_avg.append(avg[h_p, w_p])
+        #     pixel_std.append(np.sqrt(SS / count)[h_p, w_p])
+        #     pixel_val.append(frame[h_p, w_p])
+
+        #     fig, axs = plt.subplots(2, figsize=(8, 5))
+        #     axs[0].imshow(frame, cmap='gray')
+        #     axs[0].set_xticks([])
+        #     axs[0].set_yticks([])
+        #     axs[1].plot(390+np.arange(t+1-390), pixel_val, 'yo-', linewidth=2, markersize=2)
+        #     axs[1].plot(390+np.arange(t+1-390), pixel_avg, color='green', marker='o', linewidth=2, markersize=2)
+        #     axs[1].plot(390+np.arange(t+1-390), pixel_std, color='red', marker='o', linewidth=2, markersize=2)
+        #     plt.xlim([390, 642])
+        #     plt.ylim([0, 250])
+        #     circle1 = plt.Circle((w_p, h_p), 50, color='r', fill=False)
+        #     circle2 = plt.Circle((w_p, h_p), 2, color='r', fill=True)
+        #     axs[0].add_patch(circle1)
+        #     axs[0].add_patch(circle2)
+        #     # axs[1].legend(['Pixel Value', 'Average Pixel Value', 'Pixel Value Standard Deviation'], loc='lower right')
+        #     plt.savefig(args['path_results'] + '/frames_fit/' + f"evolution_{t:04d}.png", bbox_inches='tight')
+
+    # if args['store_results']:
+    #     # store pixel_avg, pixel_std, pixel_val into a csv file
+    #     import pandas as pd
+    #     df = pd.DataFrame({'pixel_avg': pixel_avg, 'pixel_std': pixel_std, 'pixel_val': pixel_val})
+    #     df.to_csv(args['path_results'] + 'frames_fit/' + 'pixel_avg_std_val.csv', index=False)
 
     std = np.sqrt(SS / count)
 
