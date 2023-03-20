@@ -3,6 +3,10 @@ import sys
 
 from Gaussian_background_model import fit, eval
 from utils import save_metrics
+from utils import plot_3d_surface
+
+import optuna
+import logging
 
 
 def task1(args):
@@ -17,7 +21,7 @@ def task1(args):
         'bg_model': args.bg_model,
         'alpha': args.alpha,
         'rho': args.rho,
-        'color_space': 'grayscale',
+        'color_space': args.color_space,
         'voting': args.voting,
         'frames_range': args.frames_range,
         'make_gifs': args.make_gifs,
@@ -43,5 +47,35 @@ def task1(args):
 
     # Evaluate
     recall, precision, F1, AP, IoU = eval(video, frame_size, mean, std, N_val, args_t1)
-    save_metrics(args_t1, recall, precision, F1, AP, IoU)
     print(f'alpha: {args.alpha}, recall: {recall[-1]}, precision: {precision[-1]}, F1: {F1[-1]}, AP: {AP}, IoU: {IoU}')
+
+    if args.optuna_trials is None:
+        save_metrics(args_t1, recall, precision, F1, AP, IoU)
+
+    return recall, precision, F1, AP, IoU
+
+
+def task2(args):
+    def objective(trial):
+        alpha = trial.suggest_float('alpha', 1, 9, step=0.5)
+        rho = trial.suggest_float('rho', 0, 1)
+        args.alpha = alpha
+        args.rho = rho
+        recall, precision, F1, AP, IoU = task1(args)
+        return recall[-1], precision[-1], F1[-1], AP, IoU
+
+    # Add stream handler of stdout to show the messages
+    optuna.logging.get_logger("optuna").addHandler(logging.StreamHandler(sys.stdout))
+    study_name = args.optuna_study_name  # Unique identifier of the study.
+    storage_name = "sqlite:///{}.db".format(study_name)
+    study = optuna.create_study(study_name=study_name, storage=storage_name,
+                                directions=['maximize', 'maximize', 'maximize', 'maximize', 'maximize'],
+                                load_if_exists=True)
+    if args.optuna_trials is not None:
+        study.optimize(objective, n_trials=args.optuna_trials)
+    else:
+        plot_3d_surface(args, study, metric='recall')
+        plot_3d_surface(args, study, metric='precision')
+        plot_3d_surface(args, study, metric='F1')
+        plot_3d_surface(args, study, metric='AP')
+        plot_3d_surface(args, study, metric='IoU')

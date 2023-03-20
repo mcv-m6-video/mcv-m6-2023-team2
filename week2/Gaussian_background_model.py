@@ -111,11 +111,10 @@ def eval(video_cv2, H_W, mean, std, N_val, args):
         segmentation, mean, std = method_Gaussian_background[args['bg_model']](frame, H_W, mean, std, args)
         roi = cv2.imread(args['path_roi'], cv2.IMREAD_GRAYSCALE) / 255
         segmentation = segmentation * roi
-        # segmentation = spatial_morphology(segmentation)
+        segmentation = spatial_morphology(segmentation)
 
-        # if args['store_results']:  # and (frame_id >= 535 and frame_id < 550) or (frame_id >= 1169 and frame_id < 1229):
-            # cv2.imwrite(args['path_results'] + '/frames_fit/' + f"{t:04d}.png", frame)
-            # cv2.imwrite(args['path_results'] + f"seg_{str(frame_id)}_pp_{str(args['alpha'])}.png", segmentation.astype(int))
+        if args['store_results'] and args['frames_range'][0] <= frame_id < args['frames_range'][1]:
+            save_image(segmentation.astype(int), frame_id, args, subfolder='segm', extension='.bmp')
 
         detected_bboxes = extract_foreground(segmentation, frame_id, args)
         detections += [detected_bboxes]
@@ -156,7 +155,7 @@ def eval(video_cv2, H_W, mean, std, N_val, args):
 
         frame_id += 1
 
-    # detections = filter_detections_temporal(detections)
+    detections = filter_detections_temporal(detections)
 
     assert frame_id == i_GT
     assert len(annotations) == len(detections)

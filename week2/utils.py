@@ -4,13 +4,16 @@ from typing import List, Dict
 import cv2
 import xmltodict
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+import matplotlib.tri as tri
 
 from class_utils import BoundingBox
 from metrics import voc_eval
 import os
 
 import imageio
+import optuna
 
 
 def iou_over_time(
@@ -349,3 +352,37 @@ def draw_boxes(image, boxes, tracker=None, color='g', linewidth=2, det=False, bo
                         linewidth)
 
     return image
+
+
+def plot_3d_surface(args, study: optuna.study.Study, metric: str = 'F1', interactive=False):
+    mapping = {
+        'recall': 'values_0',
+        'precision': 'values_1',
+        'F1': 'values_2',
+        'AP': 'values_3',
+        'IoU': 'values_4',
+    }
+    df = study.trials_dataframe()
+    x = df['params_alpha'].values
+    y = df['params_rho'].values
+    z = df[mapping[metric]].values
+
+    # prepare the interpolator
+    triang = tri.Triangulation(x, y)
+    interpolator = tri.LinearTriInterpolator(triang, z)
+
+    X, Y = np.meshgrid(x, y)
+    Z = interpolator(X, Y)
+
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+    plt.xlabel('alpha')
+    plt.ylabel('rho')
+    plt.title('recall')
+    plt.legend()
+    plt.savefig(os.path.join(args.path_results, f'optuna-{args.optuna_study_name}-{metric}.png'))
+
+    if interactive:
+        mpl.use('macosx')
+        plt.show()
