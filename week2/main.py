@@ -1,6 +1,7 @@
 import argparse
 from tasks import (
     task1,
+    task2,
 )
 
 
@@ -34,7 +35,7 @@ if __name__ == "__main__":
                         help='The path to the directory where the results will be stored.')
 
     parser.add_argument('--bg_model', type=str, default='non_adaptive',
-                        help='Model to be used for background estimation.')
+                        help='Model to be used for background estimation (non_adaptive or adaptive).')
 
     parser.add_argument('--alpha', type=float, default=3,
                         help='alpha parameter')
@@ -60,6 +61,12 @@ if __name__ == "__main__":
     parser.add_argument('--frames_range', type=tuple, default=(1169, 1229),
                         help='Start and end frame bitmaps to be saved (eg. for GIF creation).')  # default=(1169, 1229)
 
+    parser.add_argument('--optuna_study_name', type=str, default='t2-study',
+                        help='Name of the Optuna study (will be saved in disk as a DB).')
+
+    parser.add_argument('--optuna_trials', type=int, default=None,
+                        help='Number of trials for Optuna optimization.')
+
     args = parser.parse_args()
 
     print(args)
@@ -68,10 +75,9 @@ if __name__ == "__main__":
         print('Launching Task 1')
         task1(args)
 
-    # if args.t2:
-    #     print('Launching Task 2')
-    #     task1_2()
-    #     task2()
+    if args.t2:
+        print('Launching Task 2')
+        task2(args)
 
     # if args.t3:
     #     print('Launching Task 3')

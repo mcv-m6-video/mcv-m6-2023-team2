@@ -136,7 +136,8 @@ def filter_detections_temporal(detects):
             if max_iou_prev >= iou_thr or max_iou_next >= iou_thr:
                 _detect_curr.append(d_curr)
             else:
-                print(f"Filtering out prediction for frame {d_curr.frame}")
+                # print(f"Filtering out prediction for frame {d_curr.frame}")
+                pass
 
         accepted_detects.append(_detect_curr)
 
