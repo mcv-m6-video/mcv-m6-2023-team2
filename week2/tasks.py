@@ -4,6 +4,7 @@ import sys
 from Gaussian_background_model import fit, eval
 from utils import save_metrics
 from utils import plot_3d_surface
+from opencv_background_subs import subtract_test_partition
 
 import optuna
 import logging
@@ -120,3 +121,5 @@ def task3(args):
     
     else:
         backSub = cv2.createBackgroundSubtractorKNN()
+    
+    return subtract_test_partition(video, N_train, backSub)
