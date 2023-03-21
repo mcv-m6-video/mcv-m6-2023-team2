@@ -122,4 +122,4 @@ def task3(args):
     else:
         backSub = cv2.createBackgroundSubtractorKNN()
     
-    return subtract_test_partition(video, N_train, backSub)
+    return subtract_test_partition(video, N_train, N, backSub, args_t2)

@@ -68,7 +68,7 @@ if __name__ == "__main__":
     parser.add_argument('--optuna_trials', type=int, default=None,
                         help='Number of trials for Optuna optimization.')
     
-    parser.add_argument('--sus', type=int, default=None,
+    parser.add_argument('--sus', type=str, default=None,
                         help='ඞඞඞඞ.')
 
     args = parser.parse_args()
@@ -79,11 +79,11 @@ if __name__ == "__main__":
         print('Launching Task 1')
         task1(args)
 
-    elif args.t2:
+    if args.t2:
         print('Launching Task 2')
         task2(args)
     
-    elif args.t3:
+    if args.t3:
          print('Launching Task 3')
          task3(args)
 
