@@ -57,7 +57,7 @@ def task1(args):
 
 def task2(args):
     def objective(trial):
-        alpha = trial.suggest_float('alpha', 1, 9, step=0.5)
+        alpha = trial.suggest_float('alpha', 0, 10, step=0.5)
         rho = trial.suggest_float('rho', 0, 1)
         args.alpha = alpha
         args.rho = rho
