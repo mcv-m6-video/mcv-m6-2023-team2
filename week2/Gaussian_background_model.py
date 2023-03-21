@@ -92,7 +92,7 @@ def eval(video_cv2, H_W, mean, std, N_val, args):
     GT = load_annotations(args['path_GT'], select_label_types=['car'], grouped=True, use_parked=False)
     init_frame_id = int(video_cv2.get(cv2.CAP_PROP_POS_FRAMES))
     frame_id = init_frame_id
-    print("initial frame id: ", init_frame_id)
+    # print("initial frame id: ", init_frame_id)
     detections, annotations = [], []
     i_GT = frame_id
     for t in tqdm(range(N_val), desc='Evaluating Gaussian background model... (this may take a while)'):
