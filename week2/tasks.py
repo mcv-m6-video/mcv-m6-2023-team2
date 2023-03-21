@@ -79,3 +79,21 @@ def task2(args):
         plot_3d_surface(args, study, metric='F1')
         plot_3d_surface(args, study, metric='AP')
         plot_3d_surface(args, study, metric='IoU')
+
+def task3(args):
+
+    args_t2 = {
+        'path_video': args.path_video,
+        'path_roi': args.path_roi,
+        'path_GT': args.path_GT,
+        'path_results': args.path_results,
+        'viz_bboxes': args.viz_bboxes,
+        'store_results': args.store_results,
+        'bg_model': args.bg_model,
+        'alpha': args.alpha,
+        'rho': args.rho,
+        'color_space': args.color_space,
+        'voting': args.voting,
+        'frames_range': args.frames_range,
+        'make_gifs': args.make_gifs,
+    }
