@@ -102,7 +102,6 @@ def filter_detections_temporal(detects):
     """
 
     accepted_detects = []
-
     accepted_detects.append(detects[0])
 
     iou_thr = 0.5
@@ -115,10 +114,14 @@ def filter_detections_temporal(detects):
 
         detect_prev = []
         detect_next = []
-        if detects[i-1][0].frame == detect_curr[0].frame - 1:
-            detect_prev = detects[i-1]
-        if detects[i+1][0].frame == detect_curr[0].frame + 1:
-            detect_next = detects[i+1]
+        try:
+            if len(detects[i-1]) > 0 and detects[i-1][0].frame == detect_curr[0].frame - 1:
+                detect_prev = detects[i-1]
+            if len(detects[i+1]) > 0 and detects[i+1][0].frame == detect_curr[0].frame + 1:
+                detect_next = detects[i+1]
+        except IndexError as e:
+            print(e, i, len(detects))
+            pass
 
         _detect_curr = []
         for d_curr in detect_curr:
