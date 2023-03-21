@@ -97,7 +97,7 @@ def task3(args):
         'voting': args.voting,
         'frames_range': args.frames_range,
         'make_gifs': args.make_gifs,
-        'subs': args.subs
+        'sus': args.sus
 
     }
 
@@ -113,10 +113,10 @@ def task3(args):
     N_train = int(0.25 * N)
     N_val = N - N_train
 
-    if args_t2['subs'] == 'MOG2':
+    if args_t2['sus'] == 'MOG2':
         backSub = cv2.createBackgroundSubtractorMOG2()
 
-    elif args_t2['subs'] == 'LSBP':
+    elif args_t2['sus'] == 'LSBP':
         backSub = cv2.createBackgroundSubtractorLSBP()
     
     else:
