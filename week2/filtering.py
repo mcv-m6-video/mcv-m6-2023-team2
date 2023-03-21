@@ -121,9 +121,9 @@ def filter_detections_temporal(detects):
         detect_prev = []
         detect_next = []
         try:
-            if detects[i-1][0].frame == detect_curr[0].frame - 1:
+            if len(detects[i-1]) > 0 and detects[i-1][0].frame == detect_curr[0].frame - 1:
                 detect_prev = detects[i-1]
-            if i + 2 < len(detects) and detects[i+1][0].frame == detect_curr[0].frame + 1:
+            if len(detects[i+1]) > 0 and detects[i+1][0].frame == detect_curr[0].frame + 1:
                 detect_next = detects[i+1]
         except IndexError as e:
             print(e, i, len(detects))
