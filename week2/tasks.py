@@ -96,4 +96,27 @@ def task3(args):
         'voting': args.voting,
         'frames_range': args.frames_range,
         'make_gifs': args.make_gifs,
+        'subs': args.subs
+
     }
+
+    video = cv2.VideoCapture(args_t2['path_video'])
+
+    N = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    print("Video length (frames): ", N)
+
+    W = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    H = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    frame_size = [H, W]
+
+    N_train = int(0.25 * N)
+    N_val = N - N_train
+
+    if args_t2['subs'] == 'MOG2':
+        backSub = cv2.createBackgroundSubtractorMOG2()
+
+    elif args_t2['subs'] == 'LSBP':
+        backSub = cv2.createBackgroundSubtractorLSBP()
+    
+    else:
+        backSub = cv2.createBackgroundSubtractorKNN()
