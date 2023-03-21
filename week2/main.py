@@ -68,11 +68,11 @@ if __name__ == "__main__":
     parser.add_argument('--optuna_trials', type=int, default=None,
                         help='Number of trials for Optuna optimization.')
     
-    parser.add_argument('--sus', type=str, default=None,
+    parser.add_argument('--sus', type=str, default='LSBP',
                         help='ඞඞඞඞ.')
     
     parser.add_argument('--make_video', type=bool, default=True,
-                        help='ඞඞඞඞ.')
+                        help='make video from segentation.')
     
 
     args = parser.parse_args()

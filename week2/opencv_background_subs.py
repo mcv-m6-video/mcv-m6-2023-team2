@@ -3,6 +3,7 @@ from tqdm import tqdm
 
 import matplotlib.pyplot as plt
 import copy
+import numpy as np
 
 from utils import (
     load_annotations,
@@ -39,13 +40,12 @@ def subtract_test_partition(video, test_frame_start, total_frames, model, args, 
 
         if t > test_frame_start:
 
-
             gt_bboxes = gt[t] if len(gt[t]) else []
             
             segmentation = fgMask * roi
             detected_bboxes = extract_foreground(segmentation, t, args)
-            detections.append([detected_bboxes])
-            annotations.append([gt_bboxes])
+            detections.append(detected_bboxes)
+            annotations.append(gt_bboxes)
 
         
         if args['make_video']:
@@ -57,11 +57,11 @@ def subtract_test_partition(video, test_frame_start, total_frames, model, args, 
     outvid.release()
     recall, precision, F1, AP, IoU = voc_eval(detections, annotations, ovthresh=0.5)
     print(
-        'recall:', recall,
-        'precision:', precision,
-        'F1:', F1,
-        'AP:', AP,
-        'IoU:', IoU)
+        '\nrecall:', np.mean(recall),
+        '\nprecision:', np.mean(precision),
+        '\nF1:', np.mean(F1),
+        '\nAP:', np.mean(AP),
+        '\nIoU:', np.mean(IoU))
     
     return recall, precision, F1, AP, IoU
 

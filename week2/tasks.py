@@ -117,7 +117,7 @@ def task3(args):
         backSub = cv2.createBackgroundSubtractorMOG2()
 
     elif args_t2['sus'] == 'LSBP':
-        backSub = cv2.createBackgroundSubtractorLSBP()
+        backSub = cv2.bgsegm.createBackgroundSubtractorLSBP()
     
     else:
         backSub = cv2.createBackgroundSubtractorKNN()
