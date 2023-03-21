@@ -70,6 +70,10 @@ if __name__ == "__main__":
     
     parser.add_argument('--sus', type=str, default=None,
                         help='ඞඞඞඞ.')
+    
+    parser.add_argument('--make_video', type=bool, default=True,
+                        help='ඞඞඞඞ.')
+    
 
     args = parser.parse_args()
 

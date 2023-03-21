@@ -97,8 +97,8 @@ def task3(args):
         'voting': args.voting,
         'frames_range': args.frames_range,
         'make_gifs': args.make_gifs,
-        'sus': args.sus
-
+        'sus': args.sus,
+        'make_video': args.make_video
     }
 
     video = cv2.VideoCapture(args_t2['path_video'])
@@ -122,4 +122,4 @@ def task3(args):
     else:
         backSub = cv2.createBackgroundSubtractorKNN()
     
-    return subtract_test_partition(video, N_train, N, backSub, args_t2)
+    return subtract_test_partition(video, N_train, N, backSub, args_t2, H, W)
