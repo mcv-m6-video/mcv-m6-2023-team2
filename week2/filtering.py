@@ -80,7 +80,6 @@ def extract_foreground(img, frame_ID, args):
 
         idx += 1
 
-    # return BBs
     return eliminate_overlapping_boxes(BBs)
 
 
@@ -102,12 +101,7 @@ def filter_detections_temporal(detects):
     with the detections in the previous and next frames.
     """
 
-    # start time counter
-    import time
-    start_time = time.time()
-
     accepted_detects = []
-
     accepted_detects.append(detects[0])
 
     iou_thr = 0.5
@@ -151,7 +145,5 @@ def filter_detections_temporal(detects):
 
     if len(detects) > 1:
         accepted_detects.append(detects[-1])
-
-    print(f"Temporal filtering took {time.time() - start_time} seconds")
 
     return accepted_detects
