@@ -80,4 +80,8 @@ optional arguments:
   --store_results       Whether to store the intermediate results.
   --make_gifs           Whether to store make GIFs of the intermediate
                         results.
+                        
+  --sus                 KNN, MOG2 or LBSP background substraction algorithm.
+  --make_video          Bool, if True the script will save an output video with
+                        task3 process
 ```
