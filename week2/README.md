@@ -27,7 +27,7 @@ The goals of this week are:
 + Choose one SOTA method, implement it or find an existing implementation (chosen methods):
     + Z. Zivkovic et.al. Efficient adaptive density estimation per image pixel for the task of background subtraction, Pattern Recognition Letters, 2005. Implementation: BackgroundSubtractorMOG2 (OpenCV)
     + L. Guo, et.al. Background subtraction using local svd binary pattern. CVPRW, 2016. Implementation: BackgroundSubtractorLSBP (OpenCV)
-    + St-Charles, Pierre-Luc, and Guillaume-Alexandre Bilodeau. Improving Background Subtraction using Local Binary Similarity Patterns. Applications of Computer Vision (WACV), 2014.
+
 
 ### Task 4: Update simple Gaussian model to support color sequences
 + Use multiple gaussians in different color spaces
