@@ -24,13 +24,10 @@ The goals of this week are:
 + Compare the adaptive and non-adaptive versions qualitatively and quantitatively
 
 ### Task 3: Compare with SOTA and evaluate one SOTA method
-+ Choose one SOTA method, implement it or find an existing implementation:
-    + P. KaewTraKulPong et.al. An improved adaptive background mixture model for real-time tracking with shadow detection. In Video-Based Surveillance Systems, 2002. Implementation: BackgroundSubtractorMOG (OpenCV)
++ Choose one SOTA method, implement it or find an existing implementation (chosen methods):
     + Z. Zivkovic et.al. Efficient adaptive density estimation per image pixel for the task of background subtraction, Pattern Recognition Letters, 2005. Implementation: BackgroundSubtractorMOG2 (OpenCV)
     + L. Guo, et.al. Background subtraction using local svd binary pattern. CVPRW, 2016. Implementation: BackgroundSubtractorLSBP (OpenCV)
     + St-Charles, Pierre-Luc, and Guillaume-Alexandre Bilodeau. Improving Background Subtraction using Local Binary Similarity Patterns. Applications of Computer Vision (WACV), 2014.
-    + M. Braham et al. Deep background subtraction with scene-specific convolutional neural networks. In International Conference on Systems, Signals and Image Processing, 2016.
-+ Qualitatively and quantiatively compare with the simple statistical baseline
 
 ### Task 4: Update simple Gaussian model to support color sequences
 + Use multiple gaussians in different color spaces
