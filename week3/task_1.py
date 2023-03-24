@@ -220,11 +220,14 @@ def run_inference_detr(args):
         for i in classes_idxs:
             print("i: ", i)
             # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
-            print(bboxes.shape, bboxes.numpy().shape, bboxes.numpy()[i,:].shape, bboxes.numpy()[i])
             box = bboxes.numpy()[i]
 
             # Store in AI City Format:
             # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
+            print("frame_id: ", frame_id)
+            print("box[0]: ", box[0])
+            print("confs[i]: ", confs[i])
+            print("confs[i].item(): ", confs[i].item())
             det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i].item())+',-1,-1,-1\n'
             f.write(det)
 
