@@ -22,8 +22,10 @@ from detectron2.data import MetadataCatalog
 from tqdm import tqdm
 
 
-COCO_CAR_ID = 2  # COCO class id for car -1.
-VALID_IDS = [COCO_CAR_ID]
+COCO_CAR_ID = 3  # COCO class id for car -1.
+VALID_IDS = [COCO_CAR_ID-1]
+
+VALID_IDS_DETR = [COCO_CAR_ID]
 
 
 def run_inference_detectron(args):
@@ -213,12 +215,12 @@ def run_inference_detr(args):
         classes_idxs = []
         for i, p, in enumerate(confs):
             cl = p.argmax()
-            if cl in VALID_IDS:
+            if cl in VALID_IDS_DETR:
                 print(f'{CLASSES[cl]}: {p[cl]:0.2f}')
-                classes_idxs.append(i)
+                classes_idxs.append((i, cl))
 
-        for i in classes_idxs:
-            print("i: ", i)
+        for i, cl in classes_idxs:
+            print("i, cl: ", i, cl)
             # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
             box = bboxes.numpy()[i]
 
@@ -227,7 +229,8 @@ def run_inference_detr(args):
             print("frame_id: ", frame_id)
             print("box[0]: ", box[0])
             print("confs[i]: ", confs[i])
-            print("confs[i].item(): ", confs[i].item())
+            print("cl: ", cl)
+            print("confs[i][cl].item(): ", confs[i][cl].item())
             det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i].item())+',-1,-1,-1\n'
             f.write(det)
 
