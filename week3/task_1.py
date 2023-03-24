@@ -190,6 +190,7 @@ def run_inference_detr(args):
     f = open(res_path, 'a')
     for frame_id in tqdm(range(num_frames)):
         _, frame = cv2_vid.read()
+        frame = transform(frame).unsqueeze(0)
 
         # record inference time
         begin.record()
