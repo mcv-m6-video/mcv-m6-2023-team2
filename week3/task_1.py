@@ -195,7 +195,9 @@ def run_inference_detr(args):
     f = open(res_path, 'a')
     for frame_id in tqdm(range(num_frames)):
         _, frame = cv2_vid.read()
+        print("Before transform: ", frame.min(), frame.max(), frame.mean(), frame.std())
         frame = transform(frame).unsqueeze(0)
+        print("After transform: ", frame.min(), frame.max(), frame.mean(), frame.std())
 
         # record inference time
         begin.record()
@@ -220,6 +222,7 @@ def run_inference_detr(args):
                 print(f'{CLASSES[cl]}: {p[cl]:0.2f}')
                 classes_idxs.append((i, cl))
 
+        confs_filt, bboxes_filt = [], []
         for i, cl in classes_idxs:
             print("i, cl: ", i, cl)
             # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
@@ -229,14 +232,16 @@ def run_inference_detr(args):
             # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
             print("frame_id: ", frame_id)
             print("box[0]: ", box[0])
+            bboxes_filt.append(box)
             print("confs[i]: ", confs[i])
+            confs_filt.append(confs[i])
             print("cl: ", cl)
             print("confs[i][cl].item(): ", confs[i][cl].item())
             det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i][cl].item())+',-1,-1,-1\n'
             f.write(det)
 
-        confs_filt = [conf for i, conf in enumerate(confs) if i in classes_idxs]
-        bboxes_filt = [bbox for i, bbox in enumerate(bboxes) if i in classes_idxs]
+        # confs_filt = [conf for i, conf in enumerate(confs) if i in classes_idxs]
+        # bboxes_filt = [bbox for i, bbox in enumerate(bboxes) if i in classes_idxs]
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
             print(frame, frame.min(), frame.max(), frame.shape)
