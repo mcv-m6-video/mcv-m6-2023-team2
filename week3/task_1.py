@@ -21,15 +21,16 @@ from detectron2.data import MetadataCatalog
 from tqdm import tqdm
 
 
-MODELS = {
-    'retina': 'retinanet_R_50_FPN_3x',
-    'faster': 'faster_rcnn_R_50_FPN_3x',
-}
+COCO_CAR_ID = 2  # COCO class id for car -1.
+VALID_IDS = [COCO_CAR_ID]
+
 
 def run_inference_detectron(args):
 
-    coco_car_id = 2  # COCO class id for car -1.
-    valid_ids = [coco_car_id]
+    MODELS = {
+        'retina': 'retinanet_R_50_FPN_3x',
+        'faster': 'faster_rcnn_R_50_FPN_3x',
+    }
 
     model_path = 'COCO-Detection/' + MODELS[args.model] + '.yaml'
     print(model_path)
@@ -76,26 +77,22 @@ def run_inference_detectron(args):
         timestamps.append(begin.elapsed_time(end))
 
         instances = model_preds["instances"]
-        # bboxes = model_preds["instances"].pred_boxes.to("cpu")
-        # confs = model_preds["instances"].scores.to("cpu")
-        # classes = model_preds["instances"].pred_classes.to("cpu")
 
-        filtered_instances = instances[instances.pred_classes == coco_car_id] # or instances.pred_classes == 7
+        filtered_instances = instances[instances.pred_classes == COCO_CAR_ID] # or instances.pred_classes == 7
         bboxes = filtered_instances.pred_boxes.to("cpu")
         confs = filtered_instances.scores.to("cpu")
         classes = filtered_instances.pred_classes.to("cpu")
         # confident_detections = instances[instances.scores > 0.9]
 
-        # discard predictions corresponding to classes not in valid_ids
+        # discard predictions corresponding to classes not in VALID_IDS
         for i, prediction in enumerate(classes):
-            if prediction.item() in valid_ids:
-                # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
-                box = bboxes[i].tensor.numpy()[0]
+            # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
+            box = bboxes[i].tensor.numpy()[0]
 
-                # Store in AI City Format:
-                # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
-                det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i].item())+',-1,-1,-1\n'
-                f.write(det)
+            # Store in AI City Format:
+            # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
+            det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i].item())+',-1,-1,-1\n'
+            f.write(det)
 
         if args.store_results:
             output_path = os.path.join(cfg.OUTPUT_DIR, 'det_frame_' + str(frame_id) + '.png')
@@ -171,25 +168,55 @@ def plot_results(pil_img, prob, boxes):
 
 
 def run_inference_detr(args):
+
+    res_dir = os.path.join(args.path_results, args.model)
+    os.makedirs(res_dir, exist_ok=True)
+
+    res_path = os.path.join(res_dir, 'detections.txt')
+    if os.path.exists(res_path):
+        os.remove(res_path)
+
     model = torch.hub.load('facebookresearch/detr', 'detr_resnet50', pretrained=True)
     model.eval()
 
-    im = Image.open(requests.get(url, stream=True).raw)
+    cv2_vid = cv2.VideoCapture(args.path_video)
+    num_frames = min( int(cv2_vid.get(cv2.CAP_PROP_FRAME_COUNT)), args.num_frames )
 
-    # mean-std normalize the input image (batch-size: 1)
-    img = transform(im).unsqueeze(0)
+    # keep track of time (s/img) to run inferece
+    timestamps = []
+    begin = torch.cuda.Event(enable_timing=True)
+    end = torch.cuda.Event(enable_timing=True)
 
-    # propagate through the model
-    outputs = model(img)
+    f = open(res_path, 'a')
+    for frame_id in tqdm(range(num_frames)):
+        _, frame = cv2_vid.read()
 
-    # keep only predictions with 0.7+ confidence
-    probas = outputs['pred_logits'].softmax(-1)[0, :, :-1]
-    keep = probas.max(-1).values > 0.9
+        # record inference time
+        begin.record()
+        model_preds = model(frame)
+        end.record()
 
-    # convert boxes from [0; 1] to image scales
-    bboxes_scaled = rescale_bboxes(outputs['pred_boxes'][0, keep], im.size)
+        torch.cuda.synchronize()
+        timestamps.append(begin.elapsed_time(end))
 
-    plot_results(im, probas[keep], bboxes_scaled)
+
+
+    # im = Image.open(requests.get(url, stream=True).raw)
+
+    # # mean-std normalize the input image (batch-size: 1)
+    # img = transform(im).unsqueeze(0)
+
+    # # propagate through the model
+    # outputs = model(img)
+
+    # # keep only predictions with 0.7+ confidence
+    # probas = outputs['pred_logits'].softmax(-1)[0, :, :-1]
+    # keep = probas.max(-1).values > 0.9
+
+    # # convert boxes from [0; 1] to image scales
+    # bboxes_scaled = rescale_bboxes(outputs['pred_boxes'][0, keep], im.size)
+
+    # plot_results(im, probas[keep], bboxes_scaled)
 
 
 def viz_detr_att(args, model, img,):
