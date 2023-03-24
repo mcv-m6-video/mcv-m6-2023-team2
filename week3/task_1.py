@@ -231,7 +231,7 @@ def run_inference_detr(args):
             print("confs[i]: ", confs[i])
             print("cl: ", cl)
             print("confs[i][cl].item(): ", confs[i][cl].item())
-            det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i].item())+',-1,-1,-1\n'
+            det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i][cl].item())+',-1,-1,-1\n'
             f.write(det)
 
         confs_filt = [confs for i, confs in enumerate(confs) if i in classes_idxs]
