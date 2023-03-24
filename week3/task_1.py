@@ -135,7 +135,7 @@ COLORS = [[0.000, 0.447, 0.741], [0.850, 0.325, 0.098], [0.929, 0.694, 0.125],
 # standard PyTorch mean-std input image normalization
 transform = T.Compose([
     T.ToPILImage(),
-    T.Resize(800),
+    # T.Resize(800),
     T.ToTensor(),
     T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
@@ -194,9 +194,9 @@ def run_inference_detr(args):
 
     f = open(res_path, 'a')
     for frame_id in tqdm(range(num_frames)):
-        _, frame = cv2_vid.read()
-        print("Before transform: ", frame.min(), frame.max(), frame.mean(), frame.std())
-        frame = transform(frame).unsqueeze(0)
+        _, frame_orig = cv2_vid.read()
+        print("Before transform: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std())
+        frame = transform(frame_orig).unsqueeze(0)
         print("After transform: ", frame.min(), frame.max(), frame.mean(), frame.std())
 
         # record inference time
@@ -245,7 +245,8 @@ def run_inference_detr(args):
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
             print(frame, frame.min(), frame.max(), frame.shape)
-            plot_results(frame.squeeze().permute(1, 2, 0)[..., (2,1,0)], confs_filt, bboxes_filt, output_path)
+            # plot_results(frame.squeeze().permute(1, 2, 0)[..., (2,1,0)], confs_filt, bboxes_filt, output_path)
+            plot_results(frame_orig, confs_filt, bboxes_filt, output_path)
 
     f.close()
 
