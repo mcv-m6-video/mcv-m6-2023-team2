@@ -5,7 +5,7 @@
 
 
 ## Task 1: Object Detection
-+ Infernece with off-the-shelf methods
++ Inference with off-the-shelf methods
    + ...
 + Data annotation
 + Fine-tune pretrained models with our own data
