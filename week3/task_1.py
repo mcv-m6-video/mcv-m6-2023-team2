@@ -56,7 +56,7 @@ def run_inference_detectron(args):
 
     cv2_vid = cv2.VideoCapture(args.path_video)
     num_frames = int(cv2_vid.get(cv2.CAP_PROP_FRAME_COUNT))
-    # num_frames = 3
+    num_frames = 10
 
     # keep track of time to compute s/img
     timestamps = []
