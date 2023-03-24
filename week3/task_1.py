@@ -212,7 +212,8 @@ def run_inference_detr(args):
         # keep = confs.max(-1).values > 0.9
 
         # convert boxes from [0; 1] to image scales
-        bboxes = rescale_bboxes(model_preds['pred_boxes'][0, ...], frame.shape[:2])
+        
+        bboxes = rescale_bboxes(model_preds['pred_boxes'][0, ...], frame_orig.shape[:2])
         # bboxes_scaled = rescale_bboxes(model_preds['pred_boxes'][0, keep], frame.size)
 
         classes_idxs = []
