@@ -194,10 +194,10 @@ def run_inference_detr(args):
 
     f = open(res_path, 'a')
     for frame_id in tqdm(range(num_frames)):
-        _, frame_orig = cv2_vid.read()
-        print("Before transform: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std())
+        _, frame_orig = cv2_vid.read()[..., (2,1,0)]
+        print("Before transform: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
         frame = transform(frame_orig).unsqueeze(0)
-        print("After transform: ", frame.min(), frame.max(), frame.mean(), frame.std())
+        print("After transform: ", frame.min(), frame.max(), frame.mean(), frame.std(), frame.shape)
 
         # record inference time
         begin.record()
@@ -212,7 +212,7 @@ def run_inference_detr(args):
         # keep = confs.max(-1).values > 0.9
 
         # convert boxes from [0; 1] to image scales
-        
+
         bboxes = rescale_bboxes(model_preds['pred_boxes'][0, ...], frame_orig.shape[:2])
         # bboxes_scaled = rescale_bboxes(model_preds['pred_boxes'][0, keep], frame.size)
 
