@@ -217,7 +217,7 @@ def run_inference_detr(args):
                 print(f'{CLASSES[cl]}: {p[cl]:0.2f}')
                 classes_idxs.append(i)
 
-        for i in enumerate(classes_idxs):
+        for i in classes_idxs:
             print("i: ", i)
             # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
             print(bboxes.shape, bboxes.numpy().shape, bboxes.numpy()[i,:].shape, bboxes.numpy()[i])
