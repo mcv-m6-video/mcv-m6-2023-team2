@@ -160,7 +160,8 @@ def plot_results(pil_img, prob, boxes, output_path):
     plt.imshow(pil_img)
     ax = plt.gca()
     colors = COLORS * 100
-    for p, (xmin, ymin, xmax, ymax), c in zip(prob, boxes.tolist(), colors):
+    print(prob, boxes, colors)
+    for p, (xmin, ymin, xmax, ymax), c in zip(prob, boxes, colors):
         ax.add_patch(plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
                                    fill=False, color=c, linewidth=3))
         cl = p.argmax()
@@ -238,7 +239,7 @@ def run_inference_detr(args):
         bboxes_filt = [bbox for i, bbox in enumerate(bboxes) if i in classes_idxs]
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
-            print(frame)
+            print(frame, frame.min(), frame.max(), frame.shape)
             plot_results(frame.squeeze().permute(1, 2, 0)[..., (2,1,0)], confs_filt, bboxes_filt, output_path)
 
     f.close()
