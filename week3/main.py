@@ -44,7 +44,11 @@ if __name__ == "__main__":
                         help='Which model to do inference with. Can be "faster", "retina", "YOLO", "transformer".')
 
     parser.add_argument('--make_video', type=bool, default=True,
-                        help='make video from segentation.')
+                        help='Make video from segmentation.')
+
+    parser.add_argument('--num_frames', type=int, default=99999999,
+                       help='Number of frames to process.')
+
 
     args = parser.parse_args()
 

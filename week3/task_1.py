@@ -151,7 +151,7 @@ def rescale_bboxes(out_bbox, size):
     return b
 
 
-def plot_results(pil_img, prob, boxes):
+def plot_results(pil_img, prob, boxes, output_path):
     plt.figure(figsize=(16,10))
     plt.imshow(pil_img)
     ax = plt.gca()
@@ -164,7 +164,7 @@ def plot_results(pil_img, prob, boxes):
         ax.text(xmin, ymin, text, fontsize=15,
                 bbox=dict(facecolor='yellow', alpha=0.5))
     plt.axis('off')
-    plt.show()
+    plt.savefig(output_path)
 
 
 def run_inference_detr(args):
@@ -199,24 +199,42 @@ def run_inference_detr(args):
         torch.cuda.synchronize()
         timestamps.append(begin.elapsed_time(end))
 
+        confs = model_preds['pred_logits'].softmax(-1)[0, :, :-1]
+        # TODO: when visualizing results, keep only predictions with 0.7+ confidence
+        # keep = confs.max(-1).values > 0.9
 
+        # convert boxes from [0; 1] to image scales
+        bboxes = rescale_bboxes(model_preds['pred_boxes'][0, ...], frame.shape[:2])
+        # bboxes_scaled = rescale_bboxes(model_preds['pred_boxes'][0, keep], frame.size)
 
-    # im = Image.open(requests.get(url, stream=True).raw)
+        classes_idxs = []
+        for i, p, in enumerate(confs):
+            cl = p.argmax()
+            if cl in VALID_IDS:
+                print(f'{CLASSES[cl]}: {p[cl]:0.2f}')
+                classes_idxs.append(i)
 
-    # # mean-std normalize the input image (batch-size: 1)
-    # img = transform(im).unsqueeze(0)
+        for i in enumerate(classes_idxs):
+            print("i: ", i)
+            # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
+            box = bboxes[i].tensor.numpy()[0]
 
-    # # propagate through the model
-    # outputs = model(img)
+            # Store in AI City Format:
+            # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
+            det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i].item())+',-1,-1,-1\n'
+            f.write(det)
 
-    # # keep only predictions with 0.7+ confidence
-    # probas = outputs['pred_logits'].softmax(-1)[0, :, :-1]
-    # keep = probas.max(-1).values > 0.9
+        confs_filt = [confs for i, confs in enumerate(confs) if i in classes_idxs]
+        bboxes_filt = [bboxes for i, bboxes in enumerate(bboxes) if i in classes_idxs]
+        if args.store_results:
+            output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
+            plot_results(frame, confs_filt, bboxes_filt, output_path)
 
-    # # convert boxes from [0; 1] to image scales
-    # bboxes_scaled = rescale_bboxes(outputs['pred_boxes'][0, keep], im.size)
+    f.close()
 
-    # plot_results(im, probas[keep], bboxes_scaled)
+    print('Inference time (s/img): ', np.mean(timestamps)/1000)
+
+    return res_path
 
 
 def viz_detr_att(args, model, img,):
@@ -278,5 +296,7 @@ def task_1_1(args):
 
     if args.model in ['retina', 'faster']:
         res_path = run_inference_detectron(args)
+    elif args.model.lower() == 'detr':
+        res_path = run_inference_detr(args)
 
     print("Results saved in: ", res_path)
