@@ -135,7 +135,7 @@ COLORS = [[0.000, 0.447, 0.741], [0.850, 0.325, 0.098], [0.929, 0.694, 0.125],
 # standard PyTorch mean-std input image normalization
 transform = T.Compose([
     T.ToPILImage(),
-    # T.Resize(800),
+    T.Resize(800),
     T.ToTensor(),
     T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
@@ -217,27 +217,24 @@ def run_inference_detr(args):
         # bboxes_scaled = rescale_bboxes(model_preds['pred_boxes'][0, keep], frame.size)
 
         classes_idxs = []
+        confs_filt, bboxes_filt = [], []
         for i, p, in enumerate(confs):
             cl = p.argmax()
             if cl in VALID_IDS_DETR:
                 print(f'{CLASSES[cl]}: {p[cl]:0.2f}')
                 classes_idxs.append((i, cl))
 
-        confs_filt, bboxes_filt = [], []
-        for i, cl in classes_idxs:
-            # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
-            box = bboxes.numpy()[i]
+                # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
+                box = bboxes.numpy()[i]
 
-            bboxes_filt.append(box)
-            confs_filt.append(confs[i])
+                bboxes_filt.append(box)
+                confs_filt.append(confs[i])
 
-            # Store in AI City Format:
-            # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
-            det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i][cl].item())+',-1,-1,-1\n'
-            f.write(det)
+                # Store in AI City Format:
+                # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
+                det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i][cl].item())+',-1,-1,-1\n'
+                f.write(det)
 
-        # confs_filt = [conf for i, conf in enumerate(confs) if i in classes_idxs]
-        # bboxes_filt = [bbox for i, bbox in enumerate(bboxes) if i in classes_idxs]
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
             # plot_results(frame.squeeze().permute(1, 2, 0)[..., (2,1,0)], confs_filt, bboxes_filt, output_path)
