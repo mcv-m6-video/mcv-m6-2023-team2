@@ -181,7 +181,7 @@ def run_inference_detr(args):
     if os.path.exists(res_path):
         os.remove(res_path)
 
-    model = torch.hub.load('facebookresearch/detr', 'detr_resnet50', pretrained=True)
+    model = torch.hub.load('facebookresearch/detr:main', 'detr_resnet50', pretrained=True)
     model.eval()
 
     cv2_vid = cv2.VideoCapture(args.path_video)
