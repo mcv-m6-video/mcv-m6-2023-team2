@@ -238,7 +238,7 @@ def run_inference_detr(args):
         bboxes_filt = [bboxes for i, bboxes in enumerate(bboxes) if i in classes_idxs]
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
-            plot_results(frame.squeeze(), confs_filt, bboxes_filt, output_path)
+            plot_results(frame.squeeze().permute(1, 2, 0), confs_filt, bboxes_filt, output_path)
 
     f.close()
 
