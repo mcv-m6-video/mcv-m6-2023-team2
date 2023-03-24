@@ -79,7 +79,7 @@ def run_inference_detectron(args):
         classes = model_preds["instances"].pred_classes.to("cpu")
 
         for i, prediction in enumerate(classes):
-            if prediction.item() == valid_ids:
+            if prediction.item() in valid_ids:
                 # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
                 box = bboxes[i].tensor.numpy()[0]
 
