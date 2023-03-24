@@ -28,7 +28,7 @@ MODELS = {
 
 def run_inference_detectron(args):
 
-    coco_car_id = 3
+    coco_car_id = 2  # COCO class id for car -1.
     valid_ids = [coco_car_id]
 
     model_path = 'COCO-Detection/' + MODELS[args.model] + '.yaml'
@@ -63,6 +63,7 @@ def run_inference_detectron(args):
     begin = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
 
+    f = open(res_path, 'a')
     for frame_id in tqdm(range(num_frames)):
         _, frame = cv2_vid.read()
 
@@ -87,15 +88,24 @@ def run_inference_detectron(args):
                 # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
                 det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i].item())+',-1,-1,-1\n'
 
-                with open(res_path, 'a') as f:
-                    f.write(det)
+                f.write(det)
 
-                # discard predictions corresponding to classes not in valid_ids
-                if args.store_results:
-                    output_path = os.path.join(cfg.OUTPUT_DIR, 'det_frame_' + str(frame_id) + '.png')
-                    v = Visualizer(frame[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1)
-                    out = v.draw_instance_predictions(model_preds["instances"].to("cpu"))
-                    cv2.imwrite(output_path, out.get_image()[:, :, ::-1])
+        # discard predictions corresponding to classes not in valid_ids
+        bboxes_filt, confs_filt, classes_filt = [], [], []
+        for i, prediction in enumerate(classes):
+            if prediction.item() in valid_ids:
+                bboxes_filt.append(bboxes[i])
+                confs_filt.append(confs[i])
+                classes_filt.append(classes[i])
+        model_preds["instances"].pred_boxes = bboxes_filt
+        model_preds["instances"].scores = confs_filt
+        model_preds["instances"].pred_classes = classes_filt
+
+        if args.store_results:
+            output_path = os.path.join(cfg.OUTPUT_DIR, 'det_frame_' + str(frame_id) + '.png')
+            v = Visualizer(frame[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1)
+            out = v.draw_instance_predictions(model_preds["instances"].to("cpu"))
+            cv2.imwrite(output_path, out.get_image()[:, :, ::-1])
 
     print('Inference time (s/img): ', np.mean(timestamps)/1000)
 
