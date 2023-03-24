@@ -6,6 +6,7 @@ import requests
 import matplotlib.pyplot as plt
 
 import torch
+torch.set_grad_enabled(False)
 from torch import nn
 from torchvision.models import resnet50
 import torchvision.transforms as T
