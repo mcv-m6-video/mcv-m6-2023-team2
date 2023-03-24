@@ -238,8 +238,7 @@ def viz_detr_att(args, model, img,):
     plt.savefig(os.path.join(args.output_dir, 'detr_att.png'))
 
 
-
-def task_1(args):
+def task_1_1(args):
 
     if args.model in ['retina', 'faster']:
         res_path = run_inference_detectron(args)

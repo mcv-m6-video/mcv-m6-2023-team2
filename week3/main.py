@@ -1,9 +1,5 @@
 import argparse
-from tasks import (
-    task1,
-    task2,
-    task3,
-)
+from task_1 import task_1_1
 
 
 if __name__ == "__main__":
@@ -56,12 +52,12 @@ if __name__ == "__main__":
 
     if args.t1_1:
         print('Launching Task 1.1')
-        task1(args)
+        task_1_1(args)
 
     if args.t1_2:
         print('Launching Task 1.2')
         task2(args)
-    
+
     if args.t1_3:
-         print('Launching Task 1.3')
-         task3(args)
+        print('Launching Task 1.3')
+        task3(args)
