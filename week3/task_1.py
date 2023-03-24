@@ -160,8 +160,8 @@ def plot_results(pil_img, prob, boxes, output_path):
     plt.imshow(pil_img)
     ax = plt.gca()
     colors = COLORS * 100
-    print(prob, boxes, colors)
     for p, (xmin, ymin, xmax, ymax), c in zip(prob, boxes, colors):
+        print("xmin: ", xmin, "ymin: ", ymin, "xmax: ", xmax, "ymax: ", ymax)
         ax.add_patch(plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
                                    fill=False, color=c, linewidth=3))
         cl = p.argmax()
@@ -224,19 +224,14 @@ def run_inference_detr(args):
 
         confs_filt, bboxes_filt = [], []
         for i, cl in classes_idxs:
-            print("i, cl: ", i, cl)
             # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
             box = bboxes.numpy()[i]
 
+            bboxes_filt.append(box)
+            confs_filt.append(confs[i])
+
             # Store in AI City Format:
             # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
-            print("frame_id: ", frame_id)
-            print("box[0]: ", box[0])
-            bboxes_filt.append(box)
-            print("confs[i]: ", confs[i])
-            confs_filt.append(confs[i])
-            print("cl: ", cl)
-            print("confs[i][cl].item(): ", confs[i][cl].item())
             det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i][cl].item())+',-1,-1,-1\n'
             f.write(det)
 
@@ -244,7 +239,6 @@ def run_inference_detr(args):
         # bboxes_filt = [bbox for i, bbox in enumerate(bboxes) if i in classes_idxs]
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
-            print(frame, frame.min(), frame.max(), frame.shape)
             # plot_results(frame.squeeze().permute(1, 2, 0)[..., (2,1,0)], confs_filt, bboxes_filt, output_path)
             plot_results(frame_orig, confs_filt, bboxes_filt, output_path)
 
