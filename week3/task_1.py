@@ -45,7 +45,7 @@ def run_inference_detectron(args):
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
         cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST = 0.4
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(model_path)
-    cfg.OUTPUT_DIR = args.path_results
+    cfg.OUTPUT_DIR = os.path.join(args.path_results, args.model)
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 
     predictor = DefaultPredictor(cfg)
