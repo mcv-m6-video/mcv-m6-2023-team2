@@ -53,11 +53,9 @@ if __name__ == "__main__":
     if args.t1_1:
         print('Launching Task 1.1')
         task_1_1(args)
-
-    if args.t1_2:
+    elif args.t1_2:
         print('Launching Task 1.2')
         task2(args)
-
-    if args.t1_3:
+    elif args.t1_3:
         print('Launching Task 1.3')
         task3(args)
