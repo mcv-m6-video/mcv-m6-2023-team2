@@ -194,7 +194,8 @@ def run_inference_detr(args):
 
     f = open(res_path, 'a')
     for frame_id in tqdm(range(num_frames)):
-        _, frame_orig = cv2_vid.read()#[..., (2,1,0)]
+        _, frame_orig = cv2_vid.read()
+        frame_orig = cv2.cvtColor(frame_orig, cv2.COLOR_BGR2RGB)
         print("Before transform: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
         frame = transform(frame_orig).unsqueeze(0)
         print("After transform: ", frame.min(), frame.max(), frame.mean(), frame.std(), frame.shape)
