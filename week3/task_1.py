@@ -234,11 +234,12 @@ def run_inference_detr(args):
             det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i][cl].item())+',-1,-1,-1\n'
             f.write(det)
 
-        confs_filt = [confs for i, confs in enumerate(confs) if i in classes_idxs]
-        bboxes_filt = [bboxes for i, bboxes in enumerate(bboxes) if i in classes_idxs]
+        confs_filt = [conf for i, conf in enumerate(confs) if i in classes_idxs]
+        bboxes_filt = [bbox for i, bbox in enumerate(bboxes) if i in classes_idxs]
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
-            plot_results(frame.squeeze().permute(1, 2, 0), confs_filt, bboxes_filt, output_path)
+            print(frame)
+            plot_results(frame.squeeze().permute(1, 2, 0)[..., (2,1,0)], confs_filt, bboxes_filt, output_path)
 
     f.close()
 
