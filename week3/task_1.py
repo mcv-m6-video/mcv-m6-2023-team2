@@ -90,6 +90,8 @@ def run_inference_detectron(args):
                 with open(res_path, 'a') as f:
                     f.write(det)
 
+        # discard predictions corresponding to classes not in valid_ids
+        classes = [pred for pred in classes if pred.item() in valid_ids]
         if args.store_results:
             output_path = os.path.join(cfg.OUTPUT_DIR, 'det_frame_' + str(frame_id) + '.png')
             v = Visualizer(frame[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1)
