@@ -225,29 +225,29 @@ def run_inference_detr(args):
         bboxes = rescale_bboxes(model_preds['pred_boxes'][0, ...], frame_orig.size)#shape[:2])
         # bboxes_scaled = rescale_bboxes(model_preds['pred_boxes'][0, keep], frame.size)
 
-        classes_idxs = []
-        confs_filt, bboxes_filt = [], []
-        for i, p, in enumerate(confs):
-            cl = p.argmax()
-            if cl in VALID_IDS_DETR:
-                print(f'{CLASSES[cl]}: {p[cl]:0.2f}')
-                classes_idxs.append((i, cl))
+        # classes_idxs = []
+        # confs_filt, bboxes_filt = [], []
+        # for i, p, in enumerate(confs):
+        #     cl = p.argmax()
+        #     if cl in VALID_IDS_DETR:
+        #         print(f'{CLASSES[cl]}: {p[cl]:0.2f}')
+        #         classes_idxs.append((i, cl))
 
-                # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
-                box = bboxes.numpy()[i]
+        #         # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
+        #         box = bboxes.numpy()[i]
 
-                bboxes_filt.append(box)
-                confs_filt.append(confs[i])
+        #         bboxes_filt.append(box)
+        #         confs_filt.append(confs[i])
 
-                # Store in AI City Format:
-                # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
-                det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i][cl].item())+',-1,-1,-1\n'
-                f.write(det)
+        #         # Store in AI City Format:
+        #         # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
+        #         det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i][cl].item())+',-1,-1,-1\n'
+        #         f.write(det)
 
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
             # plot_results(frame.squeeze().permute(1, 2, 0)[..., (2,1,0)], confs_filt, bboxes_filt, output_path)
-            plot_results(frame_orig, confs_filt, bboxes_filt, output_path)
+            plot_results(frame_orig, confs, bboxes, output_path)
 
     f.close()
 
