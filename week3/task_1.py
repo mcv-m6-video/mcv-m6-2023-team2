@@ -58,7 +58,7 @@ def run_inference_detectron(args):
     num_frames = int(cv2_vid.get(cv2.CAP_PROP_FRAME_COUNT))
     num_frames = 10
 
-    # keep track of time to compute s/img
+    # keep track of time (s/img) to run inferece
     timestamps = []
     begin = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
@@ -75,12 +75,18 @@ def run_inference_detectron(args):
         torch.cuda.synchronize()
         timestamps.append(begin.elapsed_time(end))
 
-        bboxes = model_preds["instances"].pred_boxes.to("cpu")
-        confs = model_preds["instances"].scores.to("cpu")
-        classes = model_preds["instances"].pred_classes.to("cpu")
+        instances = model_preds["instances"]
+        # bboxes = model_preds["instances"].pred_boxes.to("cpu")
+        # confs = model_preds["instances"].scores.to("cpu")
+        # classes = model_preds["instances"].pred_classes.to("cpu")
+
+        filtered_instances = instances[instances.pred_classes == coco_car_id] # or instances.pred_classes == 7
+        bboxes = filtered_instances.pred_boxes.to("cpu")
+        confs = filtered_instances.scores.to("cpu")
+        classes = filtered_instances.pred_classes.to("cpu")
+        # confident_detections = instances[instances.scores > 0.9]
 
         # discard predictions corresponding to classes not in valid_ids
-        bboxes_filt, confs_filt, classes_filt = [], [], []
         for i, prediction in enumerate(classes):
             if prediction.item() in valid_ids:
                 # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
@@ -91,18 +97,10 @@ def run_inference_detectron(args):
                 det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i].item())+',-1,-1,-1\n'
                 f.write(det)
 
-                bboxes_filt.append(bboxes[i])
-                confs_filt.append(confs[i])
-                classes_filt.append(classes[i])
-
-        model_preds["instances"].pred_boxes = bboxes_filt
-        model_preds["instances"].scores = confs_filt
-        model_preds["instances"].pred_classes = classes_filt
-
         if args.store_results:
             output_path = os.path.join(cfg.OUTPUT_DIR, 'det_frame_' + str(frame_id) + '.png')
             v = Visualizer(frame[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1)
-            out = v.draw_instance_predictions(model_preds["instances"].to("cpu"))
+            out = v.draw_instance_predictions(filtered_instances.to("cpu"))
             cv2.imwrite(output_path, out.get_image()[:, :, ::-1])
 
     f.close()
