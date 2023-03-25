@@ -273,7 +273,7 @@ def run_inference_yolov8(args):
 
         confs, bboxes, classes = [], [], []
         print(type(results))
-        print(results.shape)
+        print(results)
         for result in results:
             print(result.boxes.conf, result.boxes.conf.shape)
             print("result: ", result)
