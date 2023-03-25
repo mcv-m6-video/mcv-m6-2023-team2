@@ -9,7 +9,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument('--t1_1', action='string',
-                        help='Task1.1 - Inference with off-the-shelf methods')
+                        help='Task1.1 - "inference", "visualization" or "evaluation" with off-the-shelf methods')
 
     parser.add_argument('--t1.2', action='store_true',
                         help='Task1.2 - Data annotation')

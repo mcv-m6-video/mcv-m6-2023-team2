@@ -2,7 +2,6 @@ import os
 import cv2
 import numpy as np
 from PIL import Image
-import requests
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
@@ -23,10 +22,10 @@ from detectron2.data import MetadataCatalog
 from ultralytics import YOLO
 
 
-COCO_CAR_ID = 3  # COCO class id for car -1.
-VALID_IDS = [COCO_CAR_ID-1]
-
-VALID_IDS_DETR = [COCO_CAR_ID]
+COCO_CAR_ID = 3  # COCO class id for car.
+COCO_TRUCK_ID = 8  # COCO class id for truck.
+VALID_IDS_SUBS = [COCO_CAR_ID-1, COCO_TRUCK_ID-1]
+VALID_IDS_ORIG = [COCO_CAR_ID, COCO_TRUCK_ID]
 
 
 def run_inference_detectron(args):
@@ -60,8 +59,7 @@ def run_inference_detectron(args):
         os.remove(res_path)
 
     cv2_vid = cv2.VideoCapture(args.path_video)
-    num_frames = int(cv2_vid.get(cv2.CAP_PROP_FRAME_COUNT))
-    num_frames = 10
+    num_frames = min( int(cv2_vid.get(cv2.CAP_PROP_FRAME_COUNT)), args.num_frames )
 
     # keep track of time (s/img) to run inferece
     timestamps = []
@@ -82,13 +80,11 @@ def run_inference_detectron(args):
 
         instances = model_preds["instances"]
 
-        filtered_instances = instances[instances.pred_classes == COCO_CAR_ID] # or instances.pred_classes == 7
+        filtered_instances = instances[instances.pred_classes in VALID_IDS_ORIG]  # a car or a (pickup) truck
         bboxes = filtered_instances.pred_boxes.to("cpu")
         confs = filtered_instances.scores.to("cpu")
         classes = filtered_instances.pred_classes.to("cpu")
-        # confident_detections = instances[instances.scores > 0.9]
 
-        # discard predictions corresponding to classes not in VALID_IDS
         for i, prediction in enumerate(classes):
             # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
             box = bboxes[i].tensor.numpy()[0]
@@ -220,7 +216,7 @@ def run_inference_detr(args):
         print("classes: ", classes.shape)
         confs_filt, bboxes_filt = [], []
         for cl, conf, box in zip(classes, confs, bboxes):
-            if cl in VALID_IDS_DETR:
+            if cl in VALID_IDS_ORIG:
                 confs_filt.append(conf)
                 bboxes_filt.append(box)
                 box = box.numpy()
@@ -279,7 +275,7 @@ def run_inference_yolov8(args):
             print(result.boxes.conf, result.boxes.conf.shape)
             for box, conf, cls in zip(result.boxes.xyxy, result.boxes.conf, result.boxes.cls):
                 cls = int(cls.item())
-                if cls in VALID_IDS:
+                if cls in VALID_IDS_SUBS:
                     box = box.cpu().numpy()
                     confs.append(conf)
                     bboxes.append(box)

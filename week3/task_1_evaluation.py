@@ -6,6 +6,7 @@ from utils import (
 )
 from metrics import voc_eval
 
+
 def filter_by_conf(detections, conf_thr=0.5):
     filtered_detections = []
     for det in detections:
