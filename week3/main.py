@@ -45,7 +45,7 @@ if __name__ == "__main__":
                         help='Which mode to execute in task 1.1. Can be "inference", "evaluation", "visualization".')
         
     parser.add_argument('--model', type=str, default='retina',
-                        help='Which model to do inference with. Can be "faster", "retina", "YOLO", "transformer".')
+                        help='Which model to do inference with. Can be "faster", "retina", "yolo", "transformer".')
 
     parser.add_argument('--min_iou', type=float, default=0.5,
                        help='Minimum IoU for a detection to be considered a TP.')
