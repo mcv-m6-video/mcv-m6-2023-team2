@@ -277,22 +277,24 @@ def run_inference_yolov8(args):
         for result in results:
             print(result.boxes.conf, result.boxes.conf.shape)
             for box, conf, cls in zip(result.boxes.xywh, result.boxes.conf, result.boxes.cls):
-                # if result.boxes.cls in VALID_IDS:
-                confs.append(conf)
-                print("conf: ", conf.shape)
-                bboxes.append(box)
-                print("box: ", box.shape)
-                classes.append(cls)
-                print("cls: ", cls.shape)
-                box = box.cpu().numpy()
-                det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf.item())+',-1,-1,-1\n'
-                f.write(det)
+                if result.boxes.cls in VALID_IDS:
+                    confs.append(conf)
+                    print("conf: ", conf.shape)
+                    bboxes.append(box)
+                    print("box: ", box.shape)
+                    classes.append(cls)
+                    print("cls: ", cls.shape)
+                    box = box.cpu().numpy()
+                    det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf.item())+',-1,-1,-1\n'
+                    f.write(det)
 
     f.close()
 
         # if args.store_results:
         #     output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
         #     plot_results(frame_pil, confs_filt, bboxes_filt, output_path)
+
+    return res_path
 
 
 def viz_detr_att(args, model, img,):
