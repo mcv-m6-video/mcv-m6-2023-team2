@@ -36,7 +36,6 @@ def run_inference_detectron(args):
     }
 
     model_path = 'COCO-Detection/' + MODELS[args.model] + '.yaml'
-    print(model_path)
 
     # Run a pre-trained detectron2 model
     cfg = get_cfg()
@@ -152,11 +151,9 @@ def plot_results(pil_img, prob, boxes, output_path, classes=None):
     ax = plt.gca()
     colors = COLORS * 100
     for i, (p, (xmin, ymin, xmax, ymax), c) in enumerate(zip(prob, boxes, colors)):
-        print("xmin: ", xmin, "ymin: ", ymin, "xmax: ", xmax, "ymax: ", ymax)
         ax.add_patch(plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
                                    fill=False, color=c, linewidth=3))
         cl = p.argmax() if classes is None else classes[i]
-        print("cl: ", cl, "p: ", p)
         text = f'{CLASSES[cl]}: {p[cl]:0.2f}' if classes is None else f'{CLASSES[cl]}: {p:0.2f}'
         ax.text(xmin, ymin, text, fontsize=15,
                 bbox=dict(facecolor='yellow', alpha=0.5))
@@ -187,16 +184,11 @@ def run_inference_detr(args):
     f = open(res_path, 'a')
     for frame_id in tqdm(range(num_frames)):
         _, frame_orig = cv2_vid.read()
-        print("Before cvtColor: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
         frame_orig = cv2.cvtColor(frame_orig, cv2.COLOR_BGR2RGB)
-        print("Before transform: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
         frame_pil = T.ToPILImage()(frame_orig)
-        print('after toPILImage: ', frame_pil.getextrema(), frame_pil.size)
         frame = T.Resize(800)(frame_pil)
-        print("after resize: ", frame.getextrema(), frame.size)
         frame = T.ToTensor()(frame)
         frame = T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(frame).unsqueeze(0)
-        print("after transform: ", frame.min(), frame.max(), frame.mean(), frame.std(), frame.shape)
 
         # record inference time
         begin.record()
@@ -207,14 +199,11 @@ def run_inference_detr(args):
         timestamps.append(begin.elapsed_time(end))
 
         confs = model_preds['pred_logits'].softmax(-1)[0, :, :-1]
-        print("confs: ", confs.shape)
 
         # convert boxes from [0; 1] to image scales
         bboxes = rescale_bboxes(model_preds['pred_boxes'][0, ...], frame_pil.size)
-        print("bboxes: ", bboxes.shape)
 
         classes = confs.argmax(axis=1)
-        print("classes: ", classes.shape)
         confs_filt, bboxes_filt = [], []
         for cl, conf, box in zip(classes, confs, bboxes):
             if cl in VALID_IDS_ORIG:
@@ -256,11 +245,8 @@ def run_inference_yolov8(args):
     f = open(res_path, 'a')
     for frame_id in tqdm(range(num_frames)):
         _, frame_orig = cv2_vid.read()
-        print("Before cvtColor: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
         frame_orig = cv2.cvtColor(frame_orig, cv2.COLOR_BGR2RGB)
-        print("Before transform: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
         frame_pil = T.ToPILImage()(frame_orig)
-        print('after toPILImage: ', frame_pil.getextrema(), frame_pil.size)
 
         begin.record()
         results = model.predict(source=frame_pil, save=True)  # save plotted images
@@ -270,10 +256,7 @@ def run_inference_yolov8(args):
         timestamps.append(begin.elapsed_time(end))
 
         confs, bboxes, classes = [], [], []
-        print(type(results))
-        print(results)
         for result in results:
-            print(result.boxes.conf, result.boxes.conf.shape)
             for box, conf, cls in zip(result.boxes.xyxy, result.boxes.conf, result.boxes.cls):
                 cls = int(cls.item())
                 if cls in VALID_IDS_SUBS:
@@ -286,10 +269,11 @@ def run_inference_yolov8(args):
 
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
-            print(confs, bboxes, classes)
             plot_results(frame_pil, confs, bboxes, output_path, classes=classes)
 
     f.close()
+
+    print('Inference time (s/img): ', np.mean(timestamps)/1000)
 
     return res_path
 
