@@ -20,8 +20,8 @@ def task_1_1_evaluation(args):
     gt = load_annotations(args.path_GT, grouped=False, use_parked=True)
     det = load_predictions(args.path_det, grouped=False)
 
-    for min_conf in [0.5, 0.75]:
-        for min_iou in [0.5, 0.75]:
+    for min_conf in [0.5, 0.75, 0.9]:
+        for min_iou in [0.5, 0.75, 0.9]:
             det_filt = filter_by_conf(det, conf_thr=min_conf)
 
             test_perc = 0.75
