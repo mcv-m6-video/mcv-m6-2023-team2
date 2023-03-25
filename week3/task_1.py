@@ -214,7 +214,7 @@ def run_inference_detr(args):
         bboxes = rescale_bboxes(model_preds['pred_boxes'][0, ...], frame_pil.size)
         print("bboxes: ", bboxes.shape)
 
-        classes = confs.argmax(axis=0)
+        classes = confs.argmax(axis=1)
         print("classes: ", classes.shape)
         for cl, conf, box in zip(classes, confs, bboxes):
             det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf[cl].item())+',-1,-1,-1\n'
