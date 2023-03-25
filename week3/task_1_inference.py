@@ -81,7 +81,6 @@ def run_inference_detectron(args):
         instances = model_preds["instances"]
 
         filter = torch.logical_or(instances.pred_classes == VALID_IDS_SUBS[0], instances.pred_classes == VALID_IDS_SUBS[1])
-        print("filter: ", filter)
         filtered_instances = instances[filter]  # a car or a (pickup) truck
         bboxes = filtered_instances.pred_boxes.to("cpu")
         confs = filtered_instances.scores.to("cpu")
