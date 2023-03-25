@@ -158,7 +158,7 @@ def plot_results(pil_img, prob, boxes, output_path, classes=None):
         print("xmin: ", xmin, "ymin: ", ymin, "xmax: ", xmax, "ymax: ", ymax)
         ax.add_patch(plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
                                    fill=False, color=c, linewidth=3))
-        cl = p.argmax() if not classes else classes[i]
+        cl = p.argmax() if classes is None else classes[i]
         print("cl: ", cl, "p: ", p)
         text = f'{CLASSES[cl]}: {p[cl]:0.2f}' if classes is None else f'{CLASSES[cl]}: {p:0.2f}'
         ax.text(xmin, ymin, text, fontsize=15,
@@ -277,7 +277,7 @@ def run_inference_yolov8(args):
         print(results)
         for result in results:
             print(result.boxes.conf, result.boxes.conf.shape)
-            for box, conf, cls in zip(result.boxes.xywh, result.boxes.conf, result.boxes.cls):
+            for box, conf, cls in zip(result.boxes.xyxy, result.boxes.conf, result.boxes.cls):
                 cls = cls.item()
                 # if cls.item() in VALID_IDS:
                 box = box.cpu().numpy()
