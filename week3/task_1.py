@@ -242,7 +242,7 @@ def run_inference_yolov8(args):
     model = YOLO('yolov8n.pt')
 
     # from PIL
-    im1 = Image.open("bus.jpg")
+    # im1 = Image.open("bus.jpg")
     # results = model.predict(source=im1, save=True)  # save plotted images
     results = model.predict('https://ultralytics.com/images/bus.jpg', save=True)
     for result in results:
