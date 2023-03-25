@@ -132,19 +132,6 @@ CLASSES = [
 COLORS = [[0.000, 0.447, 0.741], [0.850, 0.325, 0.098], [0.929, 0.694, 0.125],
           [0.494, 0.184, 0.556], [0.466, 0.674, 0.188], [0.301, 0.745, 0.933]]
 
-# standard PyTorch mean-std input image normalization
-# transform = T.Compose([
-#     T.ToPILImage(),
-#     T.Resize(800),
-#     T.ToTensor(),
-#     T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-# ])
-
-transform = T.Compose([
-    T.Resize(800),
-    T.ToTensor(),
-    T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
 
 # for output bounding box post-processing
 def box_cxcywh_to_xyxy(x):
@@ -212,12 +199,6 @@ def run_inference_detr(args):
         frame = T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(frame).unsqueeze(0)
         print("after transform: ", frame.min(), frame.max(), frame.mean(), frame.std(), frame.shape)
 
-        # url = 'http://images.cocodataset.org/val2017/000000039769.jpg'
-        # frame_orig = Image.open(requests.get(url, stream=True).raw)
-        # print("Before transform: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
-        # frame = transform(frame_orig).unsqueeze(0)
-        # print("After transform: ", frame.min(), frame.max(), frame.mean(), frame.std(), frame.shape)
-
         # record inference time
         begin.record()
         model_preds = model(frame)
@@ -227,13 +208,17 @@ def run_inference_detr(args):
         timestamps.append(begin.elapsed_time(end))
 
         confs = model_preds['pred_logits'].softmax(-1)[0, :, :-1]
-        # TODO: when visualizing results, keep only predictions with 0.7+ confidence
-        # keep = confs.max(-1).values > 0.9
+        print("confs: ", confs.shape)
 
         # convert boxes from [0; 1] to image scales
+        bboxes = rescale_bboxes(model_preds['pred_boxes'][0, ...], frame_pil.size)
+        print("bboxes: ", bboxes.shape)
 
-        bboxes = rescale_bboxes(model_preds['pred_boxes'][0, ...], frame_pil.size)#shape[:2])
-        # bboxes_scaled = rescale_bboxes(model_preds['pred_boxes'][0, keep], frame.size)
+        classes = confs.argmax(axis=0)
+        print("classes: ", classes.shape)
+        for cl, conf, box in zip(classes, confs, bboxes):
+            det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf[cl].item())+',-1,-1,-1\n'
+            f.write(det)
 
         # classes_idxs = []
         # confs_filt, bboxes_filt = [], []
@@ -244,7 +229,7 @@ def run_inference_detr(args):
         #         classes_idxs.append((i, cl))
 
         #         # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
-        #         box = bboxes.numpy()[i]
+        #         box = bboxes[i].numpy()
 
         #         bboxes_filt.append(box)
         #         confs_filt.append(confs[i])
