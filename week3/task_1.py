@@ -278,12 +278,12 @@ def run_inference_yolov8(args):
         for result in results:
             print(result.boxes.conf, result.boxes.conf.shape)
             for box, conf, cls in zip(result.boxes.xyxy, result.boxes.conf, result.boxes.cls):
-                cls = cls.item()
-                if cls.item() in VALID_IDS:
+                cls = int(cls.item())
+                if cls in VALID_IDS:
                     box = box.cpu().numpy()
                     confs.append(conf)
                     bboxes.append(box)
-                    classes.append(int(cls)+1)
+                    classes.append(cls+1)
                     det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf.item())+',-1,-1,-1\n'
                     f.write(det)
 
