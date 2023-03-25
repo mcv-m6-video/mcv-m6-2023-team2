@@ -23,8 +23,8 @@ def task_1_1_evaluation(args):
     det = filter_by_conf(det, conf_thr=args.min_conf)
 
     test_perc = 0.75
-    test_gt = generate_test_subset(gt, num_frames=2141, test_perc=test_perc)
-    test_det = generate_test_subset(det, num_frames=2141, test_perc=test_perc)
+    test_gt = generate_test_subset(gt, N_frames=2141, test_p=test_perc)
+    test_det = generate_test_subset(det, N_frames=2141, test_p=test_perc)
 
     rec, prec, ap, iou = voc_eval(
         group_annotations_by_frame(test_det),
