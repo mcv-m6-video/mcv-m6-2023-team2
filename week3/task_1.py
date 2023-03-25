@@ -149,17 +149,17 @@ def rescale_bboxes(out_bbox, size):
     return b
 
 
-def plot_results(pil_img, prob, boxes, output_path):
+def plot_results(pil_img, prob, boxes, output_path, classes=None):
     plt.figure(figsize=(16,10))
     plt.imshow(pil_img)
     ax = plt.gca()
     colors = COLORS * 100
-    for p, (xmin, ymin, xmax, ymax), c in zip(prob, boxes, colors):
+    for i, p, (xmin, ymin, xmax, ymax), c in enumerate(zip(prob, boxes, colors)):
         print("xmin: ", xmin, "ymin: ", ymin, "xmax: ", xmax, "ymax: ", ymax)
         ax.add_patch(plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
                                    fill=False, color=c, linewidth=3))
-        cl = p.argmax()
-        text = f'{CLASSES[cl]}: {p[cl]:0.2f}'
+        cl = p.argmax() if not classes else classes[i]
+        text = f'{CLASSES[cl]}: {p[cl]:0.2f}' if classes is None else f'{CLASSES[cl]}: {p:0.2f}'
         ax.text(xmin, ymin, text, fontsize=15,
                 bbox=dict(facecolor='yellow', alpha=0.5))
     plt.axis('off')
@@ -287,8 +287,8 @@ def run_inference_yolov8(args):
 
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
-            print(confs, bboxes)
-            plot_results(frame_pil, confs, bboxes, output_path)
+            print(confs, bboxes, classes)
+            plot_results(frame_pil, confs, bboxes, output_path, classes=classes)
 
     f.close()
 
