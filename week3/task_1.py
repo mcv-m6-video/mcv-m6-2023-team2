@@ -272,7 +272,10 @@ def run_inference_yolov8(args):
         timestamps.append(begin.elapsed_time(end))
 
         confs, bboxes, classes = [], [], []
+        print(result.boxes.conf, result.boxes.conf.shape)
+        print(results.shape)
         for result in results:
+            print("result: ", result)
             if result.boxes.cls in VALID_IDS_DETR_YOLO:
                 confs.append(result.boxes.conf)
                 print("confs: ", confs.shape)
