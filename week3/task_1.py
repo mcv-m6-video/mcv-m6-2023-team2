@@ -282,7 +282,7 @@ def run_inference_yolov8(args):
                     box = box.cpu().numpy()
                     confs.append(conf)
                     bboxes.append(box)
-                    classes.append(cls.item())
+                    classes.append(int(cls.item()))
                     det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf.item())+',-1,-1,-1\n'
                     f.write(det)
 
