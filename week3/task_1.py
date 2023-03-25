@@ -225,28 +225,8 @@ def run_inference_detr(args):
                 det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf[cl].item())+',-1,-1,-1\n'
                 f.write(det)
 
-        # classes_idxs = []
-        # confs_filt, bboxes_filt = [], []
-        # for i, p, in enumerate(confs):
-        #     cl = p.argmax()
-        #     if cl in VALID_IDS_DETR:
-        #         print(f'{CLASSES[cl]}: {p[cl]:0.2f}')
-        #         classes_idxs.append((i, cl))
-
-        #         # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
-        #         box = bboxes[i].numpy()
-
-        #         bboxes_filt.append(box)
-        #         confs_filt.append(confs[i])
-
-        #         # Store in AI City Format:
-        #         # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
-        #         det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i][cl].item())+',-1,-1,-1\n'
-        #         f.write(det)
-
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
-            # plot_results(frame_pil, confs, bboxes, output_path)
             plot_results(frame_pil, confs_filt, bboxes_filt, output_path)
 
     f.close()
@@ -254,6 +234,28 @@ def run_inference_detr(args):
     print('Inference time (s/img): ', np.mean(timestamps)/1000)
 
     return res_path
+
+
+def run_inference_yolov8(args):
+    from ultralytics import YOLO
+
+    model = YOLO('yolov8n.pt')
+
+    # from PIL
+    im1 = Image.open("bus.jpg")
+    # results = model.predict(source=im1, save=True)  # save plotted images
+    results = model.predict('https://ultralytics.com/images/bus.jpg', save=True)
+    for result in results:
+        # detection
+        print(result.boxes.xywh)   # box with xywh format, (N, 4)
+        print(result.boxes.xywhn)  # box with xywh format but normalized, (N, 4)
+        print(result.boxes.conf)   # confidence score, (N, 1)
+        print(result.boxes.cls)    # cls, (N, 1)
+
+        # classification
+        print(result.probs)     # cls prob, (num_class, )
+
+        print("*"*50)
 
 
 def viz_detr_att(args, model, img,):
@@ -317,5 +319,9 @@ def task_1_1(args):
         res_path = run_inference_detectron(args)
     elif args.model.lower() == 'detr':
         res_path = run_inference_detr(args)
+    elif args.model.lower() == 'yolo':
+        res_path = run_inference_yolov8(args)
+    else:
+        raise ValueError('Unknown model: ' + args.model)
 
     print("Results saved in: ", res_path)
