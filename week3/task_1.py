@@ -204,9 +204,9 @@ def run_inference_detr(args):
         print("Before cvtColor: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
         frame_orig = cv2.cvtColor(frame_orig, cv2.COLOR_BGR2RGB)
         print("Before transform: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
-        frame = T.ToPILImage()(frame_orig)
-        print('after toPILImage: ', frame.getextrema(), frame.size)
-        frame = T.Resize(800)(frame)
+        frame_pil = T.ToPILImage()(frame_orig)
+        print('after toPILImage: ', frame_pil.getextrema(), frame.size)
+        frame = T.Resize(800)(frame_pil)
         print("after resize: ", frame.getextrema(), frame.size)
         frame = T.ToTensor()(frame)
         frame = T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(frame).unsqueeze(0)
@@ -232,7 +232,7 @@ def run_inference_detr(args):
 
         # convert boxes from [0; 1] to image scales
 
-        bboxes = rescale_bboxes(model_preds['pred_boxes'][0, ...], frame_orig.size)#shape[:2])
+        bboxes = rescale_bboxes(model_preds['pred_boxes'][0, ...], frame_pil.size)#shape[:2])
         # bboxes_scaled = rescale_bboxes(model_preds['pred_boxes'][0, keep], frame.size)
 
         # classes_idxs = []
@@ -257,7 +257,7 @@ def run_inference_detr(args):
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
             # plot_results(frame.squeeze().permute(1, 2, 0)[..., (2,1,0)], confs_filt, bboxes_filt, output_path)
-            plot_results(frame_orig, confs, bboxes, output_path)
+            plot_results(frame_pil, confs, bboxes, output_path)
 
     f.close()
 
