@@ -207,7 +207,7 @@ def run_inference_detr(args):
         frame = T.ToPILImage()(frame_orig)
         print('after toPILImage: ', frame.getextrema(), frame.size)
         frame = T.Resize(800)(frame)
-        print("after resize: ", frame.min(), frame.max(), frame.mean(), frame.std(), frame.shape)
+        print("after resize: ", frame.getextrema(), frame.siz)
         frame = T.ToTensor()(frame)
         frame = T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(frame).unsqueeze(0)
         print("after transform: ", frame.min(), frame.max(), frame.mean(), frame.std(), frame.shape)
