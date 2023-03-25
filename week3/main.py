@@ -1,5 +1,6 @@
 import argparse
-from task_1 import task_1_1
+from task_1_inference import task_1_1_inference
+from task_1_evaluation import task_1_1_evaluation
 
 
 if __name__ == "__main__":
@@ -7,7 +8,7 @@ if __name__ == "__main__":
         description='Road Traffic Monitoring Analysis for Video Surveillance. MCV-M6-Project. Team 2'
     )
 
-    parser.add_argument('--t1_1', action='store_true',
+    parser.add_argument('--t1_1', action='string',
                         help='Task1.1 - Inference with off-the-shelf methods')
 
     parser.add_argument('--t1.2', action='store_true',
@@ -31,6 +32,9 @@ if __name__ == "__main__":
     parser.add_argument('--path_GT', type=str, default="../data/AICity_S03_c010/ai_challenge_s03_c010-full_annotation.xml",
                         help='The path to the ground truth file corresponding to the video to be processed.')
 
+    parser.add_argument('--path_det', type=str, default="./results/faster/detections.txt",
+                        help='The path to the detection file corresponding to the video to be processed.')
+
     parser.add_argument('--store_results', action='store_true',
                         help='Whether to store the intermediate results.')
 
@@ -40,8 +44,17 @@ if __name__ == "__main__":
     parser.add_argument('--frames_range', type=tuple, default=(1169, 1229),
                         help='Start and end frame bitmaps to be saved (eg. for GIF creation).')  # default=(1169, 1229)
 
+    parser.add_argument('--mode', type=str, default='inference',
+                        help='Which mode to execute in task 1.1. Can be "inference", "evaluation", "visualization".')
+        
     parser.add_argument('--model', type=str, default='retina',
                         help='Which model to do inference with. Can be "faster", "retina", "YOLO", "transformer".')
+
+    parser.add_argument('--min_iou', type=float, default=0.5,
+                       help='Minimum IoU for a detection to be considered a TP.')
+
+    parser.add_argument('--min_conf', type=float, default=0.5,
+                       help='Minimum confidence of a detection for it to be considere for evaluation.')
 
     parser.add_argument('--make_video', type=bool, default=True,
                         help='Make video from segmentation.')
@@ -55,8 +68,13 @@ if __name__ == "__main__":
     print(args)
 
     if args.t1_1:
-        print('Launching Task 1.1')
-        task_1_1(args)
+        print(f'Launching Task 1.1. Mode: {args.mode}. Model: {args.model}')
+        if args.mode == 'inference':
+            task_1_1_inference(args)
+        elif args.mode == 'evaluation':
+            task_1_1_evaluation(args)
+        elif args.mode == 'visualization':
+            pass
     elif args.t1_2:
         print('Launching Task 1.2')
         task2(args)
