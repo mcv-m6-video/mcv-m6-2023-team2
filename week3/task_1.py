@@ -205,7 +205,7 @@ def run_inference_detr(args):
         frame_orig = cv2.cvtColor(frame_orig, cv2.COLOR_BGR2RGB)
         print("Before transform: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
         frame = T.ToPILImage()(frame_orig)
-        print('after toPILImage: ', frame.min(), frame.max(), frame.mean(), frame.std(), frame.shape)
+        print('after toPILImage: ', frame.getextrema(), frame.size)
         frame = T.Resize(800)(frame)
         print("after resize: ", frame.min(), frame.max(), frame.mean(), frame.std(), frame.shape)
         frame = T.ToTensor()(frame)
