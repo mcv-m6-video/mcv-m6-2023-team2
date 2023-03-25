@@ -278,7 +278,7 @@ def run_inference_yolov8(args):
         for result in results:
             print(result.boxes.conf, result.boxes.conf.shape)
             for box, conf, cls in zip(result.boxes.xywh, result.boxes.conf, result.boxes.cls):
-                if cls.item() in VALID_IDS:
+                if cls.item() in VALID_IDS_DETR_YOLO:
                     box = box.cpu().numpy()
                     confs.append(conf)
                     bboxes.append(box)
