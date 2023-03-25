@@ -279,13 +279,13 @@ def run_inference_yolov8(args):
             print(result.boxes.conf, result.boxes.conf.shape)
             for box, conf, cls in zip(result.boxes.xyxy, result.boxes.conf, result.boxes.cls):
                 cls = cls.item()
-                # if cls.item() in VALID_IDS:
-                box = box.cpu().numpy()
-                confs.append(conf)
-                bboxes.append(box)
-                classes.append(int(cls)+1)
-                det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf.item())+',-1,-1,-1\n'
-                f.write(det)
+                if cls.item() in VALID_IDS:
+                    box = box.cpu().numpy()
+                    confs.append(conf)
+                    bboxes.append(box)
+                    classes.append(int(cls)+1)
+                    det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf.item())+',-1,-1,-1\n'
+                    f.write(det)
 
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
