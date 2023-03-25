@@ -26,10 +26,10 @@ def task_1_1_evaluation(args):
     test_gt = generate_test_subset(gt, N_frames=2141, test_p=test_perc)
     test_det = generate_test_subset(det, N_frames=2141, test_p=test_perc)
 
-    rec, prec, ap, iou = voc_eval(
+    rec, prec, f1, ap, iou = voc_eval(
         group_annotations_by_frame(test_det),
         group_annotations_by_frame(test_gt),
         args.min_iou,
     )
     print('AP' + str(args.min_iou) + ': ', ap)
-    print(f'Recall: {rec}  |  Precision: {prec}  |  IoU: {iou}')
+    print(f'Recall: {rec}  |  Precision: {prec}  |  F1: {f1}  |  IoU: {iou}')
