@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 import requests
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 import torch
 torch.set_grad_enabled(False)
@@ -19,13 +20,13 @@ from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
 from detectron2.data import MetadataCatalog
 
-from tqdm import tqdm
+from ultralytics import YOLO
 
 
 COCO_CAR_ID = 3  # COCO class id for car -1.
 VALID_IDS = [COCO_CAR_ID-1]
 
-VALID_IDS_DETR = [COCO_CAR_ID]
+VALID_IDS_DETR_YOLO = [COCO_CAR_ID]
 
 
 def run_inference_detectron(args):
@@ -218,7 +219,7 @@ def run_inference_detr(args):
         print("classes: ", classes.shape)
         confs_filt, bboxes_filt = [], []
         for cl, conf, box in zip(classes, confs, bboxes):
-            if cl in VALID_IDS_DETR:
+            if cl in VALID_IDS_DETR_YOLO:
                 confs_filt.append(conf)
                 bboxes_filt.append(box)
                 box = box.numpy()
@@ -237,25 +238,57 @@ def run_inference_detr(args):
 
 
 def run_inference_yolov8(args):
-    from ultralytics import YOLO
+    res_dir = os.path.join(args.path_results, args.model)
+    os.makedirs(res_dir, exist_ok=True)
+
+    res_path = os.path.join(res_dir, 'detections.txt')
+    if os.path.exists(res_path):
+        os.remove(res_path)
 
     model = YOLO('yolov8n.pt')
 
-    # from PIL
-    # im1 = Image.open("bus.jpg")
-    # results = model.predict(source=im1, save=True)  # save plotted images
-    results = model.predict('https://ultralytics.com/images/bus.jpg', save=True)
-    for result in results:
-        # detection
-        print(result.boxes.xywh)   # box with xywh format, (N, 4)
-        print(result.boxes.xywhn)  # box with xywh format but normalized, (N, 4)
-        print(result.boxes.conf)   # confidence score, (N, 1)
-        print(result.boxes.cls)    # cls, (N, 1)
+    cv2_vid = cv2.VideoCapture(args.path_video)
+    num_frames = min( int(cv2_vid.get(cv2.CAP_PROP_FRAME_COUNT)), args.num_frames )
 
-        # classification
-        print(result.probs)     # cls prob, (num_class, )
+    # keep track of time (s/img) to run inferece
+    timestamps = []
+    begin = torch.cuda.Event(enable_timing=True)
+    end = torch.cuda.Event(enable_timing=True)
 
-        print("*"*50)
+    f = open(res_path, 'a')
+    for frame_id in tqdm(range(num_frames)):
+        _, frame_orig = cv2_vid.read()
+        print("Before cvtColor: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
+        frame_orig = cv2.cvtColor(frame_orig, cv2.COLOR_BGR2RGB)
+        print("Before transform: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
+        frame_pil = T.ToPILImage()(frame_orig)
+        print('after toPILImage: ', frame_pil.getextrema(), frame_pil.size)
+
+        begin.record()
+        results = model.predict(source=frame_pil, save=True)  # save plotted images
+        end.record()
+
+        torch.cuda.synchronize()
+        timestamps.append(begin.elapsed_time(end))
+
+        confs, bboxes, classes = [], [], []
+        for result in results:
+            if result.boxes.cls in VALID_IDS_DETR_YOLO:
+                confs.append(result.boxes.conf)
+                print("confs: ", confs.shape)
+                bboxes.append(result.boxes.xywh)
+                print("bboxes: ", bboxes.shape)
+                classes.append(result.boxes.cls)
+                print("classes: ", classes.shape)
+                box = box.numpy()
+                det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(result.boxes.conf.item())+',-1,-1,-1\n'
+                f.write(det)
+
+    f.close()
+
+        # if args.store_results:
+        #     output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
+        #     plot_results(frame_pil, confs_filt, bboxes_filt, output_path)
 
 
 def viz_detr_att(args, model, img,):
