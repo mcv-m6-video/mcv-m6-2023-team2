@@ -35,5 +35,5 @@ def task_1_1_evaluation(args):
             )
             print(f'Min. Confidence: {min_conf}; Min. IoU: {min_iou}', )
             print('AP' + str(min_iou) + ': ', ap)
-            print(f'Recall: {rec}  |  Precision: {prec}  |  F1: {f1}  |  IoU: {iou}')
+            # print(f'Recall: {rec}  |  Precision: {prec}  |  F1: {f1}  |  IoU: {iou}')
             print('-'*50)
