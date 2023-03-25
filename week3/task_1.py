@@ -154,11 +154,12 @@ def plot_results(pil_img, prob, boxes, output_path, classes=None):
     plt.imshow(pil_img)
     ax = plt.gca()
     colors = COLORS * 100
-    for i, p, (xmin, ymin, xmax, ymax), c in enumerate(zip(prob, boxes, colors)):
+    for i, (p, (xmin, ymin, xmax, ymax), c) in enumerate(zip(prob, boxes, colors)):
         print("xmin: ", xmin, "ymin: ", ymin, "xmax: ", xmax, "ymax: ", ymax)
         ax.add_patch(plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
                                    fill=False, color=c, linewidth=3))
         cl = p.argmax() if not classes else classes[i]
+        print("cl: ", cl, "p: ", p)
         text = f'{CLASSES[cl]}: {p[cl]:0.2f}' if classes is None else f'{CLASSES[cl]}: {p:0.2f}'
         ax.text(xmin, ymin, text, fontsize=15,
                 bbox=dict(facecolor='yellow', alpha=0.5))
@@ -281,7 +282,7 @@ def run_inference_yolov8(args):
                     box = box.cpu().numpy()
                     confs.append(conf)
                     bboxes.append(box)
-                    classes.append(cls)
+                    classes.append(cls.item())
                     det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf.item())+',-1,-1,-1\n'
                     f.write(det)
 
