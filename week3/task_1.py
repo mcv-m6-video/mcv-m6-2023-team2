@@ -26,7 +26,7 @@ from ultralytics import YOLO
 COCO_CAR_ID = 3  # COCO class id for car -1.
 VALID_IDS = [COCO_CAR_ID-1]
 
-VALID_IDS_DETR_YOLO = [COCO_CAR_ID]
+VALID_IDS_DETR = [COCO_CAR_ID]
 
 
 def run_inference_detectron(args):
@@ -220,7 +220,7 @@ def run_inference_detr(args):
         print("classes: ", classes.shape)
         confs_filt, bboxes_filt = [], []
         for cl, conf, box in zip(classes, confs, bboxes):
-            if cl in VALID_IDS_DETR_YOLO:
+            if cl in VALID_IDS_DETR:
                 confs_filt.append(conf)
                 bboxes_filt.append(box)
                 box = box.numpy()
@@ -278,13 +278,14 @@ def run_inference_yolov8(args):
         for result in results:
             print(result.boxes.conf, result.boxes.conf.shape)
             for box, conf, cls in zip(result.boxes.xywh, result.boxes.conf, result.boxes.cls):
-                if cls.item() in VALID_IDS_DETR_YOLO:
-                    box = box.cpu().numpy()
-                    confs.append(conf)
-                    bboxes.append(box)
-                    classes.append(int(cls.item()))
-                    det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf.item())+',-1,-1,-1\n'
-                    f.write(det)
+                cls = cls.item()
+                # if cls.item() in VALID_IDS:
+                box = box.cpu().numpy()
+                confs.append(conf)
+                bboxes.append(box)
+                classes.append(int(cls))
+                det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf.item())+',-1,-1,-1\n'
+                f.write(det)
 
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
