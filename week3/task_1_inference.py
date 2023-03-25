@@ -249,7 +249,7 @@ def run_inference_yolov8(args):
         frame_pil = T.ToPILImage()(frame_orig)
 
         begin.record()
-        results = model.predict(source=frame_pil, save=True)  # save plotted images
+        results = model.predict(source=frame_pil, save=False)  # save plotted images
         end.record()
 
         torch.cuda.synchronize()
