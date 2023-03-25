@@ -41,9 +41,6 @@ if __name__ == "__main__":
     parser.add_argument('--make_gifs', action='store_true',
                         help='Whether to store make GIFs of the intermediate results.')
 
-    parser.add_argument('--frames_range', type=tuple, default=(1169, 1229),
-                        help='Start and end frame bitmaps to be saved (eg. for GIF creation).')  # default=(1169, 1229)
-
     parser.add_argument('--mode', type=str, default='inference',
                         help='Which mode to execute in task 1.1. Can be "inference", "evaluation", "visualization".')
         
@@ -55,9 +52,6 @@ if __name__ == "__main__":
 
     parser.add_argument('--min_conf', type=float, default=0.5,
                        help='Minimum confidence of a detection for it to be considere for evaluation.')
-
-    parser.add_argument('--make_video', type=bool, default=True,
-                        help='Make video from segmentation.')
 
     parser.add_argument('--num_frames', type=int, default=99999999,
                        help='Number of frames to process.')
