@@ -74,7 +74,8 @@ def run_inference_detectron(args):
     if args.format.lower() == "aicity":
         f = open(res_path, 'a')
     elif args.format.lower() == "kitti":
-        os.makedirs(os.path.join(cfg.OUTPUT_DIR, 'labels'), exist_ok=True)
+        labels_dir = os.path.join(cfg.OUTPUT_DIR, 'label_2')
+        os.makedirs(labels_dir, exist_ok=True)
 
     for frame_id in tqdm(range(num_frames)):
         _, frame = cv2_vid.read()
@@ -97,7 +98,7 @@ def run_inference_detectron(args):
                 instances.pred_classes == COCO_PERSON_ID-1  # also detect people
             )
             filter = torch.logical_and(filter, instances.scores > 0.75)
-            f = open(os.path.join(cfg.OUTPUT_DIR, 'labels', f'{frame_id:05d}.txt'), 'w')
+            f = open(os.path.join(labels_dir, f'{frame_id:05d}.txt'), 'w')
 
         filtered_instances = instances[filter]  # a car or a (pickup) truck
         bboxes = filtered_instances.pred_boxes.to("cpu")
