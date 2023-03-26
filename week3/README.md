@@ -7,7 +7,7 @@
 ## Task 1: Object Detection
 + Inference with off-the-shelf methods
    + ...
-+ Data annotation
++ Data annotation. Annotations can be found in `week3/task1_2_annotations/`. We include `Pascal VOC` and `KITTI` format annotations.
 + Fine-tune pretrained models with our own data
 + K-Fold Cross-Validation
    + Strategy A - First 25% for training and second 75% for test.
