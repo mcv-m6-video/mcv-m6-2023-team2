@@ -73,6 +73,9 @@ def run_inference_detectron(args):
 
     if args.format.lower() == "aicity":
         f = open(res_path, 'a')
+    elif args.format.lower() == "kitti":
+        os.makedirs(os.path.join(cfg.OUTPUT_DIR, 'labels'), exist_ok=True)
+
     for frame_id in tqdm(range(num_frames)):
         _, frame = cv2_vid.read()
 
