@@ -2,7 +2,6 @@ import os
 import cv2
 import numpy as np
 from PIL import Image
-import requests
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
@@ -23,10 +22,10 @@ from detectron2.data import MetadataCatalog
 from ultralytics import YOLO
 
 
-COCO_CAR_ID = 3  # COCO class id for car -1.
-VALID_IDS = [COCO_CAR_ID-1]
-
-VALID_IDS_DETR = [COCO_CAR_ID]
+COCO_CAR_ID = 3  # COCO class id for car.
+COCO_TRUCK_ID = 8  # COCO class id for truck.
+VALID_IDS_SUBS = [COCO_CAR_ID-1, COCO_TRUCK_ID-1]
+VALID_IDS_ORIG = [COCO_CAR_ID, COCO_TRUCK_ID]
 
 
 def run_inference_detectron(args):
@@ -37,7 +36,6 @@ def run_inference_detectron(args):
     }
 
     model_path = 'COCO-Detection/' + MODELS[args.model] + '.yaml'
-    print(model_path)
 
     # Run a pre-trained detectron2 model
     cfg = get_cfg()
@@ -60,8 +58,7 @@ def run_inference_detectron(args):
         os.remove(res_path)
 
     cv2_vid = cv2.VideoCapture(args.path_video)
-    num_frames = int(cv2_vid.get(cv2.CAP_PROP_FRAME_COUNT))
-    num_frames = 10
+    num_frames = min( int(cv2_vid.get(cv2.CAP_PROP_FRAME_COUNT)), args.num_frames )
 
     # keep track of time (s/img) to run inferece
     timestamps = []
@@ -82,13 +79,12 @@ def run_inference_detectron(args):
 
         instances = model_preds["instances"]
 
-        filtered_instances = instances[instances.pred_classes == COCO_CAR_ID] # or instances.pred_classes == 7
+        filter = torch.logical_or(instances.pred_classes == VALID_IDS_SUBS[0], instances.pred_classes == VALID_IDS_SUBS[1])
+        filtered_instances = instances[filter]  # a car or a (pickup) truck
         bboxes = filtered_instances.pred_boxes.to("cpu")
         confs = filtered_instances.scores.to("cpu")
         classes = filtered_instances.pred_classes.to("cpu")
-        # confident_detections = instances[instances.scores > 0.9]
 
-        # discard predictions corresponding to classes not in VALID_IDS
         for i, prediction in enumerate(classes):
             # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
             box = bboxes[i].tensor.numpy()[0]
@@ -155,11 +151,9 @@ def plot_results(pil_img, prob, boxes, output_path, classes=None):
     ax = plt.gca()
     colors = COLORS * 100
     for i, (p, (xmin, ymin, xmax, ymax), c) in enumerate(zip(prob, boxes, colors)):
-        print("xmin: ", xmin, "ymin: ", ymin, "xmax: ", xmax, "ymax: ", ymax)
         ax.add_patch(plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
                                    fill=False, color=c, linewidth=3))
         cl = p.argmax() if classes is None else classes[i]
-        print("cl: ", cl, "p: ", p)
         text = f'{CLASSES[cl]}: {p[cl]:0.2f}' if classes is None else f'{CLASSES[cl]}: {p:0.2f}'
         ax.text(xmin, ymin, text, fontsize=15,
                 bbox=dict(facecolor='yellow', alpha=0.5))
@@ -190,16 +184,11 @@ def run_inference_detr(args):
     f = open(res_path, 'a')
     for frame_id in tqdm(range(num_frames)):
         _, frame_orig = cv2_vid.read()
-        print("Before cvtColor: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
         frame_orig = cv2.cvtColor(frame_orig, cv2.COLOR_BGR2RGB)
-        print("Before transform: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
         frame_pil = T.ToPILImage()(frame_orig)
-        print('after toPILImage: ', frame_pil.getextrema(), frame_pil.size)
         frame = T.Resize(800)(frame_pil)
-        print("after resize: ", frame.getextrema(), frame.size)
         frame = T.ToTensor()(frame)
         frame = T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(frame).unsqueeze(0)
-        print("after transform: ", frame.min(), frame.max(), frame.mean(), frame.std(), frame.shape)
 
         # record inference time
         begin.record()
@@ -210,17 +199,14 @@ def run_inference_detr(args):
         timestamps.append(begin.elapsed_time(end))
 
         confs = model_preds['pred_logits'].softmax(-1)[0, :, :-1]
-        print("confs: ", confs.shape)
 
         # convert boxes from [0; 1] to image scales
         bboxes = rescale_bboxes(model_preds['pred_boxes'][0, ...], frame_pil.size)
-        print("bboxes: ", bboxes.shape)
 
         classes = confs.argmax(axis=1)
-        print("classes: ", classes.shape)
         confs_filt, bboxes_filt = [], []
         for cl, conf, box in zip(classes, confs, bboxes):
-            if cl in VALID_IDS_DETR:
+            if cl in VALID_IDS_ORIG:
                 confs_filt.append(conf)
                 bboxes_filt.append(box)
                 box = box.numpy()
@@ -259,27 +245,21 @@ def run_inference_yolov8(args):
     f = open(res_path, 'a')
     for frame_id in tqdm(range(num_frames)):
         _, frame_orig = cv2_vid.read()
-        print("Before cvtColor: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
         frame_orig = cv2.cvtColor(frame_orig, cv2.COLOR_BGR2RGB)
-        print("Before transform: ", frame_orig.min(), frame_orig.max(), frame_orig.mean(), frame_orig.std(), frame_orig.shape)
         frame_pil = T.ToPILImage()(frame_orig)
-        print('after toPILImage: ', frame_pil.getextrema(), frame_pil.size)
 
         begin.record()
-        results = model.predict(source=frame_pil, save=True)  # save plotted images
+        results = model.predict(source=frame_pil, save=False)  # save plotted images
         end.record()
 
         torch.cuda.synchronize()
         timestamps.append(begin.elapsed_time(end))
 
         confs, bboxes, classes = [], [], []
-        print(type(results))
-        print(results)
         for result in results:
-            print(result.boxes.conf, result.boxes.conf.shape)
             for box, conf, cls in zip(result.boxes.xyxy, result.boxes.conf, result.boxes.cls):
                 cls = int(cls.item())
-                if cls in VALID_IDS:
+                if cls in VALID_IDS_SUBS:
                     box = box.cpu().numpy()
                     confs.append(conf)
                     bboxes.append(box)
@@ -289,10 +269,11 @@ def run_inference_yolov8(args):
 
         if args.store_results:
             output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')
-            print(confs, bboxes, classes)
             plot_results(frame_pil, confs, bboxes, output_path, classes=classes)
 
     f.close()
+
+    print('Inference time (s/img): ', np.mean(timestamps)/1000)
 
     return res_path
 
@@ -352,7 +333,7 @@ def viz_detr_att(args, model, img,):
     plt.savefig(os.path.join(args.output_dir, 'detr_att.png'))
 
 
-def task_1_1(args):
+def task_1_1_inference(args):
 
     if args.model in ['retina', 'faster']:
         res_path = run_inference_detectron(args)
