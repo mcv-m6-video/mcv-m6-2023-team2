@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--mode', type=str, default='inference',
                         help='Which mode to execute in task 1.1. Can be "inference", "evaluation", "visualization".')
-        
+
     parser.add_argument('--model', type=str, default='retina',
                         help='Which model to do inference with. Can be "faster", "retina", "yolo", "transformer".')
 
@@ -52,6 +52,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--min_conf', type=float, default=0.5,
                        help='Minimum confidence of a detection for it to be considere for evaluation.')
+
+    parser.add_argument('--format', type=str, default='aicity',
+                        help='Which format to use to store detections. Can be "aicity", "kitti". The latter is only suppoted for "faster" and "retina" models.')
 
     parser.add_argument('--num_frames', type=int, default=99999999,
                        help='Number of frames to process.')
