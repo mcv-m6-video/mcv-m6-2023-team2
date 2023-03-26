@@ -24,9 +24,15 @@ from ultralytics import YOLO
 
 COCO_CAR_ID = 3  # COCO class id for car.
 COCO_TRUCK_ID = 8  # COCO class id for truck.
+COCO_PERSON_ID = 1  # COCO class id for person.
 VALID_IDS_SUBS = [COCO_CAR_ID-1, COCO_TRUCK_ID-1]
 VALID_IDS_ORIG = [COCO_CAR_ID, COCO_TRUCK_ID]
 
+COCO_ID_TO_NAME = {
+    COCO_CAR_ID-1: "car",
+    COCO_TRUCK_ID-1: "car",
+    COCO_PERSON_ID-1: "person",
+}
 
 def run_inference_detectron(args):
 
@@ -65,7 +71,8 @@ def run_inference_detectron(args):
     begin = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
 
-    f = open(res_path, 'a')
+    if args.format.lower() == "aicity":
+        f = open(res_path, 'a')
     for frame_id in tqdm(range(num_frames)):
         _, frame = cv2_vid.read()
 
@@ -79,7 +86,13 @@ def run_inference_detectron(args):
 
         instances = model_preds["instances"]
 
-        filter = torch.logical_or(instances.pred_classes == VALID_IDS_SUBS[0], instances.pred_classes == VALID_IDS_SUBS[1])
+        if args.format.lower() == "aicity":
+            filter = torch.logical_or(instances.pred_classes == VALID_IDS_SUBS[0], instances.pred_classes == VALID_IDS_SUBS[1])
+        elif args.format.lower() == "kitti":
+            filter = torch.logical_or(
+                torch.logical_or(instances.pred_classes == VALID_IDS_SUBS[0], instances.pred_classes == VALID_IDS_SUBS[1]),
+                instances.pred_classes == COCO_PERSON_ID-1  # also detect people
+            )
         filtered_instances = instances[filter]  # a car or a (pickup) truck
         bboxes = filtered_instances.pred_boxes.to("cpu")
         confs = filtered_instances.scores.to("cpu")
@@ -89,10 +102,20 @@ def run_inference_detectron(args):
             # TODO: also allow predicting trucks (because pick-up trucks are also cars, but in COCO they are considered trucks)
             box = bboxes[i].tensor.numpy()[0]
 
-            # Store in AI City Format:
-            # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
-            det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i].item())+',-1,-1,-1\n'
-            f.write(det)
+            if args.format.lower() == "aicity":
+                # Store in AI City Format:
+                # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
+                det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i].item())+',-1,-1,-1\n'
+                f.write(det)
+            elif args.format.lower() == "kitti":
+                # car 0.00 0 0.00 587.01 173.33 614.12 200.12 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+                # person 0.00 0 0.00 587.01 173.33 614.12 200.12 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+                f = open(os.path.join(cfg.OUTPUT_DIR, 'labels', f'{frame_id:05d}.txt'), 'w')
+                category = COCO_ID_TO_NAME[classes[i].item()]
+                det = f'{category} 0.00 0 0.00 {box[0]} {box[1]} {box[2]} {box[3]} 0.00 0.00 0.00 0.00 0.00 0.00 0.00\n'
+                f.write(det)
+            else:
+                raise ValueError("Unknown format: {}".format(args.format))
 
         if args.store_results:
             output_path = os.path.join(cfg.OUTPUT_DIR, 'det_frame_' + str(frame_id) + '.png')
@@ -100,7 +123,8 @@ def run_inference_detectron(args):
             out = v.draw_instance_predictions(filtered_instances.to("cpu"))
             cv2.imwrite(output_path, out.get_image()[:, :, ::-1])
 
-    f.close()
+    if args.format.lower() == "aicity":
+        f.close()
 
     print('Inference time (s/img): ', np.mean(timestamps)/1000)
 
