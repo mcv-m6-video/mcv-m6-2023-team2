@@ -97,7 +97,7 @@ def run_inference_detectron(args):
                 torch.logical_or(instances.pred_classes == VALID_IDS_SUBS[0], instances.pred_classes == VALID_IDS_SUBS[1]),
                 instances.pred_classes == COCO_PERSON_ID-1  # also detect people
             )
-            filter = torch.logical_and(filter, instances.scores > 0.75)
+            filter = torch.logical_and(filter, instances.scores > 0.5)
             f = open(os.path.join(labels_dir, f'{frame_id:05d}.txt'), 'w')
 
         filtered_instances = instances[filter]  # a car or a (pickup) truck
