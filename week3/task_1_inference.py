@@ -97,6 +97,8 @@ def run_inference_detectron(args):
                 instances.pred_classes == COCO_PERSON_ID-1  # also detect people
             )
             filter = torch.logical_and(filter, instances.scores > 0.75)
+            f = open(os.path.join(cfg.OUTPUT_DIR, 'labels', f'{frame_id:05d}.txt'), 'w')
+
         filtered_instances = instances[filter]  # a car or a (pickup) truck
         bboxes = filtered_instances.pred_boxes.to("cpu")
         confs = filtered_instances.scores.to("cpu")
@@ -110,22 +112,24 @@ def run_inference_detectron(args):
                 # Store in AI City Format:
                 # <frame> <id> <bb_left> <bb_top> <bb_width> <bb_height> <conf> <x> <y> <z>
                 det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(confs[i].item())+',-1,-1,-1\n'
-                f.write(det)
             elif args.format.lower() == "kitti":
                 # car 0.00 0 0.00 587.01 173.33 614.12 200.12 0.00 0.00 0.00 0.00 0.00 0.00 0.00
                 # person 0.00 0 0.00 587.01 173.33 614.12 200.12 0.00 0.00 0.00 0.00 0.00 0.00 0.00
-                f = open(os.path.join(cfg.OUTPUT_DIR, 'labels', f'{frame_id:05d}.txt'), 'w')
                 category = COCO_ID_TO_NAME[classes[i].item()]
                 det = f'{category} 0.00 0 0.00 {box[0]} {box[1]} {box[2]} {box[3]} 0.00 0.00 0.00 0.00 0.00 0.00 0.00\n'
-                f.write(det)
             else:
                 raise ValueError("Unknown format: {}".format(args.format))
+
+            f.write(det)
 
         if args.store_results:
             output_path = os.path.join(cfg.OUTPUT_DIR, 'det_frame_' + str(frame_id) + '.png')
             v = Visualizer(frame[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1)
             out = v.draw_instance_predictions(filtered_instances.to("cpu"))
             cv2.imwrite(output_path, out.get_image()[:, :, ::-1])
+
+        if args.format.lower() == "kitti":
+            f.close()
 
     if args.format.lower() == "aicity":
         f.close()
