@@ -1,18 +1,25 @@
+from __future__ import print_function
+
 import os
 import argparse
 import numpy as np
 import time
 import matplotlib.pyplot as plt  
 import matplotlib.patches as patches
+import cv2
 
+from tqdm import tqdm
 from skimage import io
-from __future__ import print_function
 from IPython import display as dp
 
 from utils import (
     load_predictions,
     load_annotations,
+    group_annotations_by_frame,
 )
+from tracking_utils import TrackingViz
+from sort import Sort
+
 
 def __parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -21,6 +28,9 @@ def __parse_args() -> argparse.Namespace:
     
     parser.add_argument('--path_annotations', type=str, default="data/AICity_data/train/S03/c010/ai_challenge_s03_c010-full_annotation.xml",
                     help='Path to the directory where the annotations are stored.')
+    
+    parser.add_argument('--path_sequence', type=str, default="data/AICity_data/train/S03/c010/vdo.avi",
+                        help='Path to the directory where the sequence is stored.')
 
     parser.add_argument('--path_results', type=str, default="./results/",
                     help='The path to the directory where the results will be stored.')
@@ -34,7 +44,8 @@ def __parse_args() -> argparse.Namespace:
 
 def main(args: argparse.Namespace):
     if args.use_ground_truth:
-        annotations = load_annotations(args.path_annotations, grouped=True) 
+        detections = load_annotations(args.path_annotations) 
+        detections = group_annotations_by_frame(detections)
     else:
         raise NotImplementedError
     
@@ -45,53 +56,49 @@ def main(args: argparse.Namespace):
     total_frames = 0
     out = []
 
-    if display:
-        plt.ion() # for iterative display
-        fig, ax = plt.subplots(1, 2,figsize=(20,20))
+    # Only for display
+    output_video_path = os.path.join(args.path_results, "task_2_2.mp4")
+    os.makedirs(args.path_results, exist_ok=True)
 
-    for frame in range(int(seq_dets[:,0].max())): # all frames in the sequence
-        frame += 1 #detection and frame numbers begin at 1
-        dets = seq_dets[seq_dets[:,0]==frame,2:7]   
-        
-        if display:
-            fn = '../../../data/2DMOT2015/%s/%s/img1/%06d.jpg'%(phase,seq,frame) # read the frame
-            im =io.imread(fn)
-            ax[0].imshow(im)
-            ax[0].axis('off')
-            ax[0].set_title('Original Faster R-CNN detections')
-            for j in range(np.shape(dets)[0]):
-                color = colours[j]
-                coords = (dets[j,0],dets[j,1]), dets[j,2], dets[j,3]
-                ax[0].add_patch(plt.Rectangle(*coords,fill=False,edgecolor=color,lw=3))
+    video = cv2.VideoCapture(args.path_sequence)
+    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    video_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    video_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(video.get(cv2.CAP_PROP_FPS))
+    
+    tracking_viz = TrackingViz(output_video_path, video_width, video_height, fps)
+
+    mot_tracker = Sort() 
+
+    for idx_frame in tqdm(range(0, total_frames)):  
+        dets = detections[idx_frame]   
+
+        # read the frame
+        # video.set(cv2.CAP_PROP_POS_FRAMES, idx_frame)
+        ret, frame = video.read()
+
+        if not ret:
+            break
                 
-        dets[:,2:4] += dets[:,0:2] #convert to [x1,y1,w,h] to [x1,y1,x2,y2] for the tracker input
-        total_frames += 1
+        # Convert to proper array for the tracker input
+        dets = np.array([d.coordinates for d in dets])
 
-        if display:
-            ax[1].imshow(im)
-            ax[1].axis('off')
-            ax[1].set_title('Tracked Targets')
+        # If no detections, add empty array
+        if len(dets) == 0:
+            dets = np.empty((0, 5))
 
         start_time = time.time()
         trackers = mot_tracker.update(dets)
         cycle_time = time.time() - start_time
         total_time += cycle_time
         
+        tracking_viz.draw_tracks(frame, trackers)        
+        
         out.append(trackers)
-        for d in trackers:
-            if display:
-                d = d.astype(np.uint32)
-                ax[1].add_patch(patches.Rectangle((d[0],d[1]),d[2]-d[0],d[3]-d[1],fill=False,lw=3,ec=colours[d[4]%32,:]))
-                ax[1].set_adjustable('box-forced')
+        total_frames += 1
 
-        if display:
-            dp.clear_output(wait=True)
-            dp.display(plt.gcf())
-            time.sleep(0.000001)
-            ax[0].cla()
-            ax[1].cla()
+    print("Total Tracking took: %.3f for %d frames or %.1f FPS" % (total_time, total_frames, total_frames/total_time))
 
-    print("Total Tracking took: %.3f for %d frames or %.1f FPS"%(total_time,total_frames,total_frames/total_time))
 
 if __name__ == "__main__":
     args = __parse_args()
