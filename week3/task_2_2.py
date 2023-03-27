@@ -71,7 +71,7 @@ def main(args: argparse.Namespace):
 
     mot_tracker = Sort() 
 
-    for idx_frame in tqdm(range(0, 100)):  
+    for idx_frame in tqdm(range(0, total_frames)):  
         dets = detections[idx_frame]   
 
         # read the frame
