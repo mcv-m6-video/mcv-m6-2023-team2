@@ -25,6 +25,7 @@ def iou_over_time(
         frame_sampling_each: int = 4,
         save_plots: bool = True,
         save_path: str = "week1/results/",
+        run_name: str = "MY_RUN",
 ) -> float:
     """
     Shows the given annotations and predictions in the given video and returns the mean IoU.
@@ -82,7 +83,6 @@ def iou_over_time(
 
         if save_plots:
 
-            run_name = "MY_RUN"
             plots_folder = os.path.join(save_path, run_name, str(max_frames))
             os.makedirs(plots_folder, exist_ok=True)
             os.makedirs(plots_folder+"/static", exist_ok=True)

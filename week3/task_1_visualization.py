@@ -45,6 +45,7 @@ def task_1_1_visualization(args):
         max_frames=args.num_frames,
         frame_sampling_each=4,
         save_path=args.path_results,
+        run_name="",
     )
 
     print("Mean IoU: ", mean_iou)
