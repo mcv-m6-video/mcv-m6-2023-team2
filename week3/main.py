@@ -1,7 +1,7 @@
 import argparse
 from task_1_inference import task_1_1_inference
 from task_1_evaluation import task_1_1_evaluation
-
+from task_1_visualization import task_1_1_visualization
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -51,7 +51,7 @@ if __name__ == "__main__":
                        help='Minimum IoU for a detection to be considered a TP.')
 
     parser.add_argument('--min_conf', type=float, default=0.5,
-                       help='Minimum confidence of a detection for it to be considere for evaluation.')
+                       help='Minimum confidence of a detection for it to be considered for evaluation.')
 
     parser.add_argument('--format', type=str, default='aicity',
                         help='Which format to use to store detections. Can be "aicity", "kitti". The latter is only suppoted for "faster" and "retina" models.')
@@ -71,7 +71,7 @@ if __name__ == "__main__":
         elif args.mode == 'evaluation':
             task_1_1_evaluation(args)
         elif args.mode == 'visualization':
-            pass
+            task_1_1_visualization(args)
     elif args.t1_2:
         print('Launching Task 1.2')
         task2(args)
