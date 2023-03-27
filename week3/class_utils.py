@@ -74,23 +74,23 @@ class BoundingBox:
         return BoundingBox(self.x1, self.y1, self.x2, self.y2, self.track_id, self.frame, self.label, self.parked)
 
 
-def intersection_bboxes(bboxA, bboxB):
-    """Computes the intersection area of two bounding boxes."""
-    xA = max(bboxA.x1, bboxB.x1)
-    yA = max(bboxA.y1, bboxB.y1)
-    xB = min(bboxA.x2, bboxB.x2)
-    yB = min(bboxA.y2, bboxB.y2)
-    return max(0, xB - xA) * max(0, yB - yA)
+    def intersection_bboxes(self, bboxB):
+        """Computes the intersection area of two bounding boxes."""
+        xA = max(self.x1, bboxB.x1)
+        yA = max(self.y1, bboxB.y1)
+        xB = min(self.x2, bboxB.x2)
+        yB = min(self.y2, bboxB.y2)
+        return max(0, xB - xA) * max(0, yB - yA)
 
 
-def IoA(bboxA, bboxB):
-    """Computes the intersection over areas of two bounding boxes."""
-    intersecArea = intersection_bboxes(bboxA, bboxB)
-    return intersecArea / bboxA.area, intersecArea / bboxB.area
+    def IoA(self, bboxB):
+        """Computes the intersection over areas of two bounding boxes."""
+        intersecArea = self.intersection_bboxes(bboxB)
+        return intersecArea / self.area, intersecArea / bboxB.area
 
 
-def IoU(bboxA, bboxB):
-    """Computes the intersection over union of two bounding boxes."""
-    interArea = intersection_bboxes(bboxA, bboxB)
-    iou = interArea / float(bboxA.area + bboxB.area - interArea)
-    return iou
+    def IoU(self, bboxB):
+        """Computes the intersection over union of two bounding boxes."""
+        interArea = self.intersection_bboxes(bboxB)
+        iou = interArea / float(self.area + bboxB.area - interArea)
+        return iou
