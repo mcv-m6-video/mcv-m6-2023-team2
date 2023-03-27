@@ -18,6 +18,7 @@ from utils import (
     group_annotations_by_frame,
 )
 from tracking_utils import TrackingViz
+from class_utils import BoundingBox
 from sort import Sort
 
 
@@ -70,7 +71,7 @@ def main(args: argparse.Namespace):
 
     mot_tracker = Sort() 
 
-    for idx_frame in tqdm(range(0, total_frames)):  
+    for idx_frame in tqdm(range(0, 100)):  
         dets = detections[idx_frame]   
 
         # read the frame
@@ -94,7 +95,9 @@ def main(args: argparse.Namespace):
         cycle_time = time.time() - start_time
         total_time += cycle_time
         
+        trackers = [BoundingBox(*t, int(idx_frame)) for t in trackers]
         tracking_viz.draw_tracks(frame, trackers)  
+        tracking_viz.draw_trajectories(frame)
         tracking_viz.write_frame(frame)      
         
         out.append(trackers)

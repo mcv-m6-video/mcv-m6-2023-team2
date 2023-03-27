@@ -15,6 +15,7 @@ class BoundingBox:
     confidence: Optional[float] = None
 
     def __post_init__(self):
+        self.track_id = int(self.track_id)
         self.width = self.x2 - self.x1
         self.height = self.y2 - self.y1
         self.__update_center()
