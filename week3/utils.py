@@ -74,7 +74,7 @@ def iou_over_time(
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-        frame = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), (int(width/10), int(height/10)))
+        frame = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), (int(width/5), int(height/5)))
         frames.append(frame)
         steps.append(idx_frame)
 
