@@ -4,6 +4,7 @@ from utils import (
     iou_over_time,
     load_annotations,
     load_predictions,
+    filter_by_conf,
 )
 
 
@@ -35,6 +36,7 @@ def task_1_1_visualization(args):
 
     gt =  load_annotations(args.path_GT, grouped=False, use_parked=True)
     det = load_predictions(args.path_det, grouped=False)
+    det = filter_by_conf(det, conf_thr=0.5)
 
     mean_iou = iou_over_time(
         video_path=args.path_video,

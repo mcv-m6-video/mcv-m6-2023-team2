@@ -77,7 +77,7 @@ def iou_over_time(
         frames.append(frame)
         steps.append(idx_frame)
 
-        _, _, _, iou = voc_eval([grouped_annotations[idx_frame]], [grouped_predictions[idx_frame]])
+        _, _, _, _, iou = voc_eval([grouped_annotations[idx_frame]], [grouped_predictions[idx_frame]])
         miou.append(iou)
 
         if save_plots:
@@ -120,6 +120,15 @@ def iou_over_time(
         f.write(str(mean_miou))
 
     return mean_miou
+
+
+def filter_by_conf(detections, conf_thr=0.5):
+    filtered_detections = []
+    for det in detections:
+        if det.confidence >= conf_thr:
+            filtered_detections.append(det)
+
+    return filtered_detections
 
 
 def group_by_frame(boxes):
