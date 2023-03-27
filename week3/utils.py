@@ -115,7 +115,7 @@ def iou_over_time(
     imageio.mimsave(os.path.join(plots_folder, f"video_small_{max_frames}.gif"), frames, duration=0.05)
     print(f"GIF saved at {save_path}")
 
-    _, _, _, mean_miou = voc_eval(grouped_annotations, grouped_predictions)
+    _, _, _, _, mean_miou = voc_eval(grouped_annotations, grouped_predictions)
     with open(os.path.join(plots_folder, 'mean_iou.txt'), 'w') as f:
         f.write(str(mean_miou))
 
