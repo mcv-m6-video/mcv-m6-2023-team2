@@ -34,7 +34,7 @@ from utils import (
 
 def task_1_1_visualization(args):
 
-    gt =  load_annotations(args.path_GT, grouped=False, use_parked=True)
+    gt =  load_annotations(args.path_GT, select_label_types=["car"], grouped=False, use_parked=True)
     det = load_predictions(args.path_det, grouped=False)
     det = filter_by_conf(det, conf_thr=0.5)
 
