@@ -79,6 +79,8 @@ def main(args: argparse.Namespace):
 
         if not ret:
             break
+
+        tracking_viz.draw_detections(frame, dets)
                 
         # Convert to proper array for the tracker input
         dets = np.array([d.coordinates for d in dets])
@@ -92,7 +94,8 @@ def main(args: argparse.Namespace):
         cycle_time = time.time() - start_time
         total_time += cycle_time
         
-        tracking_viz.draw_tracks(frame, trackers)        
+        tracking_viz.draw_tracks(frame, trackers)  
+        tracking_viz.write_frame(frame)      
         
         out.append(trackers)
         total_frames += 1
