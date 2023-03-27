@@ -20,15 +20,15 @@ from filtering import (
 from metrics import voc_eval
 
 COLOR_SPACES = {
-    # 'RGB': (cv2.COLOR_BGR2RGB, 3),
-    # 'LAB': (cv2.COLOR_BGR2LAB, 3),
+    'RGB': (cv2.COLOR_BGR2RGB, 3),
+    'LAB': (cv2.COLOR_BGR2LAB, 3),
     # 'YUV': (cv2.COLOR_BGR2YUV, 3),
     # 'H': (cv2.COLOR_BGR2HSV, 1),
     # 'L': (cv2.COLOR_BGR2LAB, 1),
     # 'CbCr': (cv2.COLOR_BGR2YCrCb, 2),
     'grayscale': (cv2.COLOR_BGR2GRAY, 1),
-    # 'YCrCb': (cv2.COLOR_BGR2YCrCb, 3),
-    # 'HSV': (cv2.COLOR_BGR2HSV, 3),
+    'YCrCb': (cv2.COLOR_BGR2YCrCb, 3),
+    'HSV': (cv2.COLOR_BGR2HSV, 3),
 }
 
 
@@ -38,7 +38,14 @@ def fixed_Gaussian_background(img, H_W, mean, std, args):
     segmentation = np.zeros((h, w))
     mask = abs(img - mean) >= alpha * (std + 2)
 
-    N_channels = COLOR_SPACES[args['color_space']][1]
+    N_channels = COLOR_SPACES[args['color_space']][1] if 'channels' not in args else args['channels']
+
+    if type(N_channels) is str:
+        if N_channels == 'all':
+            N_channels = 3
+        else:
+            N_channels = 1
+
     if N_channels == 1:
         segmentation[mask] = 255
     else:
@@ -61,7 +68,13 @@ def adaptive_Gaussian_background(img, H_W, mean, std, args):
     mask = abs(img - mean) >= alpha * (std + 2)
 
     segmentation = np.zeros((h, w))
-    N_channels = COLOR_SPACES[args['color_space']][1]
+    N_channels = COLOR_SPACES[args['color_space']][1] if 'channels' not in args else args['channels']
+
+    if type(N_channels) is str:
+        if N_channels == 'all':
+            N_channels = 3
+        else:
+            N_channels = 1
 
     if N_channels == 1:
         segmentation[mask] = 255
@@ -93,20 +106,28 @@ def eval(video_cv2, H_W, mean, std, N_val, args):
     init_frame_id = int(video_cv2.get(cv2.CAP_PROP_POS_FRAMES))
     frame_id = init_frame_id
     # print("initial frame id: ", init_frame_id)
+
     detections, annotations = [], []
     i_GT = frame_id
     for t in tqdm(range(N_val), desc='Evaluating Gaussian background model... (this may take a while)'):
         _, frame = video_cv2.read()
         frame = cv2.cvtColor(frame, COLOR_SPACES[args['color_space']][0])
-        if args['color_space'] == 'H':
-            H, S, V = np.split(frame, 3, axis=2)
-            frame = np.squeeze(H)
-        if args['color_space'] == 'L':
-            L, A, B = np.split(frame, 3, axis=2)
-            frame = np.squeeze(L)
-        if args['color_space'] == 'CbCr':
-            Y, Cb, Cr = np.split(frame, 3, axis=2)
-            frame = np.dstack((Cb, Cr))
+
+        # if args['color_space'] == 'H':
+        #     H, S, V = np.split(frame, 3, axis=2)
+        #     frame = np.squeeze(H)
+        # if args['color_space'] == 'L':
+        #     L, A, B = np.split(frame, 3, axis=2)
+        #     frame = np.squeeze(L)
+        # if args['color_space'] == 'CbCr':
+        #     Y, Cb, Cr = np.split(frame, 3, axis=2)
+        #     frame = np.dstack((Cb, Cr))
+        
+        if 'channels' in args:
+            if args['channels'] == 'all':
+                frame = frame
+            else:
+                frame = frame[:,:,int(args['channels'])]
 
         segmentation, mean, std = method_Gaussian_background[args['bg_model']](frame, H_W, mean, std, args)
         roi = cv2.imread(args['path_roi'], cv2.IMREAD_GRAYSCALE) / 255
@@ -125,8 +146,10 @@ def eval(video_cv2, H_W, mean, std, N_val, args):
             # print('if len(GT[i_GT]) == 0:')
         else:
             gt_bboxes = GT[i_GT]
+
         annotations += [gt_bboxes]
         i_GT += 1
+
         # if frame_id < GT[i_GT][0].frame:  # GT is assumed to be sorted by frame id
         #     print('if frame_id < GT[i_GT][0].frame:' * 3)
         #     gt_bboxes = []
@@ -139,10 +162,11 @@ def eval(video_cv2, H_W, mean, std, N_val, args):
         #     gt_bboxes = GT[i_GT]
         #     i_GT += 1
 
-        segmentation = cv2.cvtColor(segmentation.astype(np.uint8), cv2.COLOR_GRAY2RGB)
-        segmentation_boxes = draw_boxes(image=segmentation, boxes=detected_bboxes, color='r', linewidth=3)
-        segmentation_boxes = draw_boxes(image=segmentation_boxes, boxes=gt_bboxes, color='g', linewidth=3)
-        segmentation_boxes = draw_legend(image=segmentation_boxes, labels=['Ground truth', 'Detected'], colors=['g','r'])
+        if args['store_results'] and args['frames_range'][0] <= frame_id < args['frames_range'][1] or args['viz_bboxes']:
+            segmentation = cv2.cvtColor(segmentation.astype(np.uint8), cv2.COLOR_GRAY2RGB)
+            segmentation_boxes = draw_boxes(image=segmentation, boxes=detected_bboxes, color='r', linewidth=3)
+            segmentation_boxes = draw_boxes(image=segmentation_boxes, boxes=gt_bboxes, color='g', linewidth=3)
+            segmentation_boxes = draw_legend(image=segmentation_boxes, labels=['Ground truth', 'Detected'], colors=['g','r'])
 
         if args['store_results'] and args['frames_range'][0] <= frame_id < args['frames_range'][1]:
             save_image(segmentation_boxes.astype(int), frame_id, args, subfolder='segm_bbox', extension='.png')
@@ -173,7 +197,14 @@ def eval(video_cv2, H_W, mean, std, N_val, args):
 def fit(video_cv2, H_W, N_train, args):
     count = 0
     h, w = H_W
-    num_ch = COLOR_SPACES[args['color_space']][1]
+    num_ch = COLOR_SPACES[args['color_space']][1] if 'channels' not in args else args['channels']
+
+    if type(num_ch) is str:
+        if num_ch == 'all':
+            num_ch = 3
+        else:
+            num_ch = 1
+
     if num_ch == 1:
         avg = np.zeros((h, w))
         SS = np.zeros((h, w))
@@ -181,22 +212,28 @@ def fit(video_cv2, H_W, N_train, args):
         avg = np.zeros((h, w, num_ch))
         SS = np.zeros((h, w, num_ch))
 
-
-
     pixel_avg, pixel_std, pixel_val, (h_p, w_p) = [], [], [], (180, 742)
     # Compute average and std
     for t in tqdm(range(N_train), desc='Fitting Gaussian background model... (computing mean and std)'):
         _, frame = video_cv2.read()
         frame = cv2.cvtColor(frame, COLOR_SPACES[args['color_space']][0])
-        if args['color_space'] == 'H':
-            H, S, V = np.split(frame, 3, axis=2)
-            frame = np.squeeze(H)
-        if args['color_space'] == 'L':
-            L, A, B = np.split(frame, 3, axis=2)
-            frame = np.squeeze(L)
-        if args['color_space'] == 'CbCr':
-            Y, Cb, Cr = np.split(frame, 3, axis=2)
-            frame = np.dstack((Cb, Cr))
+
+        # if args['color_space'] == 'H':
+        #     H, S, V = np.split(frame, 3, axis=2)
+        #     frame = np.squeeze(H)
+        # if args['color_space'] == 'L':
+        #     L, A, B = np.split(frame, 3, axis=2)
+        #     frame = np.squeeze(L)
+        # if args['color_space'] == 'CbCr':
+        #     Y, Cb, Cr = np.split(frame, 3, axis=2)
+        #     frame = np.dstack((Cb, Cr))
+        
+        if 'channels' in args:
+            if args['channels'] == 'all':
+                frame = frame
+            else:
+                frame = frame[:,:,int(args['channels'])]
+
         count += 1
         dev_avg = frame - avg
         avg += dev_avg / count

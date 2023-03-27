@@ -150,7 +150,7 @@ def voc_eval(preds, gt, ovthresh=0.5):
     # avoid divide by zero in case the first detection matches a difficult
     # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
-    f1 = 2 * prec * rec / (prec + rec)
+    f1 = 2 * prec * rec / (prec + rec + np.finfo(np.float64).eps)
     ap = voc_ap(rec, prec)
     iou = np.mean(iou)
 

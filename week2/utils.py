@@ -381,6 +381,7 @@ def plot_3d_surface(args, study: optuna.study.Study, metric: str = 'F1', interac
     plt.ylabel('rho')
     plt.title('recall')
     plt.legend()
+    os.makedirs(args.path_results, exist_ok=True)
     plt.savefig(os.path.join(args.path_results, f'optuna-{args.optuna_study_name}-{metric}.png'))
 
     if interactive:

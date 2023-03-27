@@ -109,7 +109,10 @@ ENV/
 /runs/
 /plots/
 /wandb/
+/data/
+/results
 
+*.db
 *.png
 *.avi
 !assets/*.png
