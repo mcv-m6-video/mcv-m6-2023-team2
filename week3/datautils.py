@@ -215,31 +215,31 @@ def load_random_data(t="train"):
 
 def load_xox(t="train"):
     if t == "train":
-        with open("fold2.json", 'r') as file:
+        with open("./datafolds/fold2.json", 'r') as file:
             train = json.load(file)
         return train
     elif t == "val":
-      with open("fold1+3.json", 'r') as file:
+      with open("./datafolds/fold1+3.json", 'r') as file:
           val = json.load(file)
     return val
 
 def load_xxo(t="train"):
     if t == "train":
-        with open("fold3.json", 'r') as file:
+        with open("./datafolds/fold3.json", 'r') as file:
             train = json.load(file)
         return train
     elif t == "val":
-      with open("fold1+2.json", 'r') as file:
+      with open("./datafolds/fold1+2.json", 'r') as file:
           val = json.load(file)
     return val
 
 def load_oxx(t="train"):
     if t == "train":
-        with open("fold1.json", 'r') as file:
+        with open("./datafolds/fold1.json", 'r') as file:
             train = json.load(file)
         return train
     elif t == "val":
-      with open("fold3+2.json", 'r') as file:
+      with open("./datafolds/fold3+2.json", 'r') as file:
           val = json.load(file)
     return val
 

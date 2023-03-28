@@ -26,7 +26,7 @@ MODELS = {
     'faster': 'faster_rcnn_R_50_FPN_3x',
 }
 
-def run_finetune_detectron(args, split: str = 'random', kfolds = True, folds = 'oxx'):
+def run_finetune_detectron(args, split: str = 'random', kfolds = True, folds = 'xxo'):
 
     model_path = 'COCO-Detection/' + MODELS[args.model] + '.yaml'
 
