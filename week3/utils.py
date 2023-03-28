@@ -168,8 +168,10 @@ def load_annotations(
     for track in tracks:
         if select_label_types and track['@label'] not in select_label_types:
             continue
+
         for box in track['box']:
             is_parked = 'attribute' in box and box['attribute']['#text'] == 'true'
+            
             if not use_parked and is_parked:
                 continue
 

@@ -4,7 +4,7 @@ from tqdm import tqdm
 from utils import load_annotations, group_annotations_by_frame
 
 
-annotations = load_annotations("./data/AICity_data/train/S03/c010/ai_challenge_s03_c010-full_annotation.xml")
+annotations = load_annotations("./data/AICity_data/train/S03/c010/ai_challenge_s03_c010-full_annotation.xml", use_parked=True)
 annotations = group_annotations_by_frame(annotations)
 
 base_dir = "./week3/data"
@@ -23,7 +23,8 @@ gt_file = open(os.path.join(sequence_path, "gt", "gt.txt"), "w")
 
 for frame_anns in tqdm(annotations):
     for ann in frame_anns:
-        gt_file.write(f"{ann.frame+1},{ann.track_id},{ann.x1},{ann.y1},{ann.x2},{ann.y2},1,-1,-1,-1\n")
+        x1, y1, w, h = ann.coordinates_dim
+        gt_file.write(f"{ann.frame+1},{ann.track_id+1},{x1},{y1},{w},{h},1,-1,-1,-1\n")
 
 gt_file.close()
 

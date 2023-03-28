@@ -2,3 +2,12 @@ xmltodict
 filterpy==1.4.5
 scikit-image==0.17.2
 lap==0.4.0
+numpy==1.18.1
+scipy==1.4.1
+pycocotools==2.0.2
+matplotlib==3.2.1
+opencv_python==4.4.0.46
+pytest==6.0.1
+Pillow==8.1.2
+tqdm==4.64.0
+tabulate

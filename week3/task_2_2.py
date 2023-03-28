@@ -27,10 +27,7 @@ def __parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description='Road Traffic Monitoring Analysis for Video Surveillance. MCV-M6-Project, week 3, task 2.2. Team 2'
     )
-    
-    parser.add_argument('--path_detections', type=str, default="week3/results/retina/detections.txt",  # "data/AICity_data/train/S03/c010/ai_challenge_s03_c010-full_annotation.xml",
-                    help='Path to the directory where the annotations are stored.')
-    
+
     parser.add_argument('--path_sequence', type=str, default="data/AICity_data/train/S03/c010/vdo.avi",
                         help='Path to the directory where the sequence is stored.')
 
@@ -115,20 +112,14 @@ def tracking_by_kalman_filter(detections, model_name, save_video_path, save_trac
 
 
 def main(args: argparse.Namespace):
-    if args.use_ground_truth:
-        detections = load_annotations(args.path_detections) 
-        for annotation in detections:
-            annotation.confidence = np.random.uniform(0, 1)
+    for model_name in ["yolo", "ssd", "detr", "retina"]:
+        # Path will be like this: ./week3/data/gt/mot_challenge/parabellum-train/MODEL_NAME/data/s03.txt
+        detections_path = f"week3/results/{model_name}/detections.txt"
+        detections = load_predictions(detections_path)
         detections = filter_annotations(detections, confidence_thr=args.confidence_threshold)
         detections = group_annotations_by_frame(detections)
-    else:
-        detections = load_predictions(args.path_detections)
-        detections = filter_annotations(detections, confidence_thr=args.confidence_threshold)
-        detections = group_annotations_by_frame(detections)
-    
-    # Path will be like this: ./week3/data/gt/mot_challenge/parabellum-train/MODEL_NAME/data/s03.txt
-    model_name = "retina_track"
-    tracking_by_kalman_filter(detections, model_name, args.path_results, args.path_tracking_data)
+        model_name = f"{model_name}_thr_{int(args.confidence_threshold*100)}"
+        tracking_by_kalman_filter(detections, model_name, args.path_results, args.path_tracking_data)
 
 
 if __name__ == "__main__":
