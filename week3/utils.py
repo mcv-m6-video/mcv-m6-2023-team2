@@ -225,6 +225,10 @@ def load_predictions(csv_file_path: str, grouped: bool = False) -> List[Bounding
     return bboxes
 
 
+def filter_annotations(annotations: List[BoundingBox], confidence_thr: float = 0.0) -> List[BoundingBox]:
+    return [x for x in annotations if x.confidence >= confidence_thr]
+
+
 def load_optical_flow(file_path: str):
     # channels arranged as BGR
     img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED).astype(np.double)
