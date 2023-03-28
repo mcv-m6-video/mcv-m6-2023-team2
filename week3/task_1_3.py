@@ -42,6 +42,9 @@ def run_finetune_detectron(args, split: str = 'first'):
         cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST = 0.4
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(model_path)
     cfg.OUTPUT_DIR = os.path.join(args.path_results, args.model)
+    cfg.SOLVER.IMS_PER_BATCH = 8
+    cfg.SOLVER.CHECKPOINT_PERIOD = 10
+    cfg.SOLVER.MAX_ITER = 1000
     
     cfg.DATASETS.TEST = ('val',)
     cfg.DATASETS.TRAIN = ('train',)
