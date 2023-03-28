@@ -169,6 +169,29 @@ def load_jsons(coco_dictionary):
     open('train_random.json', 'w').write(json.dumps(train))
     open('val_random.json', 'w').write(json.dumps(val))
 
+    ### CROSS VALIDATION ####
+    fold_1, fold_2, fold_3 = list(), list(), list()
+    start_fold_2 = int(0.33 * len(coco_dictionary['images']))
+    start_fold_3 = int(0.66 * len(coco_dictionary['images']))
+    using = fold_1
+
+    for idx, image in enumerate(coco_dictionary['images']):
+
+        gt = [{**x, 'bbox_mode': 1} for x in coco_dictionary['annotations'] if image['id'] == x['image_id']]
+        
+        if idx > start_fold_3: using = fold_3
+        elif idx > start_fold_2: using = fold_2
+        else: using = fold_1
+
+        using.append({**image, 'image_id': image['id'], 'annotations': gt})
+
+    open('fold1.json', 'w').write(json.dumps(fold_1))
+    open('fold2.json', 'w').write(json.dumps(fold_2))
+    open('fold3.json', 'w').write(json.dumps(fold_3))
+
+    open('fold1+3.json', 'w').write(json.dumps(fold_1 + fold_3))
+    open('fold1+2.json', 'w').write(json.dumps(fold_1 + fold_2))
+    open('fold3+2.json', 'w').write(json.dumps(fold_3 + fold_2))
 
 def load_first_data(t="train"):
     if t == "train":

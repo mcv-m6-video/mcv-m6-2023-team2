@@ -26,7 +26,7 @@ MODELS = {
     'faster': 'faster_rcnn_R_50_FPN_3x',
 }
 
-def run_finetune_detectron(args, split: str = 'first'):
+def run_finetune_detectron(args, split: str = 'random'):
 
     model_path = 'COCO-Detection/' + MODELS[args.model] + '.yaml'
 
@@ -46,16 +46,16 @@ def run_finetune_detectron(args, split: str = 'first'):
     cfg.SOLVER.CHECKPOINT_PERIOD = 10
     cfg.SOLVER.MAX_ITER = 1000
     
-    cfg.DATASETS.TEST = ('val',)
-    cfg.DATASETS.TRAIN = ('train',)
-    os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
-
     ### HERE WE REGISTER THE DATASET ###
     loader = rapapa.load_first_data if split == 'first' else rapapa.load_random_data
-    for d in ["train", "val"]:
-        DatasetCatalog.register(d, lambda d=d: loader(d))
+    for d in [f"train_{split}", f"val_{split}"]:
+        DatasetCatalog.register(d, lambda d=d: loader(d.split('_')[0] ))
         MetadataCatalog.get(d).set(thing_classes=["car", "bike"])
-    metadata = MetadataCatalog.get("train")
+    metadata = MetadataCatalog.get(f"train_{split}")
+
+    cfg.DATASETS.TRAIN = (f"train_{split}",)
+    cfg.DATASETS.TEST = (f"val_{split}",)
+    os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 
     trainer = DefaultTrainer(cfg)
     trainer.resume_or_load(resume=False)
