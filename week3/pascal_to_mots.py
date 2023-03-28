@@ -4,7 +4,7 @@ from tqdm import tqdm
 from utils import load_annotations, group_annotations_by_frame
 
 
-annotations = load_annotations("./data/AICity_data/train/S03/c010/ai_challenge_s03_c010-full_annotation.xml")
+annotations = load_annotations("./data/AICity_data/train/S03/c010/ai_challenge_s03_c010-full_annotation.xml", use_parked=True)
 annotations = group_annotations_by_frame(annotations)
 
 base_dir = "./week3/data"
