@@ -4,19 +4,15 @@ import os
 import argparse
 import numpy as np
 import time
-import matplotlib.pyplot as plt  
-import matplotlib.patches as patches
 import cv2
 
 from tqdm import tqdm
-from skimage import io
-from IPython import display as dp
 
 from utils import (
     load_predictions,
-    load_annotations,
     group_annotations_by_frame,
     filter_annotations,
+    non_maxima_suppression
 )
 from tracking_utils import TrackingViz
 from class_utils import BoundingBox
@@ -47,7 +43,15 @@ def __parse_args() -> argparse.Namespace:
     return args
 
 
-def tracking_by_kalman_filter(detections, model_name, save_video_path, save_tracking_path):
+def tracking_by_kalman_filter(
+        detections, 
+        model_name, 
+        save_video_path, 
+        save_tracking_path, 
+        max_age: int = 1,
+        min_hits: int = 3,
+        iou_threshold: float = 0.3,
+    ):
     # Reference: https://github.com/telecombcn-dl/2017-persontyle/blob/master/sessions/tracking/tracking_kalman.ipynb
     save_tracking_path = os.path.join(save_tracking_path, model_name, "data")
     os.makedirs(save_tracking_path, exist_ok=True)
@@ -69,10 +73,13 @@ def tracking_by_kalman_filter(detections, model_name, save_video_path, save_trac
     tracking_viz = TrackingViz(output_video_path, video_width, video_height, fps)
     results_file = open(os.path.join(save_tracking_path, "s03.txt"), "w")
 
-    mot_tracker = Sort() 
+    mot_tracker = Sort(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold) 
 
     for idx_frame in tqdm(range(0, total_frames)):  
-        dets = detections[idx_frame]   
+        if len(detections) <= idx_frame:
+            dets = []
+        else:
+            dets = detections[idx_frame]   
 
         # read the frame
         # video.set(cv2.CAP_PROP_POS_FRAMES, idx_frame)
@@ -112,14 +119,24 @@ def tracking_by_kalman_filter(detections, model_name, save_video_path, save_trac
 
 
 def main(args: argparse.Namespace):
-    for model_name in ["yolo", "ssd", "detr", "retina"]:
-        # Path will be like this: ./week3/data/gt/mot_challenge/parabellum-train/MODEL_NAME/data/s03.txt
-        detections_path = f"week3/results/{model_name}/detections.txt"
-        detections = load_predictions(detections_path)
-        detections = filter_annotations(detections, confidence_thr=args.confidence_threshold)
-        detections = group_annotations_by_frame(detections)
-        model_name = f"{model_name}_thr_{int(args.confidence_threshold*100)}"
-        tracking_by_kalman_filter(detections, model_name, args.path_results, args.path_tracking_data)
+    for model_name in ["retina"]: # "yolo", "ssd", "detr", 
+        for max_age in [1, 10, 50, 100]:
+            # Path will be like this: ./week3/data/gt/mot_challenge/parabellum-train/MODEL_NAME/data/s03.txt
+            detections_path = f"week3/results/{model_name}/detections.txt"
+            detections = load_predictions(detections_path)
+            detections = filter_annotations(detections, confidence_thr=args.confidence_threshold)
+            detections = group_annotations_by_frame(detections)
+            detections = non_maxima_suppression(detections)
+            model_name_for_file = f"kalman_{model_name}_thr_{int(args.confidence_threshold*100)}_max_age_{max_age}"
+            tracking_by_kalman_filter(
+                detections, 
+                model_name_for_file, 
+                args.path_results, 
+                args.path_tracking_data,
+                max_age=max_age,
+                min_hits=3,
+                iou_threshold=0.3,
+                )
 
 
 if __name__ == "__main__":

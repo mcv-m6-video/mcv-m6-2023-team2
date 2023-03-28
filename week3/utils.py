@@ -1,4 +1,5 @@
 from collections import defaultdict, OrderedDict
+from copy import deepcopy
 import math
 from typing import List, Dict
 import cv2
@@ -405,3 +406,38 @@ def generate_test_subset(data, N_frames=2141, test_p=0.75):
             test_data.append(annotation)
 
     return test_data
+
+
+def non_maxima_suppression(bboxes_per_frame: List[List[BoundingBox]], iou_threshold: float = 0.7) -> List[BoundingBox]:
+    """
+    Perform Non Maxima Suppression (NMS) on a list of bounding boxes.
+
+    :param bboxes: a list of BoundingBox objects per frame.
+    :param iou_threshold: the IoU threshold for overlapping bounding boxes.
+    :return: a list of selected BoundingBox objects after NMS.
+    """
+    new_bboxes_per_frame = []
+
+    for bboxes in bboxes_per_frame:
+        # Sort the bounding boxes by decreasing confidence scores.
+        bboxes_sorted = sorted(bboxes, key=lambda bbox: bbox.confidence or 0, reverse=True)
+
+        selected_bboxes = []
+
+        while bboxes_sorted:
+            # Select the bounding box with the highest confidence score.
+            bbox = bboxes_sorted[0]
+            selected_bboxes.append(bbox)
+
+            # Remove the selected bounding box from the list.
+            bboxes_sorted = bboxes_sorted[1:]
+
+            # Compute the IoU between the selected bounding box and the remaining bounding boxes.
+            ious = [bbox.IoU(other) for other in bboxes_sorted]
+
+            # Remove the bounding boxes with IoU > threshold.
+            bboxes_sorted = [b for i, b in enumerate(bboxes_sorted) if ious[i] <= iou_threshold]
+
+        new_bboxes_per_frame.append(selected_bboxes)
+
+    return new_bboxes_per_frame
