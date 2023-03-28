@@ -10,6 +10,7 @@ class Track(object):
     Class to represent a track (object or instance trajectory).
     """
     def __init__(self, id: int, first_detection: BoundingBox, first_frame_number: int):
+        first_detection.track_id = id
         self.id = id
         self.detections = [first_detection]
         self.frame_numbers = [first_frame_number]
@@ -19,6 +20,9 @@ class Track(object):
         return self.detections
 
     def add_detection(self, detection: BoundingBox, frame_number: int):
+        detection.track_id = self.id
+        if self.frame_numbers[-1] == frame_number:
+            return
         self.detections.append(detection)
         self.frame_numbers.append(frame_number)
 
@@ -97,7 +101,7 @@ class TrackingViz:
                  video_width: int, 
                  video_height: int, 
                  fps: int, 
-                 fourcc: str = cv2.VideoWriter_fourcc(*'FMP4'),
+                 fourcc: str = cv2.VideoWriter_fourcc(*'XVID'),
                  max_trackers: int = 32,
                  max_trajectory_length: int = 100,
                  ) -> None:
