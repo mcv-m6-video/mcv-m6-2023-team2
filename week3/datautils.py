@@ -213,6 +213,35 @@ def load_random_data(t="train"):
           val = json.load(file)
     return val
 
+def load_xox(t="train"):
+    if t == "train":
+        with open("fold2.json", 'r') as file:
+            train = json.load(file)
+        return train
+    elif t == "val":
+      with open("fold1+3.json", 'r') as file:
+          val = json.load(file)
+    return val
+
+def load_xxo(t="train"):
+    if t == "train":
+        with open("fold3.json", 'r') as file:
+            train = json.load(file)
+        return train
+    elif t == "val":
+      with open("fold1+2.json", 'r') as file:
+          val = json.load(file)
+    return val
+
+def load_oxx(t="train"):
+    if t == "train":
+        with open("fold1.json", 'r') as file:
+            train = json.load(file)
+        return train
+    elif t == "val":
+      with open("fold3+2.json", 'r') as file:
+          val = json.load(file)
+    return val
 
 if __name__ == '__main__':
     #unvideo_video('/home/adria/Desktop/mcv-m6-2023-team2/data/AICity_S03_c010/vdo.avi')
