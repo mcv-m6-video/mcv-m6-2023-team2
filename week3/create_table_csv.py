@@ -8,7 +8,7 @@ root_dir = 'week3\\data\\trackers\\mot_challenge\\parabellum-train\\'
 result_filename = 'results.csv'
 
 # Define the header for the results csv file
-header = ['method', 'model', 'threshold', 'NMS', 'max_age', 'HOTA', 'IDF1']
+header = ['method', 'model', 'miniou', 'max_age', 'HOTA', 'IDF1']
 
 # Initialize the list of results
 results = []
@@ -23,9 +23,12 @@ for subdir, dirs, files in os.walk(root_dir):
             params = foldername.split('_')
             method = params[0]
             model = params[1]
-            threshold = float(params[3]) / 100
-            nms = "yes" if params[5] == "True" else "no"
-            max_age = int(params[7])
+            # get thr index
+            miniou_index = params.index('miniou')
+            miniou = float(params[miniou_index+1]) / 100
+            # get maxage index
+            maxage_index = params.index('maxage')
+            max_age = int(params[maxage_index+1])
 
             # Read the metrics from the csv file
             with open(os.path.join(subdir, filename), 'r') as csvfile:
@@ -35,7 +38,7 @@ for subdir, dirs, files in os.walk(root_dir):
                 idf1 = row['IDF1']
 
             # Add the results to the list
-            results.append([method, model, threshold, nms, max_age, hota, idf1])
+            results.append([method, model, miniou, max_age, hota, idf1])
 
 # Write the results to the csv file
 with open(result_filename, 'w', newline='') as csvfile:

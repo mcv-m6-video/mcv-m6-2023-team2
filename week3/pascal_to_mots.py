@@ -24,7 +24,7 @@ gt_file = open(os.path.join(sequence_path, "gt", "gt.txt"), "w")
 for frame_anns in tqdm(annotations):
     for ann in frame_anns:
         x1, y1, w, h = ann.coordinates_dim
-        gt_file.write(f"{ann.frame+1},{ann.track_id+1},{x1},{y1},{w},{h},1,-1,-1,-1\n")
+        gt_file.write(f"{ann.frame+1},{ann.track_id},{x1},{y1},{w},{h},1,-1,-1,-1\n")
 
 gt_file.close()
 
