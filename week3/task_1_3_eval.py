@@ -48,7 +48,7 @@ OURS_TO_COCO = {
     2: 2
 }
 
-def run_inference_detectron(args, split = 'first', json_val = './datafolds/fold3+2.json'):
+def run_inference_detectron(args, split = 'first', json_val = './datafolds/val_first.json'):
     data = json.load(open(json_val, 'r'))
     idxs_val = [x['id'] for x in data]    
     print(idxs_val[0])
@@ -71,7 +71,7 @@ def run_inference_detectron(args, split = 'first', json_val = './datafolds/fold3
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
         cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST = 0.4
     cfg.OUTPUT_DIR = os.path.join(args.path_results, args.model)
-    cfg.MODEL.WEIGHTS = './results_guarrada/faster/model_final_oxx.pth' #model_zoo.get_checkpoint_url(model_path)
+    cfg.MODEL.WEIGHTS = './results_guarrada/faster/model_final_first.pth' #model_zoo.get_checkpoint_url(model_path)
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
     predictor = DefaultPredictor(cfg)
     #DetectionCheckpointer(predictor).load()  # load a file, usually from cfg.MODEL.WEIGHTS
@@ -99,7 +99,7 @@ def run_inference_detectron(args, split = 'first', json_val = './datafolds/fold3
     H = int(cv2_vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
     outvid = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), cv2_vid.get(cv2.CAP_PROP_FPS), (W, H))
     for frame_id in tqdm(range(num_frames)):
-        #if not (frame_id+1) in idxs_val: continue
+        if not (frame_id+1) in idxs_val: continue
         _, frame = cv2_vid.read()
 
 
@@ -215,7 +215,7 @@ if __name__ == '__main__':
         path_results = 'results_guarrada'
         path_video = '../data/AICity_S03_c010/vdo.avi'
         format = 'aicity'
-        store_results = False
+        store_results = True
         path_GT = "../data/AICity_S03_c010/ai_challenge_s03_c010-full_annotation.xml"
         path_det = "results_guarrada/faster/detections.txt"
 
