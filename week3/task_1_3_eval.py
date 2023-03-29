@@ -48,7 +48,7 @@ OURS_TO_COCO = {
     2: 2
 }
 
-def run_inference_detectron(args, split = 'first', json_val = './datafolds/val_first.json'):
+def run_inference_detectron(args, split = 'random', json_val = './datafolds/val_first.json'):
     data = json.load(open(json_val, 'r'))
     idxs_val = [x['id'] for x in data]    
     print(idxs_val[0])
@@ -71,7 +71,7 @@ def run_inference_detectron(args, split = 'first', json_val = './datafolds/val_f
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
         cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST = 0.4
     cfg.OUTPUT_DIR = os.path.join(args.path_results, args.model)
-    cfg.MODEL.WEIGHTS = './results_guarrada/faster/model_final_first.pth' #model_zoo.get_checkpoint_url(model_path)
+    cfg.MODEL.WEIGHTS = './results_guarrada/faster/model_final.pth' #model_zoo.get_checkpoint_url(model_path)
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
     predictor = DefaultPredictor(cfg)
     #DetectionCheckpointer(predictor).load()  # load a file, usually from cfg.MODEL.WEIGHTS
