@@ -114,48 +114,63 @@ def tracking_by_kalman_filter(
 
 def main(args: argparse.Namespace):
     base_confidence_threshold = 0.5
+    base_min_iou = 0.3
     base_max_age = 10
 
-    # Path will be like this: ./week3/data/trackers/mot_challenge/parabellum-train/MODEL_NAME/data/s03.txt
-    for model_name in ["yolo", "retina"]:
-        for use_nms in [True, False]:
-            detections_path = f"week3/results/{model_name}/detections.txt"
+    # model_name = "faster_finetune"
+    # detections_path = f"week3/results/{model_name}/detections.txt"
+    # detections = load_predictions(detections_path)    
+    # detections = filter_annotations(detections, confidence_thr=base_confidence_threshold)
+    # detections = group_annotations_by_frame(detections)
+    # detections = non_maxima_suppression(detections)
+    # model_name_for_file = f"kalman_{model_name}_thr_{int(base_confidence_threshold*100)}_nms_{True}_maxage_{base_max_age}"
+    # tracking_by_kalman_filter(
+    #     detections, 
+    #     model_name_for_file, 
+    #     args.path_results, 
+    #     args.path_tracking_data,
+    #     max_age=base_max_age,
+    #     min_hits=3,
+    #     iou_threshold=0.3,
+    #     )
 
-            for max_age in [1, 50]:
-                detections = load_predictions(detections_path)
-                detections = filter_annotations(detections, confidence_thr=base_confidence_threshold)
-                detections = group_annotations_by_frame(detections)
-                if use_nms:
-                    detections = non_maxima_suppression(detections)
-                model_name_for_file = f"kalman_{model_name}_thr_{int(base_confidence_threshold*100)}_nms_{use_nms}_maxage_{max_age}"
-                tracking_by_kalman_filter(
-                    detections, 
-                    model_name_for_file, 
-                    args.path_results, 
-                    args.path_tracking_data,
-                    max_age=max_age,
-                    min_hits=3,
-                    iou_threshold=0.3,
-                    )
-                
-            for confidence_thr in [0.0, 0.5, 0.75]:
-                detections = load_predictions(detections_path)
-                detections = filter_annotations(detections, confidence_thr=confidence_thr)
-                detections = group_annotations_by_frame(detections)
-                if use_nms:
-                    detections = non_maxima_suppression(detections)
-                model_name_for_file = f"kalman_{model_name}_thr_{int(confidence_thr*100)}_nms_{use_nms}_maxage_{base_max_age}"
-                tracking_by_kalman_filter(
-                    detections, 
-                    model_name_for_file, 
-                    args.path_results, 
-                    args.path_tracking_data,
-                    max_age=base_max_age,
-                    min_hits=3,
-                    iou_threshold=0.3,
-                    )
+    # Path will be like this: ./week3/data/trackers/mot_challenge/parabellum-train/MODEL_NAME/data/s03.txt
+    for model_name in ["faster", "faster_finetune"]:
+        detections_path = f"week3/results/{model_name}/detections.txt"
+
+        for max_age in [1, 50]:
+            detections = load_predictions(detections_path)
+            detections = filter_annotations(detections, confidence_thr=base_confidence_threshold)
+            detections = group_annotations_by_frame(detections)
+            detections = non_maxima_suppression(detections)
+            model_name_for_file = f"kalman_{model_name.replace('_', '-')}_miniou_{int(base_min_iou*100)}_nms_{True}_maxage_{max_age}"
+            tracking_by_kalman_filter(
+                detections, 
+                model_name_for_file, 
+                args.path_results, 
+                args.path_tracking_data,
+                max_age=max_age,
+                min_hits=3,
+                iou_threshold=base_min_iou,
+                )
             
-            
+        for min_iou in [0.1, 0.3, 0.5]:
+            detections = load_predictions(detections_path)
+            detections = filter_annotations(detections, confidence_thr=base_confidence_threshold)
+            detections = group_annotations_by_frame(detections)
+            detections = non_maxima_suppression(detections)
+            model_name_for_file = f"kalman_{model_name.replace('_', '-')}_miniou_{int(min_iou*100)}_nms_{True}_maxage_{base_max_age}"
+            tracking_by_kalman_filter(
+                detections, 
+                model_name_for_file, 
+                args.path_results, 
+                args.path_tracking_data,
+                max_age=base_max_age,
+                min_hits=3,
+                iou_threshold=min_iou,
+                )
+        
+        
 
 
 if __name__ == "__main__":
