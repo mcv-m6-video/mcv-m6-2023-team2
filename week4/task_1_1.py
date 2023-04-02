@@ -37,6 +37,15 @@ def main(args: argparse.Namespace):
     logging.basicConfig(filename='task_1_1.log', level=logging.INFO)
     logging.info(f"Carrying out Grid Search on frame {args.frame}")
 
+    if os.path.exists('task_1_1.csv'):
+        with open('task_1_1.csv', 'r') as f:
+            # Check existing results so we don't repeat them
+            existing_results = " ".join(f.read().splitlines())
+    else:
+        with open('task_1_1.csv', 'w') as f:
+            f.write('block_size,search_window_size,estimation_type,error_function,OF_MSEN,OF_PEPN,time\n')
+        existing_results = ""
+
     block_sizes = [8, 16, 32, 64, 128]
     search_window_sizes = [8, 16, 32, 64, 128]
     estimation_types = ['forward', 'backward']
@@ -53,6 +62,10 @@ def main(args: argparse.Namespace):
         for search_window_size in search_window_sizes:
             for estimation_type in estimation_types:
                 for error_function in error_functions:
+                    if f'{block_size},{search_window_size},{estimation_type},{error_function}' in existing_results:
+                        logging.info(f"Skipping block_size={block_size}, search_window_size={search_window_size}, estimation_type={estimation_type}, error_function={error_function}")
+                        continue
+
                     logging.info(f"Processing with block_size={block_size}, search_window_size={search_window_size}, estimation_type={estimation_type}, error_function={error_function}")
                     output_dir = os.path.join('output', f'block_size={block_size}_search_window_size={search_window_size}_estimation_type={estimation_type}_error_function={error_function}')
 
@@ -71,6 +84,9 @@ def main(args: argparse.Namespace):
                     visualize_optical_flow_error(gt_flow, pred_flow, output_dir=output_dir)
                     plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2], output_dir=output_dir)
                     plot_optical_flow_quiver(pred_flow, frame_prev, output_dir=output_dir)
+
+                    with open('task_1_1.csv', 'a') as results_csv:
+                        results_csv.write(f'{block_size},{search_window_size},{estimation_type},{error_function},{msen},{pepn},{end - start}\n')
 
     # block_matching = BlockMatching()
     # pred_flow = block_matching.estimate_optical_flow(frame_prev, frame_next)
