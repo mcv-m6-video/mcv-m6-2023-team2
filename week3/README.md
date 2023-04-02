@@ -1,6 +1,3 @@
-# TODO: finish up README
-
-
 # Week 3
 
 
@@ -30,7 +27,7 @@
 To execute each task, simply run with:
 
 ```bash
-python task#.py -h
+python main.py -h
 ```
 
 For task 1.1, run:
