@@ -56,7 +56,7 @@ def plot_optical_flow_hsv(path, normalize = 1, hide_unlabeled = 1, use_whole_ran
     #################################
             
     image = cv2.imread(path, cv2.IMREAD_UNCHANGED).astype(np.double)
-    image, labeled = image[:, :, 1:], image[:, :, 0]
+    image, labeled = image[:, :, 1:], image[:, :, 0] # v u
     
     phase = np.rad2deg(np.arctan(image[:, :, 1] / image[:, :, 0])) / 360
     magnitude = (image[:, :, 1] ** 2  + image[:, :, 0] ** 2) ** .5

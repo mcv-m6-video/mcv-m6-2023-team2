@@ -200,10 +200,7 @@ def load_predictions(csv_file_path: str) -> List[BoundingBox]:
     return bboxes
 
 
-def load_optical_flow(file_path: str):
-    # channels arranged as BGR
-    img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED).astype(np.double)
-
+def convert_optical_flow_to_image(flow: np.ndarray) -> np.ndarray:
     # The 3-channel uint16 PNG images that comprise optical flow maps contain information
     # on the u-component in the first channel, the v-component in the second channel,
     # and whether a valid ground truth optical flow value exists for a given pixel in the third channel.
@@ -212,18 +209,23 @@ def load_optical_flow(file_path: str):
     # their original uint16 format to floating point values, one can do so by subtracting 2^15 from the value,
     # converting it to float, and then dividing the result by 64.
 
-    img_u = (img[:, :, 2] - 2 ** 15) / 64
-    img_v = (img[:, :, 1] - 2 ** 15) / 64
+    img_u = (flow[:, :, 2] - 2 ** 15) / 64
+    img_v = (flow[:, :, 1] - 2 ** 15) / 64
 
-    img_available = img[:, :, 0]  # whether a valid GT optical flow value is available
+    img_available = flow[:, :, 0]  # whether a valid GT optical flow value is available
     img_available[img_available > 1] = 1
 
     img_u[img_available == 0] = 0
     img_v[img_available == 0] = 0
 
     optical_flow = np.dstack((img_u, img_v, img_available))
-
     return optical_flow
+
+
+def load_optical_flow(file_path: str):
+    # channels arranged as BGR
+    img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED).astype(np.double)
+    return convert_optical_flow_to_image(img)
 
 
 def histogram_error_distribution(error, GT):
