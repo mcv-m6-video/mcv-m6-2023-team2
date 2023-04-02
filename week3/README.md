@@ -33,5 +33,10 @@ To execute each task, simply run with:
 python task#.py -h
 ```
 
+For task 1.1, run:
 
-Note: Add AIcity folder into data/ to use it. Clone [this repo](https://github.com/abewley/sort) in ./W3 to use the SORT algorithm. Clone [this repo](https://github.com/matterport/Mask_RCNN) in ./W3/mask_rcnn to use Mask R-CNN (Keras), and download the official YOLOv3 weights, coco.classes and coco.names from [here](https://pjreddie.com/darknet/yolo/) and include them in ./W3/yolo.
+```bash
+python main.py -t1_1
+```
+
+Note: Add AIcity folder into data/ to use it. Clone [this repo](https://github.com/abewley/sort) in ./week3 to use the SORT algorithm. Clone [this repo](https://github.com/matterport/Mask_RCNN) in ./week3/mask_rcnn to use Mask R-CNN (Keras), and download the official YOLOv3 weights, coco.classes and coco.names from [here](https://pjreddie.com/darknet/yolo/) and include them in ./week3/yolo.
