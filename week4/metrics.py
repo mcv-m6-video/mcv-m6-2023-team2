@@ -158,7 +158,7 @@ def voc_eval(preds, gt, ovthresh=0.5):
     return rec, prec, f1, ap, iou
 
 
-def OF_MSEN(GT, pred, frame: str, verbose=False, visualize=True):
+def OF_MSEN(GT, pred, output_dir: str, verbose=False, visualize=True):
     """
     Computes "Mean Square Error in Non-occluded areas"
     """
@@ -176,14 +176,16 @@ def OF_MSEN(GT, pred, frame: str, verbose=False, visualize=True):
         print(se[0, -1])
 
     if visualize:
+        os.makedirs(output_dir, exist_ok=True)
+        
         se[GT[:, :, 2] == 0] = 0  # Exclude non-valid pixels
         plt.figure(figsize=(11, 4))
         img_plot = plt.imshow(se)
         img_plot.set_cmap("Blues")
-        plt.title(f"Mean Square Error in Non-Occluded Areas - {frame}")
+        plt.title(f"Mean Square Error in Non-Occluded Areas")
         plt.colorbar()
         os.makedirs("./results", exist_ok=True)
-        plt.savefig(f'./results/OF_squareError_{frame}.png')
+        plt.savefig(os.path.join(output_dir, "OF_MSEN.png"))
         plt.clf()
 
         pred, _ = cv2.cartToPolar(pred[:, :, 0], pred[:, :, 1])
@@ -191,9 +193,9 @@ def OF_MSEN(GT, pred, frame: str, verbose=False, visualize=True):
         img_plot = plt.imshow(pred)
         plt.clim(0,4)
         img_plot.set_cmap("YlOrRd")
-        plt.title(f"Optical Flow Prediction - {frame}")
+        plt.title(f"Optical Flow Prediction")
         plt.colorbar()
-        plt.savefig(f'./results/OF_pred_{frame}.png')
+        plt.savefig(os.path.join(output_dir, "OF_Prediction.png"))
         plt.clf()
 
     return msen, sen

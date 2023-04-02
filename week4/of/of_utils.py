@@ -13,7 +13,15 @@ def mae(y_true, y_pred):
     return np.abs(y_true - y_pred).mean()
 
 
-def visualize_optical_flow_error(GT, OF_pred, frame):
+def norm(x): 
+    return (1 + ((x - x.mean()) / x.std())) / 2
+
+
+def standarize(x): 
+    return (x - x.min()) / (x.max() - x.min())
+
+
+def visualize_optical_flow_error(GT, OF_pred, output_dir = "./results/"):
     error_dist = u_diff, v_diff = GT[:, :, 0] - \
         OF_pred[:, :, 0], GT[:, :, 1] - OF_pred[:, :, 1]
     error_dist = np.sqrt(u_diff ** 2 + v_diff ** 2)
@@ -26,15 +34,8 @@ def visualize_optical_flow_error(GT, OF_pred, frame):
     plt.title('MSEN Distribution')
     plt.ylabel('Count')
     plt.xlabel('Mean Square Error in Non-Occluded Areas')
-    plt.savefig(f'./results/MSEN_hist_{frame}.png')
-
-
-def norm(x): 
-    return (1 + ((x - x.mean()) / x.std())) / 2
-
-
-def standarize(x): 
-    return (x - x.min()) / (x.max() - x.min())
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(os.path.join(output_dir, "MSEN_hist.png"))
 
 
 def plot_optical_flow_hsv(flow, 
@@ -47,6 +48,7 @@ def plot_optical_flow_hsv(flow,
                           onlymagnitude=False, 
                           output_dir = "./results/"
                           ):
+    # TODO: Doesn't work properly
     phase = np.rad2deg(np.arctan(flow[:, :, 0] / flow[:, :, 1])) / 360
     magnitude = (flow[:, :, 0] ** 2 + flow[:, :, 1] ** 2) ** .5
 
@@ -78,10 +80,11 @@ def plot_optical_flow_hsv(flow,
 
     plt.axis('off')
     plt.imshow(rgb)
+    os.makedirs(output_dir, exist_ok=True)
     plt.savefig(os.path.join(output_dir, 'optical_flow_hsv.png'))
 
 
-def plot_optical_flow_quiver(ofimg, original_image, output_dir = "./results", step=30, scale=0.05, flow_with_camera=False):
+def plot_optical_flow_quiver(ofimg, original_image, output_dir = "./results", step=20, scale=1, flow_with_camera=False):
     magnitude = np.hypot(ofimg[:, :, 0], ofimg[:, :, 1])
 
     if flow_with_camera:
@@ -92,14 +95,15 @@ def plot_optical_flow_quiver(ofimg, original_image, output_dir = "./results", st
     plt.quiver(x[::step, ::step], y[::step, ::step], ofimg[::step, ::step, 0], ofimg[::step,
                ::step, 1], magnitude[::step, ::step], scale_units='xy', angles='xy', scale=scale)
 
-    if not original_image is None:
-        plt.imshow(original_image, cmap='gray')
+    plt.imshow(original_image, cmap='gray')
 
     plt.axis('off')
-    plt.savefig('./results/optical_flow_quiver.png')
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(os.path.join(output_dir, 'optical_flow_quiver.png'))
 
 
 def plot_optical_flow_surface(path,  original_image_path=None):
+    # TODO: Adapt
     ofimg = read_flow(path)
     magnitude = np.hypot(ofimg[:, :, 0], ofimg[:, :, 1])
 

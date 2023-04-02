@@ -1,9 +1,8 @@
 import os
 import argparse
-
 import cv2
-from tqdm import tqdm
-from typing import List
+import logging
+import time
 
 from of.optical_flow import BlockMatching
 from utils import load_optical_flow
@@ -35,22 +34,55 @@ def __parse_args() -> argparse.Namespace:
 
 
 def main(args: argparse.Namespace):
+    logging.basicConfig(filename='task_1_1.log', level=logging.INFO)
+    logging.info(f"Carrying out Grid Search on frame {args.frame}")
+
+    block_sizes = [8, 16, 32, 64, 128]
+    search_window_sizes = [8, 16, 32, 64, 128]
+    estimation_types = ['forward', 'backward']
+    error_functions = ['mse', 'mae']
+
     # Load frames in "data/FRAMES_OF/XXXXXX_XX.png"
     frame_prev = cv2.imread(os.path.join(args.path_frames_dir, f"{args.frame}_10.png"), cv2.IMREAD_GRAYSCALE)
     frame_next = cv2.imread(os.path.join(args.path_frames_dir, f"{args.frame}_11.png"), cv2.IMREAD_GRAYSCALE)
 
     gt_flow = load_optical_flow(os.path.join(args.path_gt_dir, f"{args.frame}_10.png"))
     
-    block_matching = BlockMatching()
-    pred_flow = block_matching.estimate_optical_flow(frame_prev, frame_next)
+    #TODO: Save metrics and plot results of the grid search
+    for block_size in block_sizes:
+        for search_window_size in search_window_sizes:
+            for estimation_type in estimation_types:
+                for error_function in error_functions:
+                    logging.info(f"Processing with block_size={block_size}, search_window_size={search_window_size}, estimation_type={estimation_type}, error_function={error_function}")
+                    output_dir = os.path.join('output', f'block_size={block_size}_search_window_size={search_window_size}_estimation_type={estimation_type}_error_function={error_function}')
 
-    msen, sen = OF_MSEN(gt_flow, pred_flow, frame=args.frame, verbose=False)
-    pepn = OF_PEPN(sen)
+                    block_matching = BlockMatching(block_size=block_size, search_window_size=search_window_size, estimation_type=estimation_type, error_function=error_function)
+                    start = time.time()
+                    pred_flow = block_matching.estimate_optical_flow(frame_prev, frame_next)
+                    end = time.time()
+                    logging.info(f"Elapsed time: {end - start} seconds")
 
-    print(f"MSEN: {msen}\nPEPN: {pepn} %")
-    visualize_optical_flow_error(gt_flow, pred_flow, args.frame)
-    plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2])
-    plot_optical_flow_quiver(pred_flow, frame_prev)
+                    msen, sen = OF_MSEN(gt_flow, pred_flow, output_dir=output_dir, verbose=False)
+                    pepn = OF_PEPN(sen)
+
+                    logging.info(f"MSEN: {msen}")
+                    logging.info(f"PEPN: {pepn}%")
+
+                    visualize_optical_flow_error(gt_flow, pred_flow, output_dir=output_dir)
+                    plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2], output_dir=output_dir)
+                    plot_optical_flow_quiver(pred_flow, frame_prev, output_dir=output_dir)
+
+    # block_matching = BlockMatching()
+    # pred_flow = block_matching.estimate_optical_flow(frame_prev, frame_next)
+
+    # msen, sen = OF_MSEN(gt_flow, pred_flow, frame=args.frame, verbose=False)
+    # pepn = OF_PEPN(sen)
+
+    # print(f"MSEN: {msen}\nPEPN: {pepn} %")
+    # visualize_optical_flow_error(gt_flow, pred_flow, args.frame)
+    # plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2])
+    # plot_optical_flow_quiver(pred_flow, frame_prev)
+
     # plot_optical_flow_hsv(gt_flow[:,:,:2], gt_flow[:,:,2])
     # plot_optical_flow_quiver(gt_flow, frame_prev)
 

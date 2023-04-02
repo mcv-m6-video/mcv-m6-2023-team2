@@ -1,4 +1,3 @@
-import time
 import numpy as np
 
 from tqdm import tqdm
@@ -14,7 +13,7 @@ class OpticalFlowEstimator:
 class BlockMatching(OpticalFlowEstimator):
     def __init__(self, 
                  estimation_type: str = "backward", 
-                 search_window_size: int = 64, 
+                 search_window_size: int = 32, 
                  block_size: int = 32, 
                  error_function="mse"
                  ):
@@ -38,21 +37,18 @@ class BlockMatching(OpticalFlowEstimator):
         Returns:
              3-channel float32 image with optical flow vectors. h x w x (u, v, 1)
         """
-        start = time.time()
         optical_flow_image = np.zeros((image_prev.shape[0], image_prev.shape[1], 3), dtype=np.float32)
 
         if self.estimation_type == "backward":
             image_prev, image_next = image_next, image_prev
 
-        block_size_half = self.block_size // 2
-
         for y_prev in tqdm(range(0, image_prev.shape[0]-self.block_size, self.block_size)):
-            y_min = max(0, y_prev - self.search_window_half_size + block_size_half)
-            y_max = min(image_prev.shape[0], y_prev + self.search_window_half_size + block_size_half)
+            y_min = max(0, y_prev - self.search_window_half_size)
+            y_max = min(image_prev.shape[0] - self.block_size, y_prev + self.search_window_half_size + self.block_size)
 
             for x_prev in range(0, image_prev.shape[1]-self.block_size, self.block_size):
-                x_min = max(0, x_prev - self.search_window_half_size + block_size_half)
-                x_max = min(image_prev.shape[1], x_prev + self.search_window_half_size + block_size_half)
+                x_min = max(0, x_prev - self.search_window_half_size)
+                x_max = min(image_prev.shape[1] - self.block_size, x_prev + self.search_window_half_size + self.block_size)
 
                 block_prev = image_prev[y_prev:y_prev + self.block_size, x_prev:x_prev + self.block_size]
                 block_prev = block_prev.reshape(-1)
@@ -60,8 +56,8 @@ class BlockMatching(OpticalFlowEstimator):
                 min_error = np.inf
                 min_x_next = min_y_next = 0
 
-                for y_next in range(y_min, y_max-self.block_size):
-                    for x_next in range(x_min, x_max-self.block_size):
+                for y_next in range(y_min, y_max):
+                    for x_next in range(x_min, x_max):
                         block_next = image_next[y_next:y_next + self.block_size, x_next:x_next + self.block_size]
                         block_next = block_next.reshape(-1)
 
@@ -81,7 +77,6 @@ class BlockMatching(OpticalFlowEstimator):
             optical_flow_image[:, :, 0] = -optical_flow_image[:, :, 0]
             optical_flow_image[:, :, 1] = -optical_flow_image[:, :, 1]
 
-        print(f"Block matching took {time.time() - start} seconds.")
         return optical_flow_image
             
 
