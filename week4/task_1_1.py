@@ -11,6 +11,7 @@ from of.of_utils import (
     visualize_optical_flow_error,
     plot_optical_flow_hsv,
     plot_optical_flow_quiver,
+    plot_optical_flow_surface,
 )
 from metrics import (
     OF_MSEN,
@@ -27,6 +28,8 @@ def __parse_args() -> argparse.Namespace:
         description='Road Traffic Monitoring Analysis for Video Surveillance. MCV-M6-Project, week 4, task 1.1. Team 2'
     )
 
+    parser.add_argument('--mode', type=str, default='dry', choices=['dry', 'grid_search', 'optuna'],
+                        help='Mode to run the script')
     parser.add_argument('--path_gt_dir', type=str, default='./data/GT_OF', 
                         help='Path to the directory containing the ground truth optical flow')
     parser.add_argument('--path_frames_dir', type=str, default='./data/FRAMES_OF', 
@@ -51,6 +54,8 @@ def run_dry(gt_flow, frame_prev, frame_next):
     visualize_optical_flow_error(gt_flow, pred_flow, args.frame)
     plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2])
     plot_optical_flow_quiver(pred_flow, frame_prev)
+    plot_optical_flow_quiver(pred_flow, frame_prev, flow_with_camera=True)
+    plot_optical_flow_surface(pred_flow, frame_prev)
 
 
 def run_grid_search(gt_flow, frame_prev, frame_next):
@@ -95,6 +100,8 @@ def run_grid_search(gt_flow, frame_prev, frame_next):
                     visualize_optical_flow_error(gt_flow, pred_flow, output_dir=output_dir)
                     plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2], output_dir=output_dir)
                     plot_optical_flow_quiver(pred_flow, frame_prev, output_dir=output_dir)
+                    plot_optical_flow_quiver(pred_flow, frame_prev, output_dir=output_dir, flow_with_camera=True)
+                    plot_optical_flow_surface(pred_flow, frame_prev, output_dir=output_dir)
 
                     with open('task_1_1.csv', 'a') as results_csv:
                         results_csv.write(f'{block_size},{search_window_size},{estimation_type},{error_function},{msen},{pepn},{end - start}\n')
@@ -132,6 +139,8 @@ def run_optuna_search(gt_flow, frame_prev, frame_next, trials: int = 100, study_
         visualize_optical_flow_error(gt_flow, pred_flow, output_dir=output_dir)
         plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2], output_dir=output_dir)
         plot_optical_flow_quiver(pred_flow, frame_prev, output_dir=output_dir)
+        plot_optical_flow_quiver(pred_flow, frame_prev, output_dir=output_dir, flow_with_camera=True)
+        plot_optical_flow_surface(pred_flow, frame_prev, output_dir=output_dir)
 
         with open('task_1_1.csv', 'a') as results_csv:
             results_csv.write(f'{block_size},{search_window_size},{estimation_type},{error_function},{msen},{pepn},{eta}\n')
@@ -160,10 +169,18 @@ def main(args: argparse.Namespace):
     frame_next = cv2.imread(os.path.join(args.path_frames_dir, f"{args.frame}_11.png"), cv2.IMREAD_GRAYSCALE)
 
     gt_flow = load_optical_flow(os.path.join(args.path_gt_dir, f"{args.frame}_10.png"))
+    # plot_optical_flow_hsv(gt_flow[:,:,:2], gt_flow[:,:,2])
+    # plot_optical_flow_quiver(gt_flow, frame_prev)
+    # plot_optical_flow_surface(gt_flow, frame_prev)
 
-    # run_dry(gt_flow, frame_prev, frame_next)
-    # run_grid_search(gt_flow, frame_prev, frame_next)
-    run_optuna_search(gt_flow, frame_prev, frame_next, trials=args.optuna_trials)
+    if args.mode == "dry":
+        run_dry(gt_flow, frame_prev, frame_next)
+    elif args.mode == "grid_search":
+        run_grid_search(gt_flow, frame_prev, frame_next)
+    elif args.mode == "optuna_search":
+        run_optuna_search(gt_flow, frame_prev, frame_next, trials=args.optuna_trials)
+    else:
+        raise ValueError(f"Invalid mode: {args.mode}")
 
 
 if __name__ == "__main__":
