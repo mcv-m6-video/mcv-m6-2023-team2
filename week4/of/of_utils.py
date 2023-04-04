@@ -28,10 +28,11 @@ def visualize_optical_flow_error(GT, OF_pred, output_dir = "./results/"):
 
     max_range = int(math.ceil(np.amax(error_dist)))
 
+    plt.clf()
     plt.figure(figsize=(8, 5))
+    plt.title('MSEN Distribution')
     plt.hist(error_dist[GT[..., 2] == 1].ravel(),
              bins=30, range=(0.0, max_range))
-    plt.title('MSEN Distribution')
     plt.ylabel('Count')
     plt.xlabel('Mean Square Error in Non-Occluded Areas')
     os.makedirs(output_dir, exist_ok=True)
@@ -40,24 +41,26 @@ def visualize_optical_flow_error(GT, OF_pred, output_dir = "./results/"):
 
 def plot_optical_flow_hsv(flow, 
                           labelled=None, 
-                          normalize=True, 
                           hide_unlabeled=True, 
                           use_whole_range=False, 
                           value=1, 
                           onlyphase=False, 
                           onlymagnitude=False, 
-                          output_dir = "./results/"
-                          ):
-    # TODO: Doesn't work properly
-    phase = np.rad2deg(np.arctan(flow[:, :, 0] / flow[:, :, 1])) / 360
-    magnitude = (flow[:, :, 0] ** 2 + flow[:, :, 1] ** 2) ** .5
+                          output_dir="./results/"):
+    # Normalize flow to range [0, 1]
+    flow_norm = flow / (np.abs(flow).max() + 1e-8)
+    u, v = flow_norm[:, :, 0], flow_norm[:, :, 1]
 
-    if normalize:
-        phase = np.clip(norm(phase), 0, 1)
-        magnitude = np.clip(norm(magnitude), 0, 1)
-    else:
-        phase = standarize(phase)
-        magnitude = standarize(magnitude)
+    # Calculate phase angle using arctan2
+    phase = np.arctan2(v, u) / (2 * np.pi) % 1 - 0.5
+    magnitude = np.sqrt(u ** 2 + v ** 2)
+
+    # Normalize phase and magnitude to [0, 1]
+    phase_min, phase_max = np.min(phase), np.max(phase)
+    magnitude_min, magnitude_max = np.min(magnitude), np.max(magnitude)
+    
+    phase = (phase - phase_min) / (phase_max - phase_min)
+    magnitude = (magnitude - magnitude_min) / (magnitude_max - magnitude_min)
 
     if use_whole_range:
         phase = cv2.equalizeHist((255 * phase).astype(np.uint8)) / 255
@@ -78,10 +81,14 @@ def plot_optical_flow_hsv(flow,
     if hide_unlabeled:
         rgb = rgb * labelled.astype(np.uint8)[:, :, None]
 
-    plt.axis('off')
-    plt.imshow(rgb)
+    h, w = flow.shape[:2]
+    plt.clf()
+    fig, ax = plt.subplots(figsize=(w/100, h/100))
+    ax.imshow(rgb)
+    ax.axis('off')
+    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, 'optical_flow_hsv.png'))
+    plt.savefig(os.path.join(output_dir, 'optical_flow_hsv.png'), bbox_inches='tight', pad_inches=0)
 
 
 def plot_optical_flow_quiver(ofimg, original_image, output_dir = "./results", step=20, scale=1, flow_with_camera=False):
@@ -92,14 +99,17 @@ def plot_optical_flow_quiver(ofimg, original_image, output_dir = "./results", st
 
     x, y = np.meshgrid(
         np.arange(0, magnitude.shape[1]), np.arange(0, magnitude.shape[0]))
-    plt.quiver(x[::step, ::step], y[::step, ::step], ofimg[::step, ::step, 0], ofimg[::step,
+    plt.clf()
+
+    h, w = ofimg.shape[:2]
+    fig, ax = plt.subplots(figsize=(w/100, h/100))
+    ax.quiver(x[::step, ::step], y[::step, ::step], ofimg[::step, ::step, 0], ofimg[::step,
                ::step, 1], magnitude[::step, ::step], scale_units='xy', angles='xy', scale=scale)
-
-    plt.imshow(original_image, cmap='gray')
-
-    plt.axis('off')
+    ax.imshow(original_image, cmap='gray')
+    ax.axis('off')
+    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, 'optical_flow_quiver.png'))
+    plt.savefig(os.path.join(output_dir, 'optical_flow_quiver.png'), bbox_inches='tight', pad_inches=0)
 
 
 def plot_optical_flow_surface(path,  original_image_path=None):
