@@ -109,10 +109,11 @@ ENV/
 /runs/
 /plots/
 /wandb/
-/data/
 /results
+/data/AICity_data
 
 *.db
 *.png
 *.avi
 !assets/*.png
+!/data/FRAMES_OF/*.png

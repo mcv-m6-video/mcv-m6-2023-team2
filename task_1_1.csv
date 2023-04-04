@@ -1,0 +1,3 @@
+block_size,search_window_size,estimation_type,error_function,OF_MSEN,OF_PEPN,time
+8,8,forward,mse,10.248608332893028,69.49103805233393,17.696252584457397
+8,8,forward,mae,13.721687054776462,96.79478577590338,16.81656050682068
