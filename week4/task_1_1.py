@@ -3,6 +3,7 @@ import argparse
 import cv2
 import logging
 import time
+import optuna
 
 from of.optical_flow import BlockMatching
 from utils import load_optical_flow
@@ -17,6 +18,10 @@ from metrics import (
 )
 
 
+ESTIMATION_TYPES = ['forward', 'backward']
+ERROR_FUNCTIONS = ['mse', 'mae', 'nccorr', 'nccoeff']
+
+
 def __parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description='Road Traffic Monitoring Analysis for Video Surveillance. MCV-M6-Project, week 4, task 1.1. Team 2'
@@ -28,12 +33,27 @@ def __parse_args() -> argparse.Namespace:
                         help='Path to the directory containing the frames')
     parser.add_argument('--frame', type=str, default='000045',
                         help='Frame number to process')
+    parser.add_argument('--optuna_trials', type=int, default=100,
+                        help='Number of trials to run for Optuna')
 
     args = parser.parse_args()
     return args
 
 
-def main(args: argparse.Namespace):
+def run_dry(gt_flow, frame_prev, frame_next):
+    block_matching = BlockMatching()
+    pred_flow = block_matching.estimate_optical_flow(frame_prev, frame_next)
+
+    msen, sen = OF_MSEN(gt_flow, pred_flow, output_dir="output/test", verbose=False)
+    pepn = OF_PEPN(sen)
+
+    print(f"MSEN: {msen}\nPEPN: {pepn}%")
+    visualize_optical_flow_error(gt_flow, pred_flow, args.frame)
+    plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2])
+    plot_optical_flow_quiver(pred_flow, frame_prev)
+
+
+def run_grid_search(gt_flow, frame_prev, frame_next):
     logging.basicConfig(filename='task_1_1.log', level=logging.INFO)
     logging.info(f"Carrying out Grid Search on frame {args.frame}")
 
@@ -48,20 +68,11 @@ def main(args: argparse.Namespace):
 
     block_sizes = [8, 16, 32, 64, 128]
     search_window_sizes = [8, 16, 32, 64, 128]
-    estimation_types = ['forward', 'backward']
-    error_functions = ['mse', 'mae']
 
-    # Load frames in "data/FRAMES_OF/XXXXXX_XX.png"
-    frame_prev = cv2.imread(os.path.join(args.path_frames_dir, f"{args.frame}_10.png"), cv2.IMREAD_GRAYSCALE)
-    frame_next = cv2.imread(os.path.join(args.path_frames_dir, f"{args.frame}_11.png"), cv2.IMREAD_GRAYSCALE)
-
-    gt_flow = load_optical_flow(os.path.join(args.path_gt_dir, f"{args.frame}_10.png"))
-    
-    #TODO: Save metrics and plot results of the grid search
     for block_size in block_sizes:
         for search_window_size in search_window_sizes:
-            for estimation_type in estimation_types:
-                for error_function in error_functions:
+            for estimation_type in ESTIMATION_TYPES:
+                for error_function in ERROR_FUNCTIONS:
                     if f'{block_size},{search_window_size},{estimation_type},{error_function}' in existing_results:
                         logging.info(f"Skipping block_size={block_size}, search_window_size={search_window_size}, estimation_type={estimation_type}, error_function={error_function}")
                         continue
@@ -88,19 +99,68 @@ def main(args: argparse.Namespace):
                     with open('task_1_1.csv', 'a') as results_csv:
                         results_csv.write(f'{block_size},{search_window_size},{estimation_type},{error_function},{msen},{pepn},{end - start}\n')
 
-    # block_matching = BlockMatching()
-    # pred_flow = block_matching.estimate_optical_flow(frame_prev, frame_next)
 
-    # msen, sen = OF_MSEN(gt_flow, pred_flow, frame=args.frame, verbose=False)
-    # pepn = OF_PEPN(sen)
+def run_optuna_search(gt_flow, frame_prev, frame_next, trials: int = 100, study_name: str = 'task_1_1_optuna_study'):
+    def objective(trial):
+        block_size = trial.suggest_int('block_size', 8, 128, step=8)
+        search_window_size = trial.suggest_int('search_window_size', 8, 128, step=8)
+        estimation_type = trial.suggest_categorical('estimation_type', ESTIMATION_TYPES)
+        error_function = trial.suggest_categorical('error_function', ERROR_FUNCTIONS)
 
-    # print(f"MSEN: {msen}\nPEPN: {pepn} %")
-    # visualize_optical_flow_error(gt_flow, pred_flow, args.frame)
-    # plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2])
-    # plot_optical_flow_quiver(pred_flow, frame_prev)
+        block_matching = BlockMatching(
+            block_size=block_size, 
+            search_window_size=search_window_size, 
+            estimation_type=estimation_type, 
+            error_function=error_function
+        )
 
-    # plot_optical_flow_hsv(gt_flow[:,:,:2], gt_flow[:,:,2])
-    # plot_optical_flow_quiver(gt_flow, frame_prev)
+        start = time.time()
+        pred_flow = block_matching.estimate_optical_flow(frame_prev, frame_next)
+        end = time.time()
+        eta = end - start
+        logging.info(f"Elapsed time: {eta} seconds")
+
+        msen, sen = OF_MSEN(gt_flow, pred_flow, output_dir="output/test", verbose=False)
+        pepn = OF_PEPN(sen)
+
+        logging.info(f"MSEN: {msen}")
+        logging.info(f"PEPN: {pepn}%")
+
+        visualize_optical_flow_error(gt_flow, pred_flow, args.frame)
+        plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2])
+        plot_optical_flow_quiver(pred_flow, frame_prev)
+
+        with open('task_1_1.csv', 'a') as results_csv:
+            results_csv.write(f'{block_size},{search_window_size},{estimation_type},{error_function},{msen},{pepn},{eta}\n')
+
+        return msen
+    
+    logging.basicConfig(filename='task_1_1.log', level=logging.INFO)
+    logging.info(f"Carrying out Optuna Search on frame {args.frame}")
+
+    storage_name = "sqlite:///{}.db".format(study_name)
+    study = optuna.create_study(
+        direction='minimize', 
+        storage=storage_name,
+        load_if_exists=True,
+        )
+    study.optimize(objective, n_trials=trials)
+
+    logging.info(f"Best trial: {study.best_trial}")
+    logging.info(f"Best trial params: {study.best_params}")
+    logging.info(f"Best trial value: {study.best_value}")
+
+
+def main(args: argparse.Namespace):
+    # Load frames in "data/FRAMES_OF/XXXXXX_XX.png"
+    frame_prev = cv2.imread(os.path.join(args.path_frames_dir, f"{args.frame}_10.png"), cv2.IMREAD_GRAYSCALE)
+    frame_next = cv2.imread(os.path.join(args.path_frames_dir, f"{args.frame}_11.png"), cv2.IMREAD_GRAYSCALE)
+
+    gt_flow = load_optical_flow(os.path.join(args.path_gt_dir, f"{args.frame}_10.png"))
+
+    # run_dry(gt_flow, frame_prev, frame_next)
+    # run_grid_search(gt_flow, frame_prev, frame_next)
+    run_optuna_search(gt_flow, frame_prev, frame_next, trials=args.optuna_trials)
 
 
 if __name__ == "__main__":
