@@ -26,6 +26,7 @@ def iou_over_time(
         frame_sampling_each: int = 4,
         save_plots: bool = True,
         save_path: str = "week1/results/",
+        run_name: str = "MY_RUN",
 ) -> float:
     """
     Shows the given annotations and predictions in the given video and returns the mean IoU.
@@ -74,16 +75,15 @@ def iou_over_time(
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-        frame = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), (int(width/10), int(height/10)))
+        frame = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), (int(width/3), int(height/3)))
         frames.append(frame)
         steps.append(idx_frame)
 
-        _, _, _, iou = voc_eval([grouped_annotations[idx_frame]], [grouped_predictions[idx_frame]])
+        _, _, _, _, iou = voc_eval([grouped_annotations[idx_frame]], [grouped_predictions[idx_frame]])
         miou.append(iou)
 
         if save_plots:
 
-            run_name = "MY_RUN"
             plots_folder = os.path.join(save_path, run_name, str(max_frames))
             os.makedirs(plots_folder, exist_ok=True)
             os.makedirs(plots_folder+"/static", exist_ok=True)
@@ -116,11 +116,20 @@ def iou_over_time(
     imageio.mimsave(os.path.join(plots_folder, f"video_small_{max_frames}.gif"), frames, duration=0.05)
     print(f"GIF saved at {save_path}")
 
-    _, _, _, mean_miou = voc_eval(grouped_annotations, grouped_predictions)
+    _, _, _, _, mean_miou = voc_eval(grouped_annotations, grouped_predictions)
     with open(os.path.join(plots_folder, 'mean_iou.txt'), 'w') as f:
         f.write(str(mean_miou))
 
     return mean_miou
+
+
+def filter_by_conf(detections, conf_thr=0.5):
+    filtered_detections = []
+    for det in detections:
+        if det.confidence >= conf_thr:
+            filtered_detections.append(det)
+
+    return filtered_detections
 
 
 def group_by_frame(boxes):
