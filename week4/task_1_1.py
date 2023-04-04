@@ -110,7 +110,7 @@ def run_grid_search(gt_flow, frame_prev, frame_next):
 def run_optuna_search(gt_flow, frame_prev, frame_next, trials: int = 100, study_name: str = 'task_1_1_optuna_study'):
     def objective(trial):
         block_size = trial.suggest_int('block_size', 8, 128, step=8)
-        search_window_size = trial.suggest_int('search_window_size', 8, 128, step=8)
+        search_window_size = trial.suggest_int('search_window_size', 8, 256, step=8)
         estimation_type = trial.suggest_categorical('estimation_type', ESTIMATION_TYPES)
         error_function = trial.suggest_categorical('error_function', ERROR_FUNCTIONS)
 
