@@ -28,7 +28,7 @@ def __parse_args() -> argparse.Namespace:
         description='Road Traffic Monitoring Analysis for Video Surveillance. MCV-M6-Project, week 4, task 1.1. Team 2'
     )
 
-    parser.add_argument('--mode', type=str, default='dry', choices=['dry', 'grid_search', 'optuna'],
+    parser.add_argument('--mode', type=str, default='optuna', choices=['dry', 'grid_search', 'optuna'],
                         help='Mode to run the script')
     parser.add_argument('--path_gt_dir', type=str, default='./data/GT_OF', 
                         help='Path to the directory containing the ground truth optical flow')
@@ -177,7 +177,7 @@ def main(args: argparse.Namespace):
         run_dry(gt_flow, frame_prev, frame_next)
     elif args.mode == "grid_search":
         run_grid_search(gt_flow, frame_prev, frame_next)
-    elif args.mode == "optuna_search":
+    elif args.mode == "optuna":
         run_optuna_search(gt_flow, frame_prev, frame_next, trials=args.optuna_trials)
     else:
         raise ValueError(f"Invalid mode: {args.mode}")
