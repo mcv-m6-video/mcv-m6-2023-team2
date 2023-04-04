@@ -107,6 +107,9 @@ def run_optuna_search(gt_flow, frame_prev, frame_next, trials: int = 100, study_
         estimation_type = trial.suggest_categorical('estimation_type', ESTIMATION_TYPES)
         error_function = trial.suggest_categorical('error_function', ERROR_FUNCTIONS)
 
+        logging.info(f"Processing with block_size={block_size}, search_window_size={search_window_size}, estimation_type={estimation_type}, error_function={error_function}")
+        output_dir = os.path.join('output', f'block_size={block_size}_search_window_size={search_window_size}_estimation_type={estimation_type}_error_function={error_function}')
+
         block_matching = BlockMatching(
             block_size=block_size, 
             search_window_size=search_window_size, 
@@ -126,9 +129,9 @@ def run_optuna_search(gt_flow, frame_prev, frame_next, trials: int = 100, study_
         logging.info(f"MSEN: {msen}")
         logging.info(f"PEPN: {pepn}%")
 
-        visualize_optical_flow_error(gt_flow, pred_flow, args.frame)
-        plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2])
-        plot_optical_flow_quiver(pred_flow, frame_prev)
+        visualize_optical_flow_error(gt_flow, pred_flow, output_dir=output_dir)
+        plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2], output_dir=output_dir)
+        plot_optical_flow_quiver(pred_flow, frame_prev, output_dir=output_dir)
 
         with open('task_1_1.csv', 'a') as results_csv:
             results_csv.write(f'{block_size},{search_window_size},{estimation_type},{error_function},{msen},{pepn},{eta}\n')
