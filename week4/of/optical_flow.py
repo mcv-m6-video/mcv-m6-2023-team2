@@ -42,7 +42,7 @@ class BlockMatching(OpticalFlowEstimator):
         if self.estimation_type == "backward":
             image_prev, image_next = image_next, image_prev
 
-        for y_prev in tqdm(range(0, image_prev.shape[0]-self.block_size, self.block_size)):
+        for y_prev in tqdm(range(0, image_prev.shape[0]-self.block_size, self.block_size), desc="Estimating optical flow using block matching... (rows to process)"):
             y_min = max(0, y_prev - self.search_window_half_size)
             y_max = min(image_prev.shape[0] - self.block_size, y_prev + self.search_window_half_size + self.block_size)
 
