@@ -116,7 +116,7 @@ def run_optuna_search(gt_flow, frame_prev, frame_next, trials: int = 100, study_
         error_function = trial.suggest_categorical('error_function', ERROR_FUNCTIONS)
 
         logging.info(f"Processing with block_size={block_size}, search_window_size={search_window_size}, estimation_type={estimation_type}, error_function={error_function}")
-        output_dir = os.path.join('output', f'block_size={block_size}_search_window_size={search_window_size}_estimation_type={estimation_type}_error_function={error_function}')
+        output_dir = os.path.join('output', 'task_1_1', f'block_size={block_size}_search_window_size={search_window_size}_estimation_type={estimation_type}_error_function={error_function}')
 
         block_matching = BlockMatching(
             block_size=block_size, 
@@ -131,7 +131,7 @@ def run_optuna_search(gt_flow, frame_prev, frame_next, trials: int = 100, study_
         eta = end - start
         logging.info(f"Elapsed time: {eta} seconds")
 
-        msen, sen = OF_MSEN(gt_flow, pred_flow, output_dir="output/test", verbose=False)
+        msen, sen = OF_MSEN(gt_flow, pred_flow, output_dir=output_dir, verbose=False)
         pepn = OF_PEPN(sen)
 
         logging.info(f"MSEN: {msen}")

@@ -445,3 +445,20 @@ def non_maxima_suppression(bboxes_per_frame: List[List[BoundingBox]], iou_thresh
     return new_bboxes_per_frame
 
 
+def resize_image_keep_aspect_ratio(image, max_size, interpolation=cv2.INTER_LINEAR):
+    """
+    Resize an image to a maximum size while keeping the aspect ratio.
+
+    :param image: the image to resize.
+    :param max_size: the maximum size of the image.
+    :param interpolation: the interpolation method.
+    :return: the resized image.
+    """
+    h, w = image.shape[:2]
+    
+    if h > w:
+        new_h, new_w = max_size, int(max_size * w / h)
+    else:
+        new_h, new_w = int(max_size * h / w), max_size
+
+    return cv2.resize(image, (new_w, new_h), interpolation=interpolation)
