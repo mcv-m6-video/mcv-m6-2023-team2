@@ -13,9 +13,9 @@ class OpticalFlowEstimator:
 
 class BlockMatching(OpticalFlowEstimator):
     def __init__(self, 
-                 estimation_type: str = "backward", 
-                 search_window_size: int = 64, 
-                 block_size: int = 32, 
+                 estimation_type: str = "forward", 
+                 search_window_size: int = 76, 
+                 block_size: int = 24, 
                  error_function="nccorr"
                  ):
         self.estimation_type = estimation_type
