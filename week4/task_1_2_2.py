@@ -62,10 +62,11 @@ def run_dry(gt_flow, frame_prev, frame_next, args):
 
     print(f"MSEN: {msen}\nPEPN: {pepn}%")
     visualize_optical_flow_error(gt_flow, pred_flow, args.frame)
-    plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2])
-    plot_optical_flow_quiver(pred_flow, frame_prev)
-    plot_optical_flow_quiver(pred_flow, frame_prev, flow_with_camera=True)
-    plot_optical_flow_surface(pred_flow, frame_prev)
+    output_dir = os.path.join("task_1_2_2", args.method)
+    plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2], output_dir=output_dir)
+    plot_optical_flow_quiver(pred_flow, frame_prev, output_dir=output_dir)
+    plot_optical_flow_quiver(pred_flow, frame_prev, flow_with_camera=True, output_dir=output_dir)
+    plot_optical_flow_surface(pred_flow, frame_prev, output_dir=output_dir)
 
 
 def main(args: argparse.Namespace):
