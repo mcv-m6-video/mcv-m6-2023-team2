@@ -29,8 +29,8 @@ def __parse_args() -> argparse.Namespace:
         description='Road Traffic Monitoring Analysis for Video Surveillance. MCV-M6-Project, week 4, task 1.2.2 Team 2'
     )
 
-    parser.add_argument('--mode', type=str, default='optuna', choices=['dry', 'optuna'],
-                        help='Mode to run the script')
+    parser.add_argument('--method', type=str, default='', choices=['maskflownet', 'unimatch'],
+                        help='Method to compute OF.')
     parser.add_argument('--path_gt_dir', type=str, default='../data/GT_OF',
                         help='Path to the directory containing the ground truth optical flow')
     parser.add_argument('--path_frames_dir', type=str, default='../data/FRAMES_OF',
@@ -48,7 +48,7 @@ estimate_flow = {
 }
 
 
-def run_dry(gt_flow, frame_prev, frame_next):
+def run_dry(gt_flow, frame_prev, frame_next, args):
 
     start = time.time()
 
@@ -75,7 +75,7 @@ def main(args: argparse.Namespace):
 
     gt_flow = load_optical_flow(os.path.join(args.path_gt_dir, f"{args.frame}_10.png"))
 
-    run_dry(gt_flow, frame_prev, frame_next)
+    run_dry(gt_flow, frame_prev, frame_next, args)
 
 
 if __name__ == "__main__":
