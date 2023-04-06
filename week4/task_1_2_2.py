@@ -31,9 +31,9 @@ def __parse_args() -> argparse.Namespace:
 
     parser.add_argument('--mode', type=str, default='optuna', choices=['dry', 'optuna'],
                         help='Mode to run the script')
-    parser.add_argument('--path_gt_dir', type=str, default='./data/GT_OF',
+    parser.add_argument('--path_gt_dir', type=str, default='../data/GT_OF',
                         help='Path to the directory containing the ground truth optical flow')
-    parser.add_argument('--path_frames_dir', type=str, default='./data/FRAMES_OF',
+    parser.add_argument('--path_frames_dir', type=str, default='../data/FRAMES_OF',
                         help='Path to the directory containing the frames')
     parser.add_argument('--frame', type=str, default='000045',
                         help='Frame number to process')
@@ -75,10 +75,7 @@ def main(args: argparse.Namespace):
 
     gt_flow = load_optical_flow(os.path.join(args.path_gt_dir, f"{args.frame}_10.png"))
 
-    if args.mode == "dry":
-        run_dry(gt_flow, frame_prev, frame_next)
-    else:
-        raise ValueError(f"Invalid mode: {args.mode}")
+    run_dry(gt_flow, frame_prev, frame_next)
 
 
 if __name__ == "__main__":
