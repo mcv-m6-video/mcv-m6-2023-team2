@@ -2,11 +2,9 @@ import sys
 import os
 import argparse
 import cv2
-import logging
 import time
-import optuna
-import matplotlib 
-import matplotlib.pyplot as plt
+import matplotlib
+import numpy as np
 
 from utils import load_optical_flow
 from of.of_utils import (
@@ -44,7 +42,7 @@ def __parse_args() -> argparse.Namespace:
 
 estimate_flow = {
     'maskflownet': flow_maskflownet,
-    'unimatch': flow_unimatch,
+    # 'unimatch': flow_unimatch,
 }
 
 
@@ -53,6 +51,8 @@ def run_dry(gt_flow, frame_prev, frame_next, args):
     start = time.time()
 
     pred_flow, extra_out = estimate_flow[args.method](frame_prev, frame_next)
+    if pred_flow.shape[2] == 2:
+        pred_flow = np.stack((pred_flow[...,0], pred_flow[...,1], np.ones_like(pred_flow[...,0])), axis=2)
 
     end = time.time()
     print(f"Time: {end - start}")
