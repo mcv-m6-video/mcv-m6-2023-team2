@@ -21,6 +21,9 @@ from metrics import (
 sys.path.append("MaskFlownet")
 from predict_new_data import flow_maskflownet
 
+sys.path.append("unimatch")
+from evaluate_flow import flow_unimatch
+
 
 def __parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -42,7 +45,7 @@ def __parse_args() -> argparse.Namespace:
 
 estimate_flow = {
     'maskflownet': flow_maskflownet,
-    # 'unimatch': flow_unimatch,
+    'unimatch': flow_unimatch,
 }
 
 
