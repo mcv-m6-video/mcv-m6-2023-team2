@@ -5,6 +5,7 @@ import logging
 import time
 import optuna
 import matplotlib
+import numpy as np
 
 from of.optical_flow import BlockMatching
 from utils import load_optical_flow
@@ -45,14 +46,29 @@ def __parse_args() -> argparse.Namespace:
 
 
 def run_dry(gt_flow, frame_prev, frame_next):
-    block_matching = BlockMatching()
+    block_size = 24
+    search_window_size = 76
+    block_matching = BlockMatching(
+        estimation_type='forward',
+        error_function='nccorr',
+        block_size=block_size,
+        search_window_size=search_window_size,
+    )
+
+    times = []
+    start = time.time()
     pred_flow = block_matching.estimate_optical_flow(frame_prev, frame_next)
+    pred_flow = block_matching.postprocess(pred_flow)
+    end = time.time()
+    times.append(end - start)
+
+    print(f"Average time: {np.mean(times)} seconds. Standard deviation: {np.std(times)} seconds")
 
     msen, sen = OF_MSEN(gt_flow, pred_flow, output_dir="output/test", verbose=False)
     pepn = OF_PEPN(sen)
 
     print(f"MSEN: {msen}\nPEPN: {pepn}%")
-    visualize_optical_flow_error(gt_flow, pred_flow, args.frame)
+    visualize_optical_flow_error(gt_flow, pred_flow)
     plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2])
     plot_optical_flow_quiver(pred_flow, frame_prev)
     plot_optical_flow_quiver(pred_flow, frame_prev, flow_with_camera=True)
@@ -171,10 +187,12 @@ def run_optuna_search(gt_flow, frame_prev, frame_next, trials: int = 100, study_
 
 def main(args: argparse.Namespace):
     # Load frames in "data/FRAMES_OF/XXXXXX_XX.png"
-    frame_prev = cv2.imread(os.path.join(args.path_frames_dir, f"{args.frame}_10.png"))
-    frame_next = cv2.imread(os.path.join(args.path_frames_dir, f"{args.frame}_11.png"))
+    frame_prev = cv2.imread(os.path.join(args.path_frames_dir, f"{args.frame}_10.png"), cv2.IMREAD_GRAYSCALE)
+    frame_next = cv2.imread(os.path.join(args.path_frames_dir, f"{args.frame}_11.png"), cv2.IMREAD_GRAYSCALE)
 
     gt_flow = load_optical_flow(os.path.join(args.path_gt_dir, f"{args.frame}_10.png"))
+    # print(f"Max displacement in x: {np.max(np.abs(gt_flow[:,:,0]))}")
+    # print(f"Max displacement in y: {np.max(np.abs(gt_flow[:,:,1]))}")
     # plot_optical_flow_hsv(gt_flow[:,:,:2], gt_flow[:,:,2])
     # plot_optical_flow_quiver(gt_flow, frame_prev)
     # plot_optical_flow_surface(gt_flow, frame_prev)

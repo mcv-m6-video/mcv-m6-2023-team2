@@ -26,7 +26,7 @@ def __parse_args() -> argparse.Namespace:
         description='Road Traffic Monitoring Analysis for Video Surveillance. MCV-M6-Project, week 4, task 1.1. Team 2'
     )
 
-    parser.add_argument('--mode', type=str, default='optuna', choices=['dry', 'optuna'],
+    parser.add_argument('--mode', type=str, default='dry', choices=['dry', 'optuna'],
                         help='Mode to run the script')
     parser.add_argument('--path_gt_dir', type=str, default='./data/GT_OF', 
                         help='Path to the directory containing the ground truth optical flow')
@@ -53,7 +53,7 @@ def run_dry(gt_flow, frame_prev, frame_next):
     pepn = OF_PEPN(sen)
 
     print(f"MSEN: {msen}\nPEPN: {pepn}%")
-    visualize_optical_flow_error(gt_flow, pred_flow, args.frame)
+    visualize_optical_flow_error(gt_flow, pred_flow)
     plot_optical_flow_hsv(pred_flow[:,:,:2], pred_flow[:,:,2])
     plot_optical_flow_quiver(pred_flow, frame_prev)
     plot_optical_flow_quiver(pred_flow, frame_prev, flow_with_camera=True)
