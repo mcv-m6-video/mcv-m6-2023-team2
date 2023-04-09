@@ -1,17 +1,14 @@
 """
     SORT: A Simple, Online and Realtime Tracker
     Copyright (C) 2016-2020 Alex Bewley alex@bewley.ai
-
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
@@ -27,7 +24,6 @@ from skimage import io
 
 import glob
 import time
-import random
 import argparse
 from filterpy.kalman import KalmanFilter
 
@@ -63,6 +59,27 @@ def iou_batch(bb_test, bb_gt):
     o = wh / ((bb_test[..., 2] - bb_test[..., 0]) * (bb_test[..., 3] - bb_test[..., 1])
               + (bb_gt[..., 2] - bb_gt[..., 0]) * (bb_gt[..., 3] - bb_gt[..., 1]) - wh)
     return (o)
+
+
+def optflow_batch(bb_test, bb_gt, flow):
+    """
+    Compute matching pixels between bboxes
+
+    :param bb_test: list of bboxes in the form [x1,y1,x2,y2]
+    :param bb_gt: list of bboxes in the form [x1,y1,x2,y2]
+    :param flow: optical flow between two frames:
+                 3-channel float32 image with optical flow vectors. h x w x (u, v, 1)
+    """
+    ind = np.indices(flow.shape[:2]).transpose(1, 2, 0)
+    dist_mat = np.zeros((len(bb_test), len(bb_gt)))
+    for i, bboxA in enumerate(bb_test):
+        for j, bboxB in enumerate(bb_gt):
+            new_ind = ind[int(bboxA[0]):int(bboxA[2]), int(bboxA[1]):int(bboxA[3])]\
+                      + flow[int(bboxA[0]):int(bboxA[2]), int(bboxA[1]):int(bboxA[3]), :2].round()
+            score = (np.all(np.array([bboxB[0], bboxB[1]]) <= new_ind, axis=2) * np.all(
+                new_ind <= np.array([bboxB[2], bboxB[3]]), axis=2)).sum()
+            dist_mat[i, j] = score
+    return dist_mat
 
 
 def convert_bbox_to_z(bbox):
@@ -121,7 +138,6 @@ class KalmanBoxTracker(object):
         self.time_since_update = 0
         self.id = KalmanBoxTracker.count
         KalmanBoxTracker.count += 1
-        self.visualization_color = (int(random.random() * 256), int(random.random() * 256), int(random.random() * 256))
         self.history = []
         self.hits = 0
         self.hit_streak = 0
@@ -132,6 +148,7 @@ class KalmanBoxTracker(object):
         Updates the state vector with observed bbox.
         """
         self.time_since_update = 0
+        self.history = []
         self.hits += 1
         self.hit_streak += 1
         self.kf.update(convert_bbox_to_z(bbox))
@@ -140,7 +157,7 @@ class KalmanBoxTracker(object):
         """
         Advances the state vector and returns the predicted bounding box estimate.
         """
-        if ((self.kf.x[6] + self.kf.x[2]) <= 0):
+        if ((self.kf.x[6] + self.kf.x[2]) <= 0):  # Negative size
             self.kf.x[6] *= 0.0
         self.kf.predict()
         self.age += 1
@@ -157,16 +174,16 @@ class KalmanBoxTracker(object):
         return convert_x_to_bbox(self.kf.x)
 
 
-def associate_detections_to_trackers(detections, trackers, iou_threshold=0.3):
+def associate_detections_to_trackers(detections, trackers, flow, iou_threshold=0.3):
     """
     Assigns detections to tracked object (both represented as bounding boxes)
-
     Returns 3 lists of matches, unmatched_detections and unmatched_trackers
     """
     if (len(trackers) == 0):
         return np.empty((0, 2), dtype=int), np.arange(len(detections)), np.empty((0, 5), dtype=int)
 
-    iou_matrix = iou_batch(detections, trackers)
+    # iou_matrix = iou_batch(detections, trackers)
+    iou_matrix = optflow_batch(detections, trackers, flow)
 
     if min(iou_matrix.shape) > 0:
         a = (iou_matrix > iou_threshold).astype(np.int32)
@@ -213,13 +230,12 @@ class Sort(object):
         self.trackers = []
         self.frame_count = 0
 
-    def update(self, dets=np.empty((0, 5))):
+    def update(self, dets=np.empty((0, 5)), flow=None):
         """
         Params:
           dets - a numpy array of detections in the format [[x1,y1,x2,y2,score],[x1,y1,x2,y2,score],...]
         Requires: this method must be called once for each frame even with empty detections (use np.empty((0, 5)) for frames without detections).
         Returns the a similar array, where the last column is the object ID.
-
         NOTE: The number of objects returned may differ from the number of detections provided.
         """
         self.frame_count += 1
@@ -235,7 +251,7 @@ class Sort(object):
         trks = np.ma.compress_rows(np.ma.masked_invalid(trks))
         for t in reversed(to_del):
             self.trackers.pop(t)
-        matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets, trks, self.iou_threshold)
+        matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets, trks, flow, self.iou_threshold)
 
         # update matched trackers with assigned detections
         for m in matched:
@@ -337,7 +353,7 @@ if __name__ == '__main__':
                     ax1.cla()
 
     print("Total Tracking took: %.3f seconds for %d frames or %.1f FPS" % (
-    total_time, total_frames, total_frames / total_time))
+        total_time, total_frames, total_frames / total_time))
 
     if (display):
         print("Note: to get real runtime results run without the option: --display")
