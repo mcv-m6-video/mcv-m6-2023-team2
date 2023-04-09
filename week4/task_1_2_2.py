@@ -60,7 +60,7 @@ def run_dry(gt_flow, frame_prev, frame_next, args):
     end = time.time()
     print(f"Time: {end - start}")
 
-    msen, sen = OF_MSEN(gt_flow, pred_flow, output_dir="output/test", verbose=False)
+    msen, sen = OF_MSEN(gt_flow, pred_flow, output_dir=f"output/{args.method}", verbose=False)
     pepn = OF_PEPN(sen)
 
     print(f"MSEN: {msen}\nPEPN: {pepn}%")
