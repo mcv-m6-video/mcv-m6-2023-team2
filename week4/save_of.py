@@ -22,20 +22,30 @@ def __parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description='Road Traffic Monitoring Analysis for Video Surveillance. MCV-M6-Project, week 3, task 2.2. Team 2'
     )
-
     # parser.add_argument('--path_sequence', type=str, default="../data/AICity_S03_c010/vdo.avi",
     #                     help='Path to the directory where the sequence is stored.')
     parser.add_argument('--path_sequence', type=str, default="../data/aic19/train/S03/c010/vdo.avi",
                         help='Path to the directory where the sequence is stored.')
+    parser.add_argument('--sequence', 'string', require=True, help='Sequence to process, e.g. "S03"')
+    parser.add_argument('--cameras', '--list', require=True, help='List of cameras to process, e.g. "c010,c011,c012,c013,c014,c015"',
+                        type=lambda s: [item for item in s.split(',')])
     parser.add_argument('--path_results', type=str, default="./results/",
                         help='The path to the directory where the results will be stored.')
+    parser.add_argument('--max_frames', type=int, require=True, help='Maximum number of frames to process')
 
     args = parser.parse_args()
     return args
 
 
-def save_optical_flow_blockmatching(args, video_max_frames: int = 9999, video_frame_sampling: int = 1):
-    path_results = os.path.join(args.path_results, "video_of_block_matching")
+def save_optical_flow_blockmatching(
+    args,
+    sequence: str,
+    camera: str,
+    video_max_frames: int = 9999,
+    video_frame_sampling: int = 1,
+    ):
+    path_results = os.path.join(args.path_results, f"video_of_unimatch_{sequence}_{camera}")
+    # path_results = os.path.join(args.path_results, "video_of_block_matching")
     os.makedirs(path_results, exist_ok=True)
     video = cv2.VideoCapture(args.path_sequence)
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -82,10 +92,14 @@ def save_optical_flow_blockmatching(args, video_max_frames: int = 9999, video_fr
     print(f"Optical flow (BlockMatching) saved successfully at {path_results} !")
 
 
-def save_optical_flow_unimatch(args, video_max_frames: int = 9999, video_frame_sampling: int = 1):
-    path_results = os.path.join(args.path_results, "video_of_unimatch")
+def save_optical_flow_unimatch(
+    path_sequence: str,
+    path_results: str,
+    video_max_frames: int = 9999,
+    video_frame_sampling: int = 1,
+    ):
     os.makedirs(path_results, exist_ok=True)
-    video = cv2.VideoCapture(args.path_sequence)
+    video = cv2.VideoCapture(path_sequence)
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
     max_frames = min(video_max_frames, total_frames)
@@ -126,16 +140,48 @@ def inference_of_video_unimatch():
     print(f"Optical flow (Unimatch) for the video saved succesfully!")
 
 
+def batch_inference_unimatch(args):
+    sequence = args.sequence
+    cameras = args.cameras
+
+    for camera in cameras:
+        print("Processing sequence: ", sequence, ", camera: ", camera)
+
+        path_results = os.path.join(args.path_results, f"video_of_unimatch_{sequence}_{camera}")
+        print("Saving results at: ", path_results)
+
+        path_sequence = f"../data/aic19/train/{sequence}/{camera}/vdo.avi"
+        print("Processing video at: ", path_sequence)
+
+        save_optical_flow_unimatch(
+            path_sequence,
+            path_results,
+            args.max_frames,
+            video_frame_sampling=1,
+        )
+
+        print("Done processing sequence: ", sequence, ", camera: ", camera)
+        print("Done with video at: ", path_sequence)
+        print("--------------------------------------------------")
+
+
 if __name__ == "__main__":
+
     args = __parse_args()
+
     # save_optical_flow_blockmatching(
     #     args,
     #     video_max_frames=5,
     #     video_frame_sampling=1,
     # )
-    save_optical_flow_unimatch(
-        args,
-        video_max_frames=5,
-        video_frame_sampling=1,
-    )
-    inference_of_video_unimatch()
+
+    print(args)
+
+    batch_inference_unimatch()
+
+    # save_optical_flow_unimatch(
+    #     args,
+    #     video_max_frames=args.max_frames,
+    #     video_frame_sampling=1,
+    # )
+    # inference_of_video_unimatch()
