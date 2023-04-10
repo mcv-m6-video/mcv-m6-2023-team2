@@ -1,4 +1,3 @@
-
 import sys
 
 from of.optical_flow import BlockMatching
@@ -22,8 +21,6 @@ def __parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description='Road Traffic Monitoring Analysis for Video Surveillance. MCV-M6-Project, week 3, task 2.2. Team 2'
     )
-    # parser.add_argument('--path_sequence', type=str, default="../data/AICity_S03_c010/vdo.avi",
-    #                     help='Path to the directory where the sequence is stored.')
     parser.add_argument('--path_sequence', type=str, default="../data/aic19/train/S03/c010/vdo.avi",
                         help='Path to the directory where the sequence is stored.')
     parser.add_argument('--sequence', type=str, required=True, help='Sequence to process, e.g. "S03"')
@@ -38,26 +35,19 @@ def __parse_args() -> argparse.Namespace:
 
 
 def save_optical_flow_blockmatching(
-    args,
-    sequence: str,
-    camera: str,
+    path_sequence: str,
+    path_results: str,
     video_max_frames: int = 9999,
     video_frame_sampling: int = 1,
     ):
-    path_results = os.path.join(args.path_results, f"video_of_unimatch_{sequence}_{camera}")
-    # path_results = os.path.join(args.path_results, "video_of_block_matching")
     os.makedirs(path_results, exist_ok=True)
-    video = cv2.VideoCapture(args.path_sequence)
+    video = cv2.VideoCapture(path_sequence)
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
     max_frames = min(video_max_frames, total_frames)
 
     _, frame_prev = video.read()
     frame_prev = cv2.cvtColor(frame_prev, cv2.COLOR_BGR2GRAY)
-
-    # frames_of = []
-    # filename = os.path.join(args.path_results, f"s03_optical_flow_unimatch_{max_frames}_frames.npy")
-    # results_of_file = open(filename, "wb")
 
     block_matching = BlockMatching(
         estimation_type='forward',
@@ -66,29 +56,22 @@ def save_optical_flow_blockmatching(
         search_window_size=76,
     )
 
-    for idx_frame in tqdm(range(0, max_frames - 1, video_frame_sampling), desc="Saving optical flow..."):
-        # read the frame
-        # video.set(cv2.CAP_PROP_POS_FRAMES, idx_frame)
+    for idx_frame in tqdm(range(0, max_frames - 1, video_frame_sampling), desc="Saving optical flow (BlockMatching)..."):
+
         ret, frame = video.read()
 
         if not ret:
             break
 
-        # Canvia el model
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         pred_flow = block_matching.estimate_optical_flow(frame_prev, frame)
         pred_flow = block_matching.postprocess(pred_flow)
         pred_flow = convert_image_to_optical_flow(pred_flow)
 
-        # Save image
         cv2.imwrite(os.path.join(path_results, f"{idx_frame}.png"), pred_flow)
-        # frames_of.append(pred_flow)
 
         frame_prev = frame
 
-    # np.save(results_of_file, frames_of)
-    # results_of_file.close()
-    # print(f"Optical flow saved successfully! at {filename}")
     print(f"Optical flow (BlockMatching) saved successfully at {path_results} !")
 
 
@@ -169,6 +152,31 @@ def batch_inference_unimatch(args):
         print("--------------------------------------------------")
 
 
+def batch_inference_blockmatching(args):
+    sequence = args.sequence
+    cameras = args.cameras
+
+    for camera in cameras:
+        print("Processing sequence: ", sequence, ", camera: ", camera)
+
+        path_results = os.path.join(args.path_results, f"video_of_blockmatching_{sequence}_{camera}")
+        print("Saving results at: ", path_results)
+
+        path_sequence = f"../data/aic19/train/{sequence}/{camera}/vdo.avi"
+        print("Processing video at: ", path_sequence)
+
+        save_optical_flow_blockmatching(
+            path_sequence,
+            path_results,
+            args.max_frames,
+            video_frame_sampling=1,
+        )
+
+        print("Done processing sequence: ", sequence, ", camera: ", camera)
+        print("Done with video at: ", path_sequence)
+        print("--------------------------------------------------")
+
+
 if __name__ == "__main__":
 
     args = __parse_args()
@@ -182,6 +190,8 @@ if __name__ == "__main__":
     print(args)
 
     batch_inference_unimatch(args)
+
+    batch_inference_blockmatching(args)
 
     # save_optical_flow_unimatch(
     #     args,
