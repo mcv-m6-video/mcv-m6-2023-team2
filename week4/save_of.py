@@ -153,12 +153,16 @@ def batch_inference_unimatch(args):
         path_sequence = f"../data/aic19/train/{sequence}/{camera}/vdo.avi"
         print("Processing video at: ", path_sequence)
 
-        save_optical_flow_unimatch(
-            path_sequence,
-            path_results,
-            args.max_frames,
-            video_frame_sampling=1,
-        )
+        try:
+            save_optical_flow_unimatch(
+                path_sequence,
+                path_results,
+                args.max_frames,
+                video_frame_sampling=1,
+            )
+        except Exception as e:
+            print("Error processing sequence: ", sequence, ", camera: ", camera)
+            print(e)
 
         print("Done processing sequence: ", sequence, ", camera: ", camera)
         print("Done with video at: ", path_sequence)
