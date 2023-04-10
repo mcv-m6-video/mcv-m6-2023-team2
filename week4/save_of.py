@@ -99,6 +99,8 @@ def save_optical_flow_unimatch(args, video_max_frames: int = 9999, video_frame_s
             break
 
         pred_flow, _ = flow_unimatch_single(frame_prev, frame, unimatch_model,)
+        if pred_flow.shape[2] == 2:
+            pred_flow = np.stack((pred_flow[...,0], pred_flow[...,1], np.ones_like(pred_flow[...,0])), axis=2)
 
         # Save image
         pred_flow = convert_image_to_optical_flow(pred_flow)
@@ -124,11 +126,11 @@ def inference_of_video_unimatch():
 
 if __name__ == "__main__":
     args = __parse_args()
-    save_optical_flow_blockmatching(
-        args,
-        video_max_frames=5,
-        video_frame_sampling=1,
-    )
+    # save_optical_flow_blockmatching(
+    #     args,
+    #     video_max_frames=5,
+    #     video_frame_sampling=1,
+    # )
     save_optical_flow_unimatch(
         args,
         video_max_frames=5,
