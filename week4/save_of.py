@@ -77,11 +77,11 @@ def save_optical_flow_blockmatching(args, video_max_frames: int = 9999, video_fr
     # np.save(results_of_file, frames_of)
     # results_of_file.close()
     # print(f"Optical flow saved successfully! at {filename}")
-    print(f"Optical flow (BlockMatching) saved successfully at {args.path_results} !")
+    print(f"Optical flow (BlockMatching) saved successfully at {path_results} !")
 
 
 def save_optical_flow_unimatch(args, video_max_frames: int = 9999, video_frame_sampling: int = 1):
-    path_results = os.path.join(args.path_results, "video_of_block_unimatch")
+    path_results = os.path.join(args.path_results, "video_of_unimatch")
     os.makedirs(path_results, exist_ok=True)
     video = cv2.VideoCapture(args.path_sequence)
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -108,7 +108,7 @@ def save_optical_flow_unimatch(args, video_max_frames: int = 9999, video_frame_s
 
         frame_prev = frame
 
-    print(f"Optical flow (Unimatch) saved successfully at {args.path_results} !")
+    print(f"Optical flow (Unimatch) saved successfully at {path_results} !")
 
 
 def inference_of_video_unimatch():
