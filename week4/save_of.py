@@ -120,7 +120,7 @@ def save_optical_flow_unimatch(
 
         # Save image
         pred_flow = convert_image_to_optical_flow(pred_flow)
-        cv2.imwrite(os.path.join(path_results, f"{idx_frame}.png"), pred_flow)
+        cv2.imwrite(os.path.join(path_results, f"{idx_frame:>04}.png"), pred_flow)
 
         frame_prev = frame
 
