@@ -43,6 +43,7 @@ def save_optical_flow_blockmatching(args, video_max_frames: int = 9999, video_fr
     max_frames = min(video_max_frames, total_frames)
 
     _, frame_prev = video.read()
+    frame_prev = cv2.cvtColor(frame_prev, cv2.COLOR_BGR2GRAY)
 
     # frames_of = []
     # filename = os.path.join(args.path_results, f"s03_optical_flow_unimatch_{max_frames}_frames.npy")
@@ -64,6 +65,7 @@ def save_optical_flow_blockmatching(args, video_max_frames: int = 9999, video_fr
             break
 
         # Canvia el model
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         pred_flow = block_matching.estimate_optical_flow(frame_prev, frame)
         pred_flow = block_matching.postprocess(pred_flow)
         pred_flow = convert_image_to_optical_flow(pred_flow)
