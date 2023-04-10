@@ -192,7 +192,7 @@ def tracking_by_kalman_filter_with_optical_flow(
                 # pred_flow = read_flow_unimatch(os.path.join(of_data_path, f"{idx_frame:04d}_pred.flo"))
                 # pred_flow = load_optical_flow(os.path.join(of_data_path, f"{idx_frame:04d}_flow.png"))
                 pred_flow = load_optical_flow(os.path.join(of_data_path, f"{idx_frame}.png"))
-                print(pred_flow.shape)
+                # print(pred_flow.shape)
             else:
                 raise ValueError(f"Invalid optical flow type: {of_type}. Options: 'block_matching', 'unimatch'")
 
