@@ -35,7 +35,8 @@ def __parse_args() -> argparse.Namespace:
 
 
 def save_optical_flow_blockmatching(args, video_max_frames: int = 9999, video_frame_sampling: int = 1):
-    os.makedirs(os.path.join(args.path_results, "blockmatching"), exist_ok=True)
+    path_results = os.path.join(args.path_results, "video_of_block_matching")
+    os.makedirs(path_results, exist_ok=True)
     video = cv2.VideoCapture(args.path_sequence)
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
@@ -80,7 +81,8 @@ def save_optical_flow_blockmatching(args, video_max_frames: int = 9999, video_fr
 
 
 def save_optical_flow_unimatch(args, video_max_frames: int = 9999, video_frame_sampling: int = 1):
-    os.makedirs(os.path.join(args.path_results, "unimatch"), exist_ok=True)
+    path_results = os.path.join(args.path_results, "video_of_block_unimatch")
+    os.makedirs(path_results, exist_ok=True)
     video = cv2.VideoCapture(args.path_sequence)
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
