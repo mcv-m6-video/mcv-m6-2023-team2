@@ -69,7 +69,7 @@ def save_optical_flow_blockmatching(args, video_max_frames: int = 9999, video_fr
         pred_flow = convert_image_to_optical_flow(pred_flow)
 
         # Save image
-        cv2.imwrite(os.path.join(args.path_results, f"{idx_frame}.png"), pred_flow)
+        cv2.imwrite(os.path.join(path_results, f"{idx_frame}.png"), pred_flow)
         # frames_of.append(pred_flow)
 
         frame_prev = frame
@@ -104,7 +104,7 @@ def save_optical_flow_unimatch(args, video_max_frames: int = 9999, video_frame_s
 
         # Save image
         pred_flow = convert_image_to_optical_flow(pred_flow)
-        cv2.imwrite(os.path.join(args.path_results, f"{idx_frame}.png"), pred_flow)
+        cv2.imwrite(os.path.join(path_results, f"{idx_frame}.png"), pred_flow)
 
         frame_prev = frame
 
