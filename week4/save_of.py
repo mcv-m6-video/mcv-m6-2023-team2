@@ -29,9 +29,9 @@ def __parse_args() -> argparse.Namespace:
     parser.add_argument('--sequence', type=str, help='Sequence to process, e.g. "S03"')
     parser.add_argument('--cameras', help='List of cameras to process, e.g. "c010,c011,c012,c013,c014,c015"',
                         type=lambda s: [item for item in s.split(',')])
+    parser.add_argument('--max_frames', type=int, help='Maximum number of frames to process')
     parser.add_argument('--path_results', type=str, default="./results/",
                         help='The path to the directory where the results will be stored.')
-    parser.add_argument('--max_frames', type=int, help='Maximum number of frames to process')
 
     args = parser.parse_args()
     return args
@@ -177,7 +177,7 @@ if __name__ == "__main__":
 
     print(args)
 
-    batch_inference_unimatch()
+    batch_inference_unimatch(args)
 
     # save_optical_flow_unimatch(
     #     args,
