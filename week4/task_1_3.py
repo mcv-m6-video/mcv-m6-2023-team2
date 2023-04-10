@@ -189,8 +189,9 @@ def tracking_by_kalman_filter_with_optical_flow(
             if of_type == "block_match":
                 pred_flow = load_optical_flow(os.path.join(of_data_path, f"{idx_frame}.png"))
             elif of_type == "unimatch":
-                pred_flow = read_flow_unimatch(os.path.join(of_data_path, f"{idx_frame:04d}_pred.flo"))
+                # pred_flow = read_flow_unimatch(os.path.join(of_data_path, f"{idx_frame:04d}_pred.flo"))
                 # pred_flow = load_optical_flow(os.path.join(of_data_path, f"{idx_frame:04d}_flow.png"))
+                pred_flow = load_optical_flow(os.path.join(of_data_path, f"{idx_frame}.png"))
                 print(pred_flow.shape)
             else:
                 raise ValueError(f"Invalid optical flow type: {of_type}. Options: 'block_matching', 'unimatch'")
@@ -247,7 +248,7 @@ def main(args: argparse.Namespace):
             model_name=model_name_for_file,
             save_video_path=args.path_results,
             save_tracking_path=args.path_tracking_data,
-            video_max_frames=45,    # TODO: Comment this line to use all frames!
+            # video_max_frames=45,    # TODO: Comment this line to use all frames!
             tracking_max_age=max_age,
             tracking_min_hits=min_hits,
             tracking_iou_threshold=min_iou,
