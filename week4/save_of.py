@@ -26,12 +26,12 @@ def __parse_args() -> argparse.Namespace:
     #                     help='Path to the directory where the sequence is stored.')
     parser.add_argument('--path_sequence', type=str, default="../data/aic19/train/S03/c010/vdo.avi",
                         help='Path to the directory where the sequence is stored.')
-    parser.add_argument('--sequence', type=str, require=True, help='Sequence to process, e.g. "S03"')
-    parser.add_argument('--cameras', require=True, help='List of cameras to process, e.g. "c010,c011,c012,c013,c014,c015"',
+    parser.add_argument('--sequence', type=str, help='Sequence to process, e.g. "S03"')
+    parser.add_argument('--cameras', help='List of cameras to process, e.g. "c010,c011,c012,c013,c014,c015"',
                         type=lambda s: [item for item in s.split(',')])
     parser.add_argument('--path_results', type=str, default="./results/",
                         help='The path to the directory where the results will be stored.')
-    parser.add_argument('--max_frames', type=int, require=True, help='Maximum number of frames to process')
+    parser.add_argument('--max_frames', type=int, help='Maximum number of frames to process')
 
     args = parser.parse_args()
     return args
