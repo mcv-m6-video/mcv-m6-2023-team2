@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from typing import List
-from week4.class_utils import BoundingBox
+from class_utils import BoundingBox
 
 
 class Track(object):
