@@ -27,7 +27,7 @@ def __parse_args() -> argparse.Namespace:
     #                     help='Path to the directory where the sequence is stored.')
     parser.add_argument('--path_sequence', type=str, default="../data/aic19/train/S03/c010/vdo.avi",
                         help='Path to the directory where the sequence is stored.')
-    parser.add_argument('--path_results', type=str, default="./results/video_of",
+    parser.add_argument('--path_results', type=str, default="./results/",
                         help='The path to the directory where the results will be stored.')
 
     args = parser.parse_args()
