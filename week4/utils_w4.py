@@ -254,6 +254,19 @@ def convert_optical_flow_to_image(flow: np.ndarray) -> np.ndarray:
     return optical_flow
 
 
+def convert_image_to_optical_flow(flow: np.ndarray) -> np.ndarray:
+    img_u = flow[:, :, 0]
+    img_v = flow[:, :, 1]
+    img_available = flow[:, :, 2]
+
+    img_u = (img_u * 64 + 2 ** 15).astype(np.uint16)
+    img_v = (img_v * 64 + 2 ** 15).astype(np.uint16)
+    img_available = img_available.astype(np.uint16)
+
+    optical_flow = np.dstack((img_available, img_v, img_u))
+    return optical_flow
+
+
 def load_optical_flow(file_path: str):
     # channels arranged as BGR
     img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED).astype(np.double)

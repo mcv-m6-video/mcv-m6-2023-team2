@@ -5,7 +5,7 @@ import pyflow
 from tqdm import tqdm
 from typing import Tuple, Optional
 
-from week4.utils_w4 import resize_image_keep_aspect_ratio
+from utils_w4 import resize_image_keep_aspect_ratio
 from of.of_utils import mse, mae
 
 
