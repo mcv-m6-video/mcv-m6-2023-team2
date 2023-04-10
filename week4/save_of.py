@@ -1,10 +1,15 @@
 
 import sys
-sys.path.append("unimatch")
-# from evaluate_flow import setup_model
-# from evaluate_flow import inference_flow
+
 from of.optical_flow import BlockMatching
 from utils_w4 import convert_image_to_optical_flow
+
+sys.path.append("unimatch")
+from evaluate_flow import (
+    setup_model,
+    flow_unimatch_single,
+    inference_flow,
+)
 
 import os
 import cv2
@@ -29,8 +34,8 @@ def __parse_args() -> argparse.Namespace:
     return args
 
 
-def save_optical_flow(args, video_max_frames: int = 9999, video_frame_sampling: int = 1):
-    os.makedirs(args.path_results, exist_ok=True)
+def save_optical_flow_blockmatching(args, video_max_frames: int = 9999, video_frame_sampling: int = 1):
+    os.makedirs(os.path.join(args.path_results, "blockmatching"), exist_ok=True)
     video = cv2.VideoCapture(args.path_sequence)
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
@@ -56,7 +61,7 @@ def save_optical_flow(args, video_max_frames: int = 9999, video_frame_sampling: 
 
         if not ret:
             break
-            
+
         # Canvia el model
         pred_flow = block_matching.estimate_optical_flow(frame_prev, frame)
         pred_flow = block_matching.postprocess(pred_flow)
@@ -71,26 +76,60 @@ def save_optical_flow(args, video_max_frames: int = 9999, video_frame_sampling: 
     # np.save(results_of_file, frames_of)
     # results_of_file.close()
     # print(f"Optical flow saved successfully! at {filename}")
+    print(f"Optical flow (BlockMatching) saved successfully at {args.path_results} !")
 
 
-# def inference_of_video():
-#     model = setup_model()
+def save_optical_flow_unimatch(args, video_max_frames: int = 9999, video_frame_sampling: int = 1):
+    os.makedirs(os.path.join(args.path_results, "unimatch"), exist_ok=True)
+    video = cv2.VideoCapture(args.path_sequence)
+    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
-#     inference_flow(
-#         model=model,
-#         inference_dir=None,
-#         inference_video=args.path_sequence,
-#         save_flo_flow=True,
-#         output_path=args.path_results,
-#     )
+    max_frames = min(video_max_frames, total_frames)
+
+    _, frame_prev = video.read()
+
+    unimatch_model = setup_model()
+
+    for idx_frame in tqdm(range(0, max_frames - 1, video_frame_sampling), desc="Saving optical flow (Unimatch)..."):
+        ret, frame = video.read()
+
+        if not ret:
+            break
+
+        pred_flow, _ = flow_unimatch_single(frame_prev, frame, unimatch_model,)
+
+        # Save image
+        pred_flow = convert_image_to_optical_flow(pred_flow)
+        cv2.imwrite(os.path.join(args.path_results, f"{idx_frame}.png"), pred_flow)
+
+        frame_prev = frame
+
+    print(f"Optical flow (Unimatch) saved successfully at {args.path_results} !")
+
+
+def inference_of_video_unimatch():
+    model = setup_model()
+
+    inference_flow(
+        model=model,
+        inference_dir=None,
+        inference_video=args.path_sequence,
+        save_flo_flow=True,
+        output_path=args.path_results,
+    )
+    print(f"Optical flow (Unimatch) for the video saved succesfully!")
 
 
 if __name__ == "__main__":
     args = __parse_args()
-    save_optical_flow(
+    save_optical_flow_blockmatching(
         args,
         video_max_frames=5,
         video_frame_sampling=1,
     )
-    # inference_of_video()
-
+    save_optical_flow_unimatch(
+        args,
+        video_max_frames=5,
+        video_frame_sampling=1,
+    )
+    inference_of_video_unimatch()
