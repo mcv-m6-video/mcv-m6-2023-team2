@@ -111,7 +111,7 @@ ENV/
 /wandb/
 /results
 /data/AICity_data
-
+AICity_data/*
 *.db
 *.png
 *.avi

@@ -14,6 +14,9 @@ import random
 CocoDict = Dict
 Height, Width, Channels = int, int, int
 
+def generate_gt_from_txt(in_path):
+    pass
+
 def generate_gt_from_xml(in_path: Path, ignore_parked: bool = False, ignore_classes: bool = False) -> CocoDict:
 
     ## Thanks for the parser dear pau torras 
@@ -141,6 +144,7 @@ def load_jsons(coco_dictionary):
     start_validation_idx = int(len(coco_dictionary['images']) * .25)
     train, val = list(), list()
     using = train
+    everything = []
 
     for idx, image in enumerate(coco_dictionary['images']):
 
@@ -148,8 +152,9 @@ def load_jsons(coco_dictionary):
         
         if idx > start_validation_idx: using = val
         using.append({**image, 'image_id': image['id'], 'annotations': gt})
-    
+        everything.append({**image, 'image_id': image['id'], 'annotations': gt})
     open('train_first.json', 'w').write(json.dumps(train))
+    open('everything.json', 'w').write(json.dumps(everything))
     open('val_first.json', 'w').write(json.dumps(val))
 
 
@@ -245,6 +250,6 @@ def load_oxx(t="train"):
 
 if __name__ == '__main__':
     #unvideo_video('/home/adria/Desktop/mcv-m6-2023-team2/data/AICity_S03_c010/vdo.avi')
-    a = (generate_gt_from_xml('/home/adria/Desktop/mcv-m6-2023-team2/data/AICity_S03_c010/ai_challenge_s03_c010-full_annotation.xml'))
+    a = (generate_gt_from_xml('../data/AICity_S03_c010/ai_challenge_s03_c010-full_annotation.xml'))
     load_jsons(a)
     print(a['categories'])
