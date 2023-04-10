@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.feature_extraction.image import extract_patches_2d
 from tqdm import tqdm
 
-from utils import mse, mae
+# from utils import mse, mae
 
 
 class OpticalFlowEstimator:
@@ -46,7 +46,7 @@ class BlockMatching(OpticalFlowEstimator):
         if self.estimation_type == "backward":
             image_prev, image_next = image_next, image_prev
 
-        for 
+        # for
 
         # patches_prev = extract_patches_2d(image_prev, (self.block_size, self.block_size))
         # patches_next = extract_patches_2d(image_next, (self.block_size, self.block_size))

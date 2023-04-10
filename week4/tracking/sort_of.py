@@ -63,7 +63,14 @@ def iou_batch(bb_test, bb_gt):
 
 def optflow_batch(bb_test, bb_gt, flow):
     """
-    Compute matching pixels between bboxes
+    Compute matching pixels between bboxes.
+    The algorithm is the following:
+    1. Compute the optical flow between two frames
+    2. For each bbox in the first frame, compute the new bbox in the second frame
+    3. Compute the number of pixels that are in the new bbox and in the second bbox
+    4. The bbox with the highest score is the one that matches the most
+    :
+
 
     :param bb_test: list of bboxes in the form [x1,y1,x2,y2]
     :param bb_gt: list of bboxes in the form [x1,y1,x2,y2]
@@ -79,6 +86,11 @@ def optflow_batch(bb_test, bb_gt, flow):
             score = (np.all(np.array([bboxB[0], bboxB[1]]) <= new_ind, axis=2) * np.all(
                 new_ind <= np.array([bboxB[2], bboxB[3]]), axis=2)).sum()
             dist_mat[i, j] = score
+
+    # The lines below are used to compute the matching score between the two bboxes
+    # The score is the number of pixels that are in the new bbox and in the second bbox
+    # The bbox with the highest score is the one that matches the most
+
     return dist_mat
 
 
