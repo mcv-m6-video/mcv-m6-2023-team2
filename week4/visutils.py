@@ -226,7 +226,7 @@ def video_optical_quiver(seq_video_path, results_path, detections = None, vidout
     results = [results_path + r for r in files]
     for res in results:
         print(res)
-        int(x.split('.')[0].split('/')[-1])
+        int(res.split('.')[0].split('/')[-1])
 
     results = sorted(results, key = lambda x:  int(x.split('.')[0].split('/')[-1]))
     
