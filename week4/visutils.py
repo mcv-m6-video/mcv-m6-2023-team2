@@ -223,8 +223,9 @@ def plot_optical_flow_quiver_with_centroids(path, original_image_path = None, ce
 def video_optical_quiver(seq_video_path, results_path, detections = None, vidout = 'outquiver.avi'):
 
     files = [r for r in os.listdir(results_path) if 'png' in r and len(r.split('.')[0].split('/')[-1])]
-    print(files)
-    results = sorted([results_path + r for r in files], key = lambda x:  int(x.split('.')[0].split('/')[-1]))
+    results = [results_path + r for r in files]
+    print(results)
+    results = sorted(results, key = lambda x:  int(x.split('.')[0].split('/')[-1]))
     if isinstance(detections, str):
         detections = open(detections, 'r').readlines()
         detections_lut = {}
