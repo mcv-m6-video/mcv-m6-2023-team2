@@ -303,7 +303,7 @@ if __name__ == '__main__':
     ]
     
 
-    for video, result, outname in zip(videos, results, ['videos/'+outnames]):
+    for video, result, outname in zip(videos, results, ['videos/'+x for x in outnames]):
         print(f"\nProcessing:\n\t Video: {video}\n\t Result: {result}\n\tSaving at: {outname}")
         video_optical_quiver(video, result, vidout =outname)
         record_3d_video(video, result, vidout = outname)
