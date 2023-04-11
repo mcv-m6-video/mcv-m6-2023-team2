@@ -179,15 +179,15 @@ def plot_optical_flow_surface(path,  original_image_path = None):
     
 
 
-def record_3d_video(seq_video_path, results_path):
+def record_3d_video(seq_video_path, results_path, vidout = 'outpy.avi'):
 
-    results = sorted([results_path + r for r in os.listdir(results_path)], key = lambda x: int(x.split('.')[0].split('/')[-1]))
+    results = sorted([results_path + r for r in os.listdir(results_path) if 'png' in r], key = lambda x: int(x.split('.')[0].split('/')[-1]))
     video_handler = cv2.VideoCapture(seq_video_path)
 
     W = 480
     H = 640
 
-    out = cv2.VideoWriter('outpy.avi', cv2.VideoWriter_fourcc('M','J','P','G'), video_handler.get(cv2.CAP_PROP_FPS), (H, W))
+    out = cv2.VideoWriter('3d_'+vidout, cv2.VideoWriter_fourcc('M','J','P','G'), video_handler.get(cv2.CAP_PROP_FPS), (H, W))
 
     num_frames = int(video_handler.get(cv2.CAP_PROP_FRAME_COUNT))
     for frame_id in tqdm(range(num_frames - 1)):
@@ -219,26 +219,27 @@ def plot_optical_flow_quiver_with_centroids(path, original_image_path = None, ce
 
     return cv2.cvtColor(cv2.imread('out2.png', cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB)
 
-def video_optical_quiver(seq_video_path, results_path, detections = None):
-    assert not detections is None
+def video_optical_quiver(seq_video_path, results_path, detections = None, vidout = 'outquiver.avi'):
 
-    results = sorted([results_path + r for r in os.listdir(results_path)], key = lambda x: int(x.split('.')[0].split('/')[-1]))
-    detections = open(detections, 'r').readlines()
-    detections_lut = {}
-    for line in detections:
+    results = sorted([results_path + r for r in os.listdir(results_path) if 'png' in r], key = lambda x: int(x.split('.')[0].split('/')[-1]))
+    if isinstance(detections, str):
+        detections = open(detections, 'r').readlines()
+        detections_lut = {}
 
-        line = line.strip().split(',')
-        if not line[0] in detections_lut: detections_lut[int(line[0])] = []
+        for line in detections:
 
-        centroid = [float(line[2]) + .5 * float(line[4]), float(line[3]) + .5* float(line[5])]
-        detections_lut[int(line[0])].append([int(i) for i in centroid][::-1])
+            line = line.strip().split(',')
+            if not line[0] in detections_lut: detections_lut[int(line[0])] = []
+
+            centroid = [float(line[2]) + .5 * float(line[4]), float(line[3]) + .5* float(line[5])]
+            detections_lut[int(line[0])].append([int(i) for i in centroid][::-1])
 
     video_handler = cv2.VideoCapture(seq_video_path)
 
     W = 480
     H = 640
 
-    out = cv2.VideoWriter('outquiver.avi', cv2.VideoWriter_fourcc('M','J','P','G'), video_handler.get(cv2.CAP_PROP_FPS), (H, W))
+    out = cv2.VideoWriter('quiver_'+vidout, cv2.VideoWriter_fourcc('M','J','P','G'), video_handler.get(cv2.CAP_PROP_FPS), (H, W))
 
     num_frames = int(video_handler.get(cv2.CAP_PROP_FRAME_COUNT))
     for frame_id in tqdm(range(num_frames - 1)):
@@ -256,9 +257,53 @@ if __name__ == '__main__':
 
     video = 'OFs/c010/vdo.avi'
     results = 'OFs/video_of_blockmatching_S03_c010/'
-    detections = 'OFs/c010/det/det_mask_rcnn.txt'
+    #detections = 'OFs/c010/det/det_mask_rcnn.txt'
 
-    video_optical_quiver(video, results, detections)
-    #plot_optical_flow_surface(data, original)
-    #record_3d_video(video, results)
+    videos = [
+        '../data/aic19/train/S01/c003/vdo.avi',
+        '../data/aic19/train/S01/c003/vdo.avi',
+        
+        '../data/aic19/train/S03/c010/vdo.avi',
+        '../data/aic19/train/S03/c010/vdo.avi',
+
+        '../data/aic19/train/S03/c013/vdo.avi',
+        '../data/aic19/train/S03/c013/vdo.avi',
+
+        '../data/aic19/train/S04/c016/vdo.avi',
+        '../data/aic19/train/S04/c016/vdo.avi',
+        
+        ]
+    results = [
+        './results/video_of_blockmatching_S01_c003/',
+        './results/video_of_unimatch_S01_c003/',
+
+        './results/video_of_blockmatching_S03_c010/',
+        './results/video_of_unimatch_S03_c010/',
+
+        './results/video_of_blockmatching_S03_c013/',
+        './results/video_of_unimatch_S03_c013/',
+
+        './results/video_of_blockmatching_S04_c016/',
+        './results/video_of_unimatch_S04_c016/'
+        
+    ]
+    outnames = [
+        'S01_c003_BLOCKMATCH',
+        'S01_c003_UNIMATCH',
+
+        'S03_c010_BLOCKMATCH',
+        'S03_c010_UNIMATCH',
+
+        'S03_c013_BLOCKMATCH',
+        'S03_c013_UNIMATCH',
+
+
+        'S04_c016_BLOCKMATCH',
+        'S04_c016_UNIMATCH',
+    ]
+
+    for video, result, outname in zip(videos, results, outnames):
+        print(f"\nProcessing:\n\t Video: {video}\n\t Result: {result}\n\tSaving at: {outname}")
+        video_optical_quiver(video, result, vidout =outname)
+        record_3d_video(video, result, vidout = outname)
     
