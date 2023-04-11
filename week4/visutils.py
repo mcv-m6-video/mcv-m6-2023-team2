@@ -181,7 +181,7 @@ def plot_optical_flow_surface(path,  original_image_path = None):
 
 def record_3d_video(seq_video_path, results_path, vidout = 'outpy.avi'):
 
-    results = sorted([results_path + r for r in os.listdir(results_path) if 'png' in r], key = lambda x: int(x.split('.')[0].split('/')[-1]))
+    results = sorted([results_path + r for r in os.listdir(results_path) if 'png' in r],)
     video_handler = cv2.VideoCapture(seq_video_path)
 
     W = 480
@@ -221,7 +221,7 @@ def plot_optical_flow_quiver_with_centroids(path, original_image_path = None, ce
 
 def video_optical_quiver(seq_video_path, results_path, detections = None, vidout = 'outquiver.avi'):
 
-    results = sorted([results_path + r for r in os.listdir(results_path) if 'png' in r], key = lambda x: int(x.split('.')[0].split('/')[-1]))
+    results = sorted([results_path + r for r in os.listdir(results_path) if 'png' in r],)
     if isinstance(detections, str):
         detections = open(detections, 'r').readlines()
         detections_lut = {}
