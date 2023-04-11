@@ -187,7 +187,7 @@ def record_3d_video(seq_video_path, results_path, vidout = 'outpy.avi'):
     W = 480
     H = 640
 
-    out = cv2.VideoWriter('3d_'+vidout, cv2.VideoWriter_fourcc('M','J','P','G'), video_handler.get(cv2.CAP_PROP_FPS), (H, W))
+    out = cv2.VideoWriter(vidout + '_3d.avi', cv2.VideoWriter_fourcc('M','J','P','G'), video_handler.get(cv2.CAP_PROP_FPS), (H, W))
 
     num_frames = int(video_handler.get(cv2.CAP_PROP_FRAME_COUNT))
     for frame_id in tqdm(range(num_frames - 1)):
@@ -239,7 +239,7 @@ def video_optical_quiver(seq_video_path, results_path, detections = None, vidout
     W = 480
     H = 640
 
-    out = cv2.VideoWriter('quiver_'+vidout, cv2.VideoWriter_fourcc('M','J','P','G'), video_handler.get(cv2.CAP_PROP_FPS), (H, W))
+    out = cv2.VideoWriter(vidout + '_quiver.avi', cv2.VideoWriter_fourcc('M','J','P','G'), video_handler.get(cv2.CAP_PROP_FPS), (H, W))
 
     num_frames = int(video_handler.get(cv2.CAP_PROP_FRAME_COUNT))
     for frame_id in tqdm(range(num_frames - 1)):
