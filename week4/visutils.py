@@ -301,8 +301,9 @@ if __name__ == '__main__':
         'S04_c016_BLOCKMATCH',
         'S04_c016_UNIMATCH',
     ]
+    
 
-    for video, result, outname in zip(videos, results, outnames):
+    for video, result, outname in zip(videos, results, ['videos/'+outnames]):
         print(f"\nProcessing:\n\t Video: {video}\n\t Result: {result}\n\tSaving at: {outname}")
         video_optical_quiver(video, result, vidout =outname)
         record_3d_video(video, result, vidout = outname)
