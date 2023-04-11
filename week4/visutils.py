@@ -224,8 +224,12 @@ def video_optical_quiver(seq_video_path, results_path, detections = None, vidout
 
     files = [r for r in os.listdir(results_path) if 'png' in r and len(r.split('.')[0].split('/')[-1])]
     results = [results_path + r for r in files]
-    print(results)
+    for res in results:
+        print(res)
+        int(x.split('.')[0].split('/')[-1])
+
     results = sorted(results, key = lambda x:  int(x.split('.')[0].split('/')[-1]))
+    
     if isinstance(detections, str):
         detections = open(detections, 'r').readlines()
         detections_lut = {}
