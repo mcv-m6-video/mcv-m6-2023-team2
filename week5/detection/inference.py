@@ -90,13 +90,12 @@ def run_inference_yolo(cfg):
                 for result in results:
                     for box, conf, cls in zip(result.boxes.xyxy, result.boxes.conf, result.boxes.cls):
                         cls = int(cls.item())
-                        if cls in VALID_IDS_SUBS:
-                            box = box.cpu().numpy()
-                            confs.append(conf)
-                            bboxes.append(box)
-                            classes.append(cls+1)
-                            det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf.item())+',-1,-1,-1\n'
-                            f.write(det)
+                        box = box.cpu().numpy()
+                        confs.append(conf)
+                        bboxes.append(box)
+                        classes.append(cls+1)
+                        det = str(frame_id+1)+',-1,'+str(box[0])+','+str(box[1])+','+str(box[2]-box[0])+','+str(box[3]-box[1])+','+str(conf.item())+',-1,-1,-1\n'
+                        f.write(det)
 
                 if cfg["store_results"]:
                     output_path = os.path.join(res_dir, 'det_frame_' + str(frame_id) + '.png')

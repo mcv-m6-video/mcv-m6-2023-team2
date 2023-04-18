@@ -2,4 +2,4 @@ path_tracking_data: ./data/trackers/mot_challenge/parabellum-train
 tracking_type: kalman
 path_results: ./tracking/results
 dataset_dir: ../data/aic19/train
-detections_dir: ./detections_yolo
+detections_dir: ./detections/yolo

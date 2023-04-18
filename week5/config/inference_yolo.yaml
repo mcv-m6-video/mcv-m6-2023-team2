@@ -1,5 +1,5 @@
 dataset_dir: ../data/aic19/train
-path_results: ./detections_yolo
+path_results: ./detections/yolo
 weights: weights/best.pt
 store_results: true
 num_frames: 99999999
