@@ -12,7 +12,7 @@ def finetune(cfg):
     params = {
         'batch_size': 64,
         'image_size' : 512,
-        'learning_rate': 0.003,
+        'learning_rate': 0.0005,
     }
 
     batch_size = int(params['batch_size'])
@@ -41,6 +41,8 @@ def finetune(cfg):
     print('Finetuning time: {:02d}hours {:02d}min {:02d}s'.format(int(h), int(min), int(s)))
     val_results = model.val()
     print("Metrics (validation): ", val_results)
+
+    success = model.export(format="-")
 
 
 if __name__ == "__main__":
