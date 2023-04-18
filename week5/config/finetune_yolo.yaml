@@ -4,5 +4,5 @@ names: ["car"]
 nc: 1
 
 # where to store results
-train: C:\Users\Usuario\Desktop\Master\mcv-m6-2023-team2\week5\detections\train
-val:  C:\Users\Usuario\Desktop\Master\mcv-m6-2023-team2\week5\detections\val
+train: /ghome/group01/mcv-m6-2023-team2/week5/detections/train
+val: /ghome/group01/mcv-m6-2023-team2/week5/detections/val
