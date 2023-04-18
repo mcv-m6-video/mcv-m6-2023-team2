@@ -1,3 +1,5 @@
-path_tracking_data: week5/data/trackers/mot_challenge/parabellum-train
+path_tracking_data: ./data/trackers/mot_challenge/parabellum-train
 tracking_type: kalman
-path_results: week5/tracking/results
+path_results: ./tracking/results
+dataset_dir: ../data/aic19/train
+detections_dir: ./detections_yolo

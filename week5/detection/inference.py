@@ -60,6 +60,8 @@ def plot_results(pil_img, prob, boxes, output_path, classes=None):
 
 def run_inference_yolo(cfg):
 
+    model = YOLO(cfg["weights"])
+
     for seq in cfg["sequences"]:
 
         for cam in cfg["cameras"][seq]:
@@ -72,8 +74,6 @@ def run_inference_yolo(cfg):
             res_path = os.path.join(res_dir, 'detections.txt')
             if os.path.exists(res_path):
                 os.remove(res_path)
-
-            model = YOLO(cfg["weights"])
 
             cv2_vid = cv2.VideoCapture(video_path)
             num_frames = min( int(cv2_vid.get(cv2.CAP_PROP_FRAME_COUNT)), cfg["num_frames"] )

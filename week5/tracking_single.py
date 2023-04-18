@@ -29,6 +29,7 @@ from bounding_box import BoundingBox
 
 
 def tracking_by_kalman_filter(
+    cfg,
     detections,
     model_name,
     save_video_path,
@@ -50,9 +51,9 @@ def tracking_by_kalman_filter(
 
     # Only for display
     output_video_path = os.path.join(save_video_path, f"tracking_single_{model_name}.mp4")
-    os.makedirs(args.path_results, exist_ok=True)
+    os.makedirs(cfg["path_results"], exist_ok=True)
 
-    video = cv2.VideoCapture(args.path_sequence)
+    video = cv2.VideoCapture(cfg["path_sequence"])
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
     video_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
     video_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -91,7 +92,7 @@ def tracking_by_kalman_filter(
 
         cycle_time = time.time() - start_time
         total_time += cycle_time
-        
+
         trackers = [BoundingBox(*t, int(idx_frame)) for t in trackers]
         tracking_viz.draw_tracks(frame, trackers)
         tracking_viz.draw_trajectories(frame)
@@ -117,7 +118,8 @@ def tracking_by_kalman_filter(
 #         | cYYY
 #     ....
 def scan_sequences(cfg):
-    # For each tracked video, the output path will be like this: ./week5/data/trackers/mot_challenge/parabellum-train/MODEL_NAME/data/{seq}_{camera}.txt
+    # For each tracked video, the output path will be like this:
+    # ./week5/data/trackers/mot_challenge/parabellum-train/MODEL_NAME/data/{seq}_{camera}.txt
 
     # Scan all sequences in directory cfg["detections_dir"]
     for seq in os.listdir(cfg["detections_dir"]):
@@ -130,6 +132,7 @@ def scan_sequences(cfg):
             detections_path = f"{os.path.join(cfg['detections_dir'], seq, camera)}/detections.txt"
 
             # Load and process detections
+            # TODO: afegir filtrat per mida, i el que haviem comentat
             confidence_threshold = 0.6
             detections = load_predictions(detections_path)
             detections = filter_annotations(detections, confidence_thr=confidence_threshold)
@@ -139,6 +142,7 @@ def scan_sequences(cfg):
             exp_name = f'{cfg["tracking_type"]}_{seq_name}_{camera_name}'
             save_tracking_path = os.path.join(cfg["path_tracking_data"], exp_name, "data")
             save_video_path = cfg["path_results"]
+            cfg["path_sequence"] = os.path.join(cfg["dataset_dir"], seq_name, camera_name, "vdo.avi")
 
             if cfg["tracking_type"] == "kalman":
 
@@ -148,6 +152,7 @@ def scan_sequences(cfg):
                 min_iou = 0.3
 
                 tracking_by_kalman_filter(
+                    cfg=cfg,
                     detections=detections,
                     model_name=exp_name,
                     save_video_path=save_video_path,
