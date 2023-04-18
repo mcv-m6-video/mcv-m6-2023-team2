@@ -110,7 +110,7 @@ def run_inference_yolo(cfg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="../config/inference_yolo.yaml")
+    parser.add_argument("--config", default="./config/inference_yolo.yaml")
     args = parser.parse_args(sys.argv[1:])
 
     cfg = load_config(args.config)

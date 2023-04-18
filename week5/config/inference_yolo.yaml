@@ -2,6 +2,7 @@ dataset_dir: ../data/aic19/train
 path_results: ./detections_yolo
 weights: weights/yolov8n.pt
 store_results: true
+num_frames: 99999999
 sequences:
     - S01
     - S03
