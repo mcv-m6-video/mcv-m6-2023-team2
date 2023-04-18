@@ -34,8 +34,6 @@ def tracking_by_kalman_filter(
     model_name,
     save_video_path,
     save_tracking_path,
-    seq: str,
-    camera: str,
     video_max_frames: int = 9999,
     video_frame_sampling: int = 1,
     tracking_max_age: int = 1,
@@ -61,7 +59,7 @@ def tracking_by_kalman_filter(
     max_frames = min(video_max_frames, total_frames)
 
     tracking_viz = TrackingViz(output_video_path, video_width, video_height, fps)
-    results_file = open(os.path.join(save_tracking_path, f"{seq.lower()}_{camera.lower()}.txt"), "w")
+    results_file = open(os.path.join(save_tracking_path, f"res.txt"), "w")
 
     mot_tracker = Sort(max_age=tracking_max_age, min_hits=tracking_min_hits, iou_threshold=tracking_iou_threshold)
 
