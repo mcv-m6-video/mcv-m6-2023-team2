@@ -76,7 +76,7 @@ def run_inference_yolo(cfg):
             model = YOLO(cfg["weights"])
 
             cv2_vid = cv2.VideoCapture(video_path)
-            num_frames = min( int(cv2_vid.get(cv2.CAP_PROP_FRAME_COUNT)), args.num_frames )
+            num_frames = min( int(cv2_vid.get(cv2.CAP_PROP_FRAME_COUNT)), cfg["num_frames"] )
 
             f = open(res_path, 'a')
             for frame_id in tqdm(range(num_frames)):
