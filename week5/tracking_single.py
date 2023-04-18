@@ -172,7 +172,7 @@ def scan_sequences(cfg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="../config/tracking_single.yaml")
+    parser.add_argument("--config", default="./config/tracking_single.yaml")
     args = parser.parse_args(sys.argv[1:])
 
     cfg = load_config(args.config)
