@@ -1,8 +1,3 @@
-# the class labels we cant to detect
-names: ["car", "truck"]
-# number of classes to be detected
-nc: 2
-
-# where to store results
-train: /ghome/group01/mcv-m6-2023-team2/week5/detections/train
-val: /ghome/group01/mcv-m6-2023-team2/week5/detections/val
+path_tracking_data: week5/data/trackers/mot_challenge/parabellum-train
+tracking_type: kalman
+path_results: week5/tracking/results

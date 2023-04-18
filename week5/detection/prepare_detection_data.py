@@ -1,7 +1,6 @@
 import argparse
 import sys
 import os
-import cv2
 
 from utils import load_config, store_frames
 
