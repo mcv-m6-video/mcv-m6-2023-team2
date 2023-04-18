@@ -1,0 +1,3 @@
+epochs: 35
+model_weights: weights/yolov8n.pt
+finetune_yolo_config : configs/finetune_yolo.yaml

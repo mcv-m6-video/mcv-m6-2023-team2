@@ -1,0 +1,4 @@
+data_dir: "../../data/aic19/train/"
+output_dir: "detections"
+train_S: ["S01", "S04"]
+val_S: ["S03"]

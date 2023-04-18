@@ -1,0 +1,9 @@
+# the class labels we cant to detect
+# only cars in our case
+names: ["car"]
+# number of classes to be detected
+nc: 1
+
+# where to store results
+train: C:\Users\Usuario\Desktop\Master\mcv-m6-2023-team2\week5\detections\train
+val:  C:\Users\Usuario\Desktop\Master\mcv-m6-2023-team2\week5\detections\val
