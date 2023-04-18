@@ -76,13 +76,14 @@ def tracking_by_kalman_filter(
         else:
             dets = detections[idx_frame]
                 # If no detections, add empty array
-        if len(dets) == 0:
-            dets = np.empty((0, 5))
 
         tracking_viz.draw_detections(frame, dets)
 
         # Convert to proper array for the tracker input
         dets = np.array([d.coordinates for d in dets])
+        # If no detections, add empty array
+        if len(dets) == 0:
+            dets = np.empty((0, 5))
 
         start_time = time.time()
         # Update tracker
