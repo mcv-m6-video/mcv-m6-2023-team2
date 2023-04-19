@@ -169,9 +169,9 @@ def tracking_by_kalman_filter(
     print("Total Tracking took: %.3f for %d frames, @ %.1f FPS" % (total_time, total_frames, total_frames/total_time))
 
     if cfg["filter_by_area"]:
-        trackers_list = filter_by_area(cfg, trackers_list, save_tracking_path)
+        trackers_list = filter_by_area(cfg, trackers_list)
     if cfg["filter_parked"]:
-        trackers_list = filter_parked(cfg, trackers_list, save_tracking_path)
+        trackers_list = filter_parked(cfg, trackers_list)
 
     store_trackers_list(trackers_list, save_tracking_path)
 
