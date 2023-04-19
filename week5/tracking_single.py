@@ -46,7 +46,6 @@ def filter_by_id(keep_id, trackers_list: List[List[BoundingBox]]):
     filtered_trackers_list = []
     for trackers in trackers_list:
         trackers_filt = [d for d in trackers if d.track_id in keep_id]
-        # if len(trackers_filt) > 0:
         filtered_trackers_list.append(trackers_filt)
     return filtered_trackers_list
 
@@ -95,6 +94,21 @@ def filter_parked(cfg: Dict, trackers_list: List[List[BoundingBox]]):
     return filtered_trackers_list
 
 
+def viz_tracking(
+    output_video_path: str,
+    video_width: int,
+    video_height: int,
+    fps: int,
+    trackers_list: List[List[BoundingBox]],
+    frames_list: List[np.ndarray],
+):
+    tracking_viz = TrackingViz(output_video_path, video_width, video_height, fps)
+    for trackers, frame in zip(trackers_list, frames_list):
+        tracking_viz.draw_tracks(frame, trackers)
+        tracking_viz.draw_trajectories(frame)
+        tracking_viz.write_frame(frame)
+
+
 def tracking_by_kalman_filter(
     cfg,
     detections,
@@ -113,6 +127,7 @@ def tracking_by_kalman_filter(
 
     total_time = 0.0
     trackers_list = []
+    frames_list = []
 
     # Only for display
     output_video_path = os.path.join(save_video_path, f"tracking_single_{model_name}.mp4")
@@ -124,8 +139,6 @@ def tracking_by_kalman_filter(
     video_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(video.get(cv2.CAP_PROP_FPS))
     max_frames = min(video_max_frames, total_frames)
-
-    tracking_viz = TrackingViz(output_video_path, video_width, video_height, fps)
 
     mot_tracker = Sort(max_age=tracking_max_age, min_hits=tracking_min_hits, iou_threshold=tracking_iou_threshold)
 
@@ -142,8 +155,6 @@ def tracking_by_kalman_filter(
         else:
             dets = detections[idx_frame]
 
-        tracking_viz.draw_detections(frame, dets)
-
         # Convert to proper array for the tracker input
         dets = np.array([d.coordinates for d in dets])
         # If no detections, add empty array
@@ -159,9 +170,7 @@ def tracking_by_kalman_filter(
 
         # TODO: posar aquesta visu abans i despres de filtrar per area, per aparcats, etc.
         trackers = [BoundingBox(*t, int(idx_frame)) for t in trackers]
-        tracking_viz.draw_tracks(frame, trackers)
-        tracking_viz.draw_trajectories(frame)
-        tracking_viz.write_frame(frame)
+        frames_list.append(frame)
 
         trackers_list.append(trackers)
         total_frames += 1
@@ -174,6 +183,8 @@ def tracking_by_kalman_filter(
         trackers_list = filter_parked(cfg, trackers_list)
 
     store_trackers_list(trackers_list, save_tracking_path)
+    # visualize tracking
+    viz_tracking(output_video_path, video_width, video_height, fps, trackers_list, frames_list)
 
 
 # Detections are stored in the following directory structure:
