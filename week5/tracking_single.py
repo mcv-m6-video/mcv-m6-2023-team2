@@ -25,88 +25,13 @@ from utils import (
     non_maxima_suppression,
     load_optical_flow,
 )
-from tracking.tracking_utils import TrackingViz
+from tracking.tracking_utils import (
+    viz_tracking,
+    filter_by_area,
+    filter_parked,
+    store_trackers_list,
+)
 from bounding_box import BoundingBox
-
-
-def store_trackers_list(trackers_list: List[List[BoundingBox]], save_tracking_path: str):
-    # trackers_list is a list of lists, where each list contains the bounding boxes of a frame
-    results_file = open(save_tracking_path, "w")
-    for trackers in trackers_list:
-        for d in trackers:
-            # Save tracking with bounding boxes in MOT Challenge format:
-            # <frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, -1, -1, -1, -1
-            results_file.write(
-                f"{d.frame+1},{d.track_id},{d.x1},{d.y1},{d.x2-d.x1},{d.y2-d.y1},{d.confidence if d.confidence else '-1'},-1,-1,-1\n"
-            )
-    results_file.close()
-
-
-def filter_by_id(keep_id, trackers_list: List[List[BoundingBox]]):
-    filtered_trackers_list = []
-    for trackers in trackers_list:
-        trackers_filt = [d for d in trackers if d.track_id in keep_id]
-        filtered_trackers_list.append(trackers_filt)
-    return filtered_trackers_list
-
-
-def filter_by_area(cfg: Dict, trackers_list: List[List[BoundingBox]]):
-    # keep track of the area of each track over time
-    trackId_area = {}
-    for trackers in trackers_list:
-        for d in trackers:
-            if d.track_id not in trackId_area:
-                trackId_area[d.track_id] = []
-            trackId_area[d.track_id].append(d.area)
-
-    keep_id = set()
-    # Compute the average area of each track
-    for track_id in trackId_area:
-        trackId_area[track_id] = np.mean(trackId_area[track_id])
-        # Keep only the tracks with an area above a threshold
-        if trackId_area[track_id] >= cfg["filter_area_threshold"]:
-            keep_id.add(track_id)
-
-    # Finally, store only the tracks that are not parked
-    filtered_trackers_list = filter_by_id(keep_id, trackers_list)
-    return filtered_trackers_list
-
-
-def filter_parked(cfg: Dict, trackers_list: List[List[BoundingBox]]):
-    """ Discards parked vehicles """
-    # Compute the center of the bounding box for each frame and track
-    bbox_center = {}  # track_id -> list of (x,y) coordinates
-    for trackers in trackers_list:
-        for d in trackers:
-            if d.track_id not in bbox_center:
-                bbox_center[d.track_id] = []
-            bbox_center[d.track_id].append([d.center_x, d.center_y])
-
-    # Compute the std of the bounding boxes center for each track
-    keep_id = set()
-    for track_id in bbox_center:
-        bbox_center[track_id] = np.std(bbox_center[track_id], axis=0)
-        if bbox_center[track_id][0] >= cfg["filter_parked_threshold"] or bbox_center[track_id][1] >= cfg["filter_parked_threshold"]:
-            keep_id.add(track_id)
-
-    # Finally, store only the tracks that are not parked
-    filtered_trackers_list = filter_by_id(keep_id, trackers_list)
-    return filtered_trackers_list
-
-
-def viz_tracking(
-    output_video_path: str,
-    video_width: int,
-    video_height: int,
-    fps: int,
-    trackers_list: List[List[BoundingBox]],
-    frames_list: List[np.ndarray],
-):
-    tracking_viz = TrackingViz(output_video_path, video_width, video_height, fps)
-    for trackers, frame in zip(trackers_list, frames_list):
-        tracking_viz.draw_tracks(frame, trackers)
-        tracking_viz.draw_trajectories(frame)
-        tracking_viz.write_frame(frame)
 
 
 def tracking_by_kalman_filter(
