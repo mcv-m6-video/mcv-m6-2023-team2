@@ -1,5 +1,8 @@
-from typing import List
+import cv2
 import yaml
+import numpy as np
+from typing import List
+
 from bounding_box import BoundingBox
 
 
@@ -103,3 +106,31 @@ def non_maxima_suppression(bboxes_per_frame: List[List[BoundingBox]], iou_thresh
         new_bboxes_per_frame.append(selected_bboxes)
 
     return new_bboxes_per_frame
+
+
+def convert_optical_flow_to_image(flow: np.ndarray) -> np.ndarray:
+    # The 3-channel uint16 PNG images that comprise optical flow maps contain information
+    # on the u-component in the first channel, the v-component in the second channel,
+    # and whether a valid ground truth optical flow value exists for a given pixel in the third channel.
+    # A value of 1 in the third channel indicates the existence of a valid optical flow value
+    # while a value of 0 indicates otherwise. To convert the u- and v-flow values from
+    # their original uint16 format to floating point values, one can do so by subtracting 2^15 from the value,
+    # converting it to float, and then dividing the result by 64.
+
+    img_u = (flow[:, :, 2] - 2 ** 15) / 64
+    img_v = (flow[:, :, 1] - 2 ** 15) / 64
+
+    img_available = flow[:, :, 0]  # whether a valid GT optical flow value is available
+    img_available[img_available > 1] = 1
+
+    img_u[img_available == 0] = 0
+    img_v[img_available == 0] = 0
+
+    optical_flow = np.dstack((img_u, img_v, img_available))
+    return optical_flow
+
+
+def load_optical_flow(file_path: str):
+    # channels arranged as BGR
+    img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED).astype(np.double)
+    return convert_optical_flow_to_image(img)

@@ -23,9 +23,9 @@ from utils import (
     group_annotations_by_frame,
     filter_annotations,
     non_maxima_suppression,
+    load_optical_flow,
 )
 from tracking.tracking_utils import TrackingViz
-from tracking.sort import Sort
 from bounding_box import BoundingBox
 
 
@@ -117,6 +117,8 @@ def tracking_by_kalman_filter(
     tracking_max_age: int = 1,
     tracking_min_hits: int = 3,
     tracking_iou_threshold: float = 0.3,
+    of_use: bool = False,
+    of_data_path: str = None,
 ):
     # Reference: https://github.com/telecombcn-dl/2017-persontyle/blob/master/sessions/tracking/tracking_kalman.ipynb
 
@@ -133,6 +135,12 @@ def tracking_by_kalman_filter(
     fps = int(video.get(cv2.CAP_PROP_FPS))
     max_frames = min(video_max_frames, total_frames)
 
+    if of_use:
+        from tracking.sort_of import Sort
+        print("Imported SORT with Optical Flow.")
+    else:
+        from tracking.sort import Sort
+        print("Imported SORT.")
     mot_tracker = Sort(max_age=tracking_max_age, min_hits=tracking_min_hits, iou_threshold=tracking_iou_threshold)
 
     for idx_frame in tqdm(range(0, max_frames-1, video_frame_sampling), desc="Computing tracking..."):
@@ -156,7 +164,14 @@ def tracking_by_kalman_filter(
 
         start_time = time.time()
         # Update tracker
-        trackers = mot_tracker.update(dets)
+        if of_use and of_data_path is not None:
+            pred_flow = load_optical_flow(os.path.join(of_data_path, f"{idx_frame}.png"))
+
+            # Update tracker
+            trackers = mot_tracker.update(dets, pred_flow)
+        else:
+            # Update tracker
+            trackers = mot_tracker.update(dets)
 
         cycle_time = time.time() - start_time
         total_time += cycle_time
@@ -228,13 +243,29 @@ def scan_sequences(cfg):
                 tracking_by_kalman_filter(
                     cfg=cfg,
                     detections=detections,
-                    # video_max_frames=45,    # TODO: Comment this line to use all frames!
+                    # video_max_frames=45,  # TODO: Comment this line to use all frames!
                     tracking_max_age=max_age,
                     tracking_min_hits=min_hits,
                     tracking_iou_threshold=min_iou,
                 )
+            elif cfg["tracking_type"] == "kalman_of":
+                # BEST Kalman filter Tracking parameters (found in WK 3)
+                max_age = 50
+                min_hits = 3
+                min_iou = 0.3
+
+                tracking_by_kalman_filter(
+                    cfg=cfg,
+                    detections=detections,
+                    # video_max_frames=45,  # TODO: Comment this line to use all frames!
+                    tracking_max_age=max_age,
+                    tracking_min_hits=min_hits,
+                    tracking_iou_threshold=min_iou,
+                    of_use=True,
+                    of_data_path=cfg["of_data_path"],
+                )
             else:
-                raise ValueError(f"Unknown tracking type: {cfg['tracking_type']}. Valid values: 'kalman'.")
+                raise ValueError(f"Unknown tracking type: {cfg['tracking_type']}. Valid values: 'kalman', 'kalman_of'.")
 
             print(f"Tracking results saved in: {cfg['save_tracking_path']}")
             print(f"Tracking video saved in: {cfg['save_video_path']}")
