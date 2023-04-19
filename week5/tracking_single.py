@@ -63,12 +63,16 @@ def tracking_by_maximum_overlap(
     trackers_list = []
     frames_list = []
 
-    for frame_id in tqdm(range(total_frames)):
+    for frame_id in tqdm(range(total_frames-1)):
         ret, frame = video.read()
         if not ret:
             break
 
-        frame_detections = detections[frame_id]
+        # Read detections
+        if len(detections) <= frame_id:
+            frame_detections = []
+        else:
+            frame_detections = detections[frame_id]
 
         start_time = time.time()
         track_handler.update_tracks(frame_detections, frame_id)
