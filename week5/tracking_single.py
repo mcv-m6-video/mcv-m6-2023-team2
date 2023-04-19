@@ -197,9 +197,10 @@ def scan_sequences(cfg):
             detections = filter_annotations(detections, confidence_thr=confidence_threshold)
             detections = group_annotations_by_frame(detections)
             detections = non_maxima_suppression(detections)
+            detections_type = cfg["detections_dir"].split("/")[-1]
 
             exp_name = f'{seq_name.lower()}_{camera_name}'
-            method_name = cfg["tracking_type"] + f'_filtArea{cfg["filter_by_area"]}' + f'_filtParked{cfg["filter_parked"]}'
+            method_name = cfg["tracking_type"] + f'_filtArea{cfg["filter_by_area"]}' + f'_filtParked{cfg["filter_parked"]}' + f'_{detections_type}'
             cfg["save_tracking_path"] = os.path.join(cfg["path_tracking_data"], method_name, "data", exp_name + ".txt")
             os.makedirs(os.path.dirname(cfg["save_tracking_path"]), exist_ok=True)
             cfg["path_sequence"] = os.path.join(cfg["dataset_dir"], seq_name, camera_name, "vdo.avi")
