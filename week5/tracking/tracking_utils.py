@@ -194,7 +194,7 @@ class TrackingViz:
                     if current_id == previous_id:
                         track_idx = current_id % self.max_trackers
                         cv2.line(frame, (int(previous_x), int(previous_y)), (int(current_x), int(current_y)), self.colors[track_idx,:], 2)
-                
+
     def write_frame(self, frame: np.ndarray) -> None:
         self.out_video.write(frame)
 

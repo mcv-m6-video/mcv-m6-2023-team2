@@ -15,6 +15,7 @@ import numpy as np
 import time
 import cv2
 from tqdm import tqdm
+from typing import Dict, List
 
 from utils import (
     load_config,
@@ -26,6 +27,72 @@ from utils import (
 from tracking.tracking_utils import TrackingViz
 from tracking.sort import Sort
 from bounding_box import BoundingBox
+
+
+def store_trackers_list(trackers_list: List[List[BoundingBox]], save_tracking_path: str):
+    # trackers_list is a list of lists, where each list contains the bounding boxes of a frame
+    results_file = open(os.path.join(save_tracking_path, f"res.txt"), "w")
+    for trackers in trackers_list:
+        for d in trackers:
+            # Save tracking with bounding boxes in MOT Challenge format:
+            # <frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, -1, -1, -1, -1
+            results_file.write(
+                f"{d.frame+1},{d.track_id},{d.x1},{d.y1},{d.x2-d.x1},{d.y2-d.y1},{d.confidence if d.confidence else '-1'},-1,-1,-1\n"
+            )
+    results_file.close()
+
+
+def filter_by_id(keep_id, trackers_list: List[List[BoundingBox]]):
+    filtered_trackers_list = []
+    for trackers in trackers_list:
+        trackers_filt = [d for d in trackers if d.track_id in keep_id]
+        # if len(trackers_filt) > 0:
+        filtered_trackers_list.append(trackers_filt)
+    return filtered_trackers_list
+
+
+def filter_by_area(cfg: Dict, trackers_list: List[List[BoundingBox]]):
+    # keep track of the area of each track over time
+    trackId_area = {}
+    for trackers in trackers_list:
+        for d in trackers:
+            if d.track_id not in trackId_area:
+                trackId_area[d.track_id] = []
+            trackId_area[d.track_id].append(d.area)
+
+    keep_id = set()
+    # Compute the average area of each track
+    for track_id in trackId_area:
+        trackId_area[track_id] = np.mean(trackId_area[track_id])
+        # Keep only the tracks with an area above a threshold
+        if trackId_area[track_id] >= cfg["filter_area_threshold"]:
+            keep_id.add(track_id)
+
+    # Finally, store only the tracks that are not parked
+    filtered_trackers_list = filter_by_id(keep_id, trackers_list)
+    return filtered_trackers_list
+
+
+def filter_parked(cfg: Dict, trackers_list: List[List[BoundingBox]]):
+    """ Discards parked vehicles """
+    # Compute the center of the bounding box for each frame and track
+    bbox_center = {}  # track_id -> list of (x,y) coordinates
+    for trackers in trackers_list:
+        for d in trackers:
+            if d.track_id not in bbox_center:
+                bbox_center[d.track_id] = []
+            bbox_center[d.track_id].append([d.center_x, d.center_y])
+
+    # Compute the std the bounding boxes for each track
+    keep_id = set()
+    for track_id in bbox_center:
+        bbox_center[track_id] = np.std(bbox_center[track_id], axis=0)
+        if bbox_center[track_id] >= cfg["filter_parked_threshold"]:
+            keep_id.add(track_id)
+
+    # Finally, store only the tracks that are not parked
+    filtered_trackers_list = filter_by_id(keep_id, trackers_list)
+    return filtered_trackers_list
 
 
 def tracking_by_kalman_filter(
@@ -45,7 +112,7 @@ def tracking_by_kalman_filter(
     os.makedirs(save_tracking_path, exist_ok=True)
 
     total_time = 0.0
-    out = []
+    trackers_list = []
 
     # Only for display
     output_video_path = os.path.join(save_video_path, f"tracking_single_{model_name}.mp4")
@@ -59,7 +126,6 @@ def tracking_by_kalman_filter(
     max_frames = min(video_max_frames, total_frames)
 
     tracking_viz = TrackingViz(output_video_path, video_width, video_height, fps)
-    results_file = open(os.path.join(save_tracking_path, f"res.txt"), "w")
 
     mot_tracker = Sort(max_age=tracking_max_age, min_hits=tracking_min_hits, iou_threshold=tracking_iou_threshold)
 
@@ -75,7 +141,6 @@ def tracking_by_kalman_filter(
             dets = []
         else:
             dets = detections[idx_frame]
-                # If no detections, add empty array
 
         tracking_viz.draw_detections(frame, dets)
 
@@ -92,20 +157,23 @@ def tracking_by_kalman_filter(
         cycle_time = time.time() - start_time
         total_time += cycle_time
 
+        # TODO: posar aquesta visu abans i despres de filtrar per area, per aparcats, etc.
         trackers = [BoundingBox(*t, int(idx_frame)) for t in trackers]
         tracking_viz.draw_tracks(frame, trackers)
         tracking_viz.draw_trajectories(frame)
         tracking_viz.write_frame(frame)
 
-        # Save tracking with bounding boxes in MOT Challenge format:
-        # <frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, -1, -1, -1, -1
-        for d in trackers:
-            results_file.write(f"{d.frame+1},{d.track_id},{d.x1},{d.y1},{d.x2-d.x1},{d.y2-d.y1},{d.confidence if d.confidence else '-1'},-1,-1,-1\n")
-
-        out.append(trackers)
+        trackers_list.append(trackers)
         total_frames += 1
 
     print("Total Tracking took: %.3f for %d frames, @ %.1f FPS" % (total_time, total_frames, total_frames/total_time))
+
+    if cfg["filter_by_area"]:
+        trackers_list = filter_by_area(cfg, trackers_list, save_tracking_path)
+    if cfg["filter_parked"]:
+        trackers_list = filter_parked(cfg, trackers_list, save_tracking_path)
+
+    store_trackers_list(trackers_list, save_tracking_path)
 
 
 # Detections are stored in the following directory structure:
