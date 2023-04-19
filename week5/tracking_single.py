@@ -30,8 +30,63 @@ from tracking.tracking_utils import (
     filter_by_area,
     filter_parked,
     store_trackers_list,
+    TrackHandlerOverlap,
 )
 from bounding_box import BoundingBox
+
+
+def post_tracking(cfg, video_width, video_height, fps, trackers_list, frames_list):
+    if cfg["filter_by_area"]:
+        trackers_list = filter_by_area(cfg, trackers_list)
+    if cfg["filter_parked"]:
+        trackers_list = filter_parked(cfg, trackers_list)
+
+    store_trackers_list(trackers_list, cfg["save_tracking_path"])
+    # visualize tracking
+    viz_tracking(cfg["save_video_path"], video_width, video_height, fps, trackers_list, frames_list)
+
+
+def tracking_by_maximum_overlap(
+    cfg: Dict,
+    detections: List[BoundingBox],
+    max_frame_skip: int = 0,
+    min_iou: float = 0.5,
+):
+    track_handler = TrackHandlerOverlap(max_frame_skip=max_frame_skip, min_iou=min_iou)
+    video = cv2.VideoCapture(cfg["path_sequence"])
+    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    video_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    video_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(video.get(cv2.CAP_PROP_FPS))
+
+    total_time = 0.0
+    trackers_list = []
+    frames_list = []
+
+    for frame_id in tqdm(range(total_frames)):
+        ret, frame = video.read()
+        if not ret:
+            break
+
+        frame_detections = detections[frame_id]
+
+        start_time = time.time()
+        track_handler.update_tracks(frame_detections, frame_id)
+        cycle_time = time.time() - start_time
+        total_time += cycle_time
+
+        # Visualize tracking
+        frame_detections = []
+        for track in track_handler.live_tracks:
+            detection, _ = track.last_detection()
+            frame_detections.append(detection)
+        trackers_list.append(frame_detections)
+        frames_list.append(frame)
+
+        total_frames += 1
+
+    print("Total Tracking took: %.3f for %d frames, @ %.1f FPS" % (total_time, total_frames, total_frames/total_time))
+    post_tracking(cfg, video_width, video_height, fps, trackers_list, frames_list)
 
 
 def tracking_by_kalman_filter(
@@ -97,27 +152,17 @@ def tracking_by_kalman_filter(
         else:
             # Update tracker
             trackers = mot_tracker.update(dets)
-
         cycle_time = time.time() - start_time
         total_time += cycle_time
 
-        # TODO: posar aquesta visu abans i despres de filtrar per area, per aparcats, etc.
         trackers = [BoundingBox(*t, int(idx_frame)) for t in trackers]
+        trackers_list.append(trackers)
         frames_list.append(frame)
 
-        trackers_list.append(trackers)
         total_frames += 1
 
     print("Total Tracking took: %.3f for %d frames, @ %.1f FPS" % (total_time, total_frames, total_frames/total_time))
-
-    if cfg["filter_by_area"]:
-        trackers_list = filter_by_area(cfg, trackers_list)
-    if cfg["filter_parked"]:
-        trackers_list = filter_parked(cfg, trackers_list)
-
-    store_trackers_list(trackers_list, cfg["save_tracking_path"])
-    # visualize tracking
-    viz_tracking(cfg["save_video_path"], video_width, video_height, fps, trackers_list, frames_list)
+    post_tracking(cfg, video_width, video_height, fps, trackers_list, frames_list)
 
 
 # Detections are assumed to be stored in the following directory structure:
@@ -188,6 +233,16 @@ def scan_sequences(cfg):
                     tracking_iou_threshold=min_iou,
                     of_use=True,
                     of_data_path=cfg["of_data_path"],
+                )
+            elif cfg["tracking_type"] == "overlap":
+                # BEST Tracking by Overlap parameters (found in WK 3)
+                max_frame_skip = 10
+                min_iou = 0.4
+                tracking_by_maximum_overlap(
+                    cfg=cfg,
+                    detections=detections,
+                    max_frame_skip=max_frame_skip,
+                    min_iou=min_iou,
                 )
             else:
                 raise ValueError(f"Unknown tracking type: {cfg['tracking_type']}. Valid values: 'kalman', 'kalman_of'.")
