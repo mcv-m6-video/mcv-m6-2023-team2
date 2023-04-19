@@ -83,11 +83,11 @@ def filter_parked(cfg: Dict, trackers_list: List[List[BoundingBox]]):
                 bbox_center[d.track_id] = []
             bbox_center[d.track_id].append([d.center_x, d.center_y])
 
-    # Compute the std the bounding boxes for each track
+    # Compute the std of the bounding boxes center for each track
     keep_id = set()
     for track_id in bbox_center:
         bbox_center[track_id] = np.std(bbox_center[track_id], axis=0)
-        if bbox_center[track_id] >= cfg["filter_parked_threshold"]:
+        if bbox_center[track_id][0] >= cfg["filter_parked_threshold"] or bbox_center[track_id][1] >= cfg["filter_parked_threshold"]:
             keep_id.add(track_id)
 
     # Finally, store only the tracks that are not parked
