@@ -6,4 +6,4 @@ detections_dir: ./detections/yolo
 filter_by_area: false
 filter_area_threshold: 4800  # = 80px x 60px
 filter_parked: false
-filter_parked_threshold: 50  # px
+filter_parked_threshold: 5  # px
