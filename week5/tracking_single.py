@@ -31,7 +31,7 @@ from bounding_box import BoundingBox
 
 def store_trackers_list(trackers_list: List[List[BoundingBox]], save_tracking_path: str):
     # trackers_list is a list of lists, where each list contains the bounding boxes of a frame
-    results_file = open(os.path.join(save_tracking_path, f"res.txt"), "w")
+    results_file = open(save_tracking_path, "w")
     for trackers in trackers_list:
         for d in trackers:
             # Save tracking with bounding boxes in MOT Challenge format:
@@ -112,9 +112,6 @@ def viz_tracking(
 def tracking_by_kalman_filter(
     cfg,
     detections,
-    model_name,
-    save_video_path,
-    save_tracking_path,
     video_max_frames: int = 9999,
     video_frame_sampling: int = 1,
     tracking_max_age: int = 1,
@@ -123,15 +120,11 @@ def tracking_by_kalman_filter(
 ):
     # Reference: https://github.com/telecombcn-dl/2017-persontyle/blob/master/sessions/tracking/tracking_kalman.ipynb
 
-    os.makedirs(save_tracking_path, exist_ok=True)
-
     total_time = 0.0
     trackers_list = []
     frames_list = []
 
     # Only for display
-    output_video_path = os.path.join(save_video_path, f"tracking_single_{model_name}.mp4")
-    os.makedirs(cfg["path_results"], exist_ok=True)
 
     video = cv2.VideoCapture(cfg["path_sequence"])
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -182,12 +175,12 @@ def tracking_by_kalman_filter(
     if cfg["filter_parked"]:
         trackers_list = filter_parked(cfg, trackers_list)
 
-    store_trackers_list(trackers_list, save_tracking_path)
+    store_trackers_list(trackers_list, cfg["save_tracking_path"])
     # visualize tracking
-    viz_tracking(output_video_path, video_width, video_height, fps, trackers_list, frames_list)
+    viz_tracking(cfg["save_video_path"], video_width, video_height, fps, trackers_list, frames_list)
 
 
-# Detections are stored in the following directory structure:
+# Detections are assumed to be stored in the following directory structure:
 # | detections
 #     | seqXXX
 #         | cYYY
@@ -197,7 +190,7 @@ def tracking_by_kalman_filter(
 #     ....
 def scan_sequences(cfg):
     # For each tracked video, the output path will be like this:
-    # ./week5/data/trackers/mot_challenge/parabellum-train/MODEL_NAME/data/{seq}_{camera}.txt
+    # ./week5/data/trackers/mot_challenge/parabellum-train/<tracking_type>/data/{seq}_{camera}.txt
 
     # Scan all sequences in directory cfg["detections_dir"]
     for seq in os.listdir(cfg["detections_dir"]):
@@ -210,17 +203,20 @@ def scan_sequences(cfg):
             detections_path = f"{os.path.join(cfg['detections_dir'], seq, camera)}/detections.txt"
 
             # Load and process detections
-            # TODO: afegir filtrat per mida, i el que haviem comentat
             confidence_threshold = 0.6
             detections = load_predictions(detections_path)
             detections = filter_annotations(detections, confidence_thr=confidence_threshold)
             detections = group_annotations_by_frame(detections)
             detections = non_maxima_suppression(detections)
 
-            exp_name = f'{cfg["tracking_type"]}_{seq_name}_{camera_name}'
-            save_tracking_path = os.path.join(cfg["path_tracking_data"], exp_name, "data")
-            save_video_path = cfg["path_results"]
+            exp_name = f'{seq_name.lower()}_{camera_name}'
+            method_name = cfg["tracking_type"] + f'_filtArea{cfg["filter_by_area"]}' + f'_filtParked{cfg["filter_parked"]}'
+            cfg["save_tracking_path"] = os.path.join(cfg["path_tracking_data"], method_name, "data", exp_name + ".txt")
+            os.makedirs(os.path.dirname(cfg["save_tracking_path"]), exist_ok=True)
             cfg["path_sequence"] = os.path.join(cfg["dataset_dir"], seq_name, camera_name, "vdo.avi")
+
+            cfg["save_video_path"] = os.path.join(cfg["path_results"], f"tracking_single_{method_name}_{exp_name}.mp4")
+            os.makedirs(cfg["path_results"], exist_ok=True)
 
             if cfg["tracking_type"] == "kalman":
 
@@ -232,9 +228,6 @@ def scan_sequences(cfg):
                 tracking_by_kalman_filter(
                     cfg=cfg,
                     detections=detections,
-                    model_name=exp_name,
-                    save_video_path=save_video_path,
-                    save_tracking_path=save_tracking_path,
                     # video_max_frames=45,    # TODO: Comment this line to use all frames!
                     tracking_max_age=max_age,
                     tracking_min_hits=min_hits,
@@ -243,8 +236,8 @@ def scan_sequences(cfg):
             else:
                 raise ValueError(f"Unknown tracking type: {cfg['tracking_type']}. Valid values: 'kalman'.")
 
-            print(f"Tracking results saved in: {save_tracking_path}")
-            print(f"Tracking video saved in: {save_video_path}")
+            print(f"Tracking results saved in: {cfg['save_tracking_path']}")
+            print(f"Tracking video saved in: {cfg['save_video_path']}")
             print("-" * 80)
 
 
