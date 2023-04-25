@@ -184,7 +184,7 @@ def main(args: argparse.Namespace):
                         xtl, ytl, w, h = int(xtl), int(ytl), int(w), int(h)
 
                         # Open the video at the current frame
-                        video_path = os.path.join(args.dataset_path, cam.split("_")[0], cam.split("_")[1], "vdo.avi")
+                        video_path = os.path.join(args.dataset_path, cam.split("_")[0].upper(), cam.split("_")[1], "vdo.avi")
                         video = cv2.VideoCapture(video_path)
                         video.set(cv2.CAP_PROP_POS_FRAMES, idx_frame)
                         ret, frame = video.read()
