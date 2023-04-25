@@ -47,7 +47,7 @@ def resize_image(img, size=(28,28)):
     return cv2.resize(mask, size, interpolation)
 
 
-def filter_points(predictions_per_camera: dict, threshold_factor: float = 3) -> None:    
+def filter_points(predictions_per_camera: dict, threshold_factor: float = 1.5) -> None:    
     all_points = []
     for camera_name, camera_predictions in predictions_per_camera.items():
         camera_points = [(x, y) for preds in camera_predictions for (x, y, _) in preds]
