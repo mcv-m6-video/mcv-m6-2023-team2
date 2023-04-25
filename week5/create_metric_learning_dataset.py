@@ -21,7 +21,7 @@ def __parse_args() -> argparse.Namespace:
     return args
 
 
-def create_siamese_dataset(args, sequence, camera):
+def create_metric_learning_dataset(args, sequence, camera):
     aic19_video_path = os.path.join(args.data_path, sequence, camera, 'vdo.avi')
     output_dataset_path = args.output_path
     # Path like data_path/SXX/c_00X/gt/gt.txt
@@ -57,7 +57,7 @@ def create_siamese_dataset(args, sequence, camera):
 def main(args: argparse.Namespace):
     for sequence in os.listdir(args.data_path):
         for camera in os.listdir(os.path.join(args.data_path, sequence)):
-            create_siamese_dataset(args, sequence, camera)
+            create_metric_learning_dataset(args, sequence, camera)
 
 
 if __name__ == "__main__":
