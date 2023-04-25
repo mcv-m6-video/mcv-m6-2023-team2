@@ -165,9 +165,9 @@ def main(args):
 
             for prediction in frame_predictions:
                 # Convert to GPS
-                gps = calibration @ np.array([prediction.center_x, prediction.center_y, 1]).T
+                gps = calibration @ np.array([prediction.center_y, prediction.center_x, 1]).T
                 gps = gps / gps[2]
-                predictions_in_gps[camera][idx_frame].append((gps[0], gps[1], prediction.track_id))
+                predictions_in_gps[camera][idx_frame].append((gps[1], gps[0], prediction.track_id))
 
     print(f"Found {len(predictions_in_gps[cameras[0]])} frames.")
 
