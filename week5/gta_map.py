@@ -165,9 +165,9 @@ def main(args):
 
             for prediction in frame_predictions:
                 # Convert to GPS
-                gps = calibration @ np.array([prediction.center_y, prediction.center_x, 1]).T
+                gps = calibration @ np.array([prediction.center_x, prediction.center_y, 1]).T
                 gps = gps / gps[2]
-                predictions_in_gps[camera][idx_frame].append((gps[1], gps[0], prediction.track_id))
+                predictions_in_gps[camera][idx_frame].append((gps[0], gps[1], prediction.track_id))
 
     print(f"Found {len(predictions_in_gps[cameras[0]])} frames.")
 
@@ -202,6 +202,8 @@ def main(args):
                 color = camera_colors[cameras.index(camera)]
                 color = (int(color[0] * 0.5), int(color[1] * 0.5), int(color[2] * 0.5))
                 cv2.circle(camera_map, (x, y), 24, color, -1)
+                # Write camera name
+                cv2.putText(camera_map, camera, (x - 20, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
     map_size = (int(np.ceil(max_y - min_y)), int(np.ceil(max_x - min_x)), 3)
     print(f"Map size: {map_size}")
