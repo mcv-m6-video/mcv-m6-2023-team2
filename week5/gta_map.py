@@ -106,7 +106,7 @@ def main(args):
     colors = np.random.randint(0, 255, (100, 3), dtype=np.uint8)
 
     # Create map 
-    camera_map = np.zeros((1920, 1080, 3), dtype=np.uint8)
+    camera_map = np.zeros((1080, 1920, 3), dtype=np.uint8)
     min_x, min_y, max_x, max_y = 0, 0, 0, 0
     max_frame = 0
     for camera in cameras:
