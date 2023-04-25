@@ -177,21 +177,23 @@ def main(args):
     # camera_map = cv2.dilate(camera_map, kernel, iterations=1)
 
     print("Generating video...")
-    
+
     for idx_frame in tqdm(range(max_frame)):
         map_gps = camera_map.copy()
 
-        if idx_frame > 500: # TODO REMOVE!!
+        if idx_frame > 400: # TODO REMOVE!!
             break
 
         # Draw predictions as circles
         for camera in cameras:
-            for frame_predictions in predictions_in_gps[camera]:
-                for prediction in frame_predictions:
-                    color = colors[prediction[2] % 100]
-                    color = (int(color[0]), int(color[1]), int(color[2]))
-                    y, x = int(np.ceil(prediction[1] - min_y)), int(np.ceil(prediction[0] - min_x))
-                    cv2.circle(map_gps, (x, y), 48, color, -1)
+            if idx_frame >= len(predictions_in_gps[camera]):
+                continue
+
+            for prediction in predictions_in_gps[camera][idx_frame]:
+                color = colors[prediction[2] % 100]
+                color = (int(color[0]), int(color[1]), int(color[2]))
+                y, x = int(np.ceil(prediction[1] - min_y)), int(np.ceil(prediction[0] - min_x))
+                cv2.circle(map_gps, (x, y), 48, color, -1)
 
         # cv2.imwrite(os.path.join(args.sequence_path, f'frame_{idx_frame:04d}.jpg'), map_gps)
         # Resize to 640x480, keeping aspect ratio
