@@ -168,12 +168,13 @@ def main(args):
                 max_y = max(max_y, prediction[1])
 
     # Draw grayish background for all predictions
+    camera_colors = np.random.randint(0, 255, (len(cameras), 3), dtype=np.uint8)
     for camera in cameras:
         for frame_predictions in predictions_in_gps[camera]:
             for prediction in frame_predictions:
                 x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
                           int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))    
-                cv2.circle(camera_map, (x, y), 50, (100, 100, 100), -1)
+                cv2.circle(camera_map, (x, y), 50, camera_colors[cameras.index(camera)], -1)
 
     map_size = (int(np.ceil(max_y - min_y)), int(np.ceil(max_x - min_x)), 3)
     print(f"Map size: {map_size}")
