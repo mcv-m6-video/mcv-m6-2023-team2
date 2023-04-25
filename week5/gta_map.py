@@ -154,6 +154,8 @@ def main(args):
     colors = np.random.randint(0, 255, (100, 3), dtype=np.uint8)
 
     # Create map 
+    camera_map = np.zeros((1080, 1920, 3), dtype=np.uint8)
+
     min_x, min_y, max_x, max_y = 0, 0, 0, 0
     max_frame = 0
     for camera in cameras:
@@ -164,14 +166,22 @@ def main(args):
                 min_y = min(min_y, prediction[1])
                 max_x = max(max_x, prediction[0])
                 max_y = max(max_y, prediction[1])
+
+    # Draw grayish background for all predictions
+    for camera in cameras:
+        for frame_predictions in predictions_in_gps[camera]:
+            for prediction in frame_predictions:
+                x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
+                          int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))    
+                cv2.circle(camera_map, (x, y), 50, (100, 100, 100), -1)
+
     map_size = (int(np.ceil(max_y - min_y)), int(np.ceil(max_x - min_x)), 3)
     print(f"Map size: {map_size}")
 
     # Draw predictions in a video
-    camera_map = np.zeros((1080, 1920, 3), dtype=np.uint8)
     video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, camera_map.shape[:2][::-1])
 
-    # camera_map = cv2.VideoCapture(os.path.join(args.sequence_path, 'vdo.avi')).read()[1]
+    # camera_map = cv2.VideoCapture(os.path.join(args.sequence_path, camera, 'vdo.avi')).read()[1]
     # Apply calibration to camera map
     # camera_map = apply_H(camera_map, calibration)[0]
 
@@ -179,10 +189,16 @@ def main(args):
     # kernel = np.ones((50, 50), np.uint8)
     # camera_map = cv2.dilate(camera_map, kernel, iterations=1)
 
+    # Resize camera map to fit in the output video
+    # camera_map = cv2.resize(camera_map, (1920, 1080))
+
     print("Generating video...")
 
     for idx_frame in tqdm(range(max_frame)):
         map_gps = camera_map.copy()
+
+        if idx_frame > 100:
+            break
 
         # Draw predictions as circles
         for camera in cameras:
