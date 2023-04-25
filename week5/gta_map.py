@@ -182,7 +182,7 @@ def main(args):
             if idx_frame >= len(predictions_in_gps[camera]) or start_timestamps[camera] > idx_frame:
                 continue
 
-            for prediction in predictions_in_gps[camera][idx_frame]:
+            for prediction in predictions_in_gps[camera][idx_frame-start_timestamps[camera]]:
                 color = colors[prediction[2] % 100]
                 color = (int(color[0]), int(color[1]), int(color[2]))
                 # Map GPS coordinates so that they fit in the camera map image
