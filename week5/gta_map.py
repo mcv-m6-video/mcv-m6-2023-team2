@@ -124,7 +124,9 @@ def main(args):
     cameras = os.listdir(args.sequence_path)
     cameras = [camera for camera in cameras if camera.startswith('c')]
     cameras.sort()
+    print('Cameras:', cameras)
 
+    print("Mapping predictions to GPS coordinates...")
     predictions_in_gps = {}
     for camera in cameras:
         predictions_in_gps[camera] = []
@@ -174,6 +176,8 @@ def main(args):
     # kernel = np.ones((50, 50), np.uint8)
     # camera_map = cv2.dilate(camera_map, kernel, iterations=1)
 
+    print("Generating video...")
+    
     for idx_frame in tqdm(range(max_frame)):
         map_gps = camera_map.copy()
 
