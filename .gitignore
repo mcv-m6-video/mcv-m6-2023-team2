@@ -111,6 +111,9 @@ ENV/
 /wandb/
 /results
 /data/AICity_data
+/outputs_metric_learning
+/metric_learning_dataset
+/data
 AICity_data/*
 *.db
 *.png
