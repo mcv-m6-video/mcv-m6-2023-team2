@@ -146,11 +146,11 @@ def main(args):
     # camera_map = cv2.dilate(camera_map, kernel, iterations=1)
 
     # Resize camera map to fit in the output video
-    camera_map = cv2.resize(camera_map, (1920, 1080))
+    # camera_map = cv2.resize(camera_map, (1920, 1080))
 
     # Draw predictions in a video
     # video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, camera_map.shape[:2][::-1])
-    video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, (map_size[1], map_size[0]))
+    video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, (1920, 1080))
 
     print("Generating video...")
 
@@ -180,7 +180,7 @@ def main(args):
 
         # cv2.imwrite(os.path.join(args.sequence_path, f'frame_{idx_frame:04d}.jpg'), map_gps)
         # Resize to 640x480, keeping aspect ratio
-        # map_gps = resize_image(map_gps, size=(1920, 1080))
+        map_gps = resize_image(map_gps, size=(1920, 1080))
         video.write(map_gps)
 
     video.release()
