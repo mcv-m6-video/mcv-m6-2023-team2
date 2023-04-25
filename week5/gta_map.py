@@ -168,8 +168,8 @@ def main(args):
     print(f"Map size: {map_size}")
 
     # Draw predictions in a video
-    video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 30, (640, 480))
-    camera_map = np.zeros(map_size, dtype=np.uint8)
+    camera_map = np.zeros((1080, 1920), dtype=np.uint8)
+    video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 30, camera_map.shape[::-1], 0)
 
     # camera_map = cv2.VideoCapture(os.path.join(args.sequence_path, 'vdo.avi')).read()[1]
     # Apply calibration to camera map
@@ -195,13 +195,18 @@ def main(args):
             for prediction in predictions_in_gps[camera][idx_frame]:
                 color = colors[prediction[2] % 100]
                 color = (int(color[0]), int(color[1]), int(color[2]))
-                y, x = int(np.ceil(prediction[1] - min_y)), int(np.ceil(prediction[0] - min_x))
-                cv2.circle(map_gps, (x, y), 48, color, -1)
+                # y, x = int(np.ceil(prediction[1] - min_y)), int(np.ceil(prediction[0] - min_x))
+                # Map GPS coordinates so that they fit in the camera map image
+                x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
+                          int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))                
+                cv2.circle(map_gps, (x, y), 32, color, -1)
 
         # cv2.imwrite(os.path.join(args.sequence_path, f'frame_{idx_frame:04d}.jpg'), map_gps)
         # Resize to 640x480, keeping aspect ratio
-        map_gps = resize_image(map_gps, size=(640, 480))
+        # map_gps = resize_image(map_gps, size=(1920, 1080))
         video.write(map_gps)
+
+    video.release()
 
 
 if __name__ == '__main__':
