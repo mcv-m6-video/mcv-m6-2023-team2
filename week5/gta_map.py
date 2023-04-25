@@ -106,7 +106,7 @@ def main(args):
     colors = np.random.randint(0, 255, (100, 3), dtype=np.uint8)
 
     # Create map 
-
+    camera_map = np.zeros((1920, 1080, 3), dtype=np.uint8)
     min_x, min_y, max_x, max_y = 0, 0, 0, 0
     max_frame = 0
     for camera in cameras:
@@ -121,16 +121,16 @@ def main(args):
     map_size = (int(np.ceil(max_y - min_y)), int(np.ceil(max_x - min_x)), 3)
     print(f"Map size: {map_size}")
 
-    camera_map = np.zeros((map_size[0], map_size[1], 3), dtype=np.uint8)
+    # camera_map = np.zeros((map_size[0], map_size[1], 3), dtype=np.uint8)
 
     # Draw grayish background for all predictions
     camera_colors = np.random.randint(0, 255, (len(cameras), 3), dtype=np.uint8)
     for camera in cameras:
         for frame_predictions in predictions_in_gps[camera]:
             for prediction in frame_predictions:
-                # x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
-                #           int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))  
-                x, y = int(np.ceil((prediction[0] - min_x))), int(np.ceil((prediction[1] - min_y)))
+                x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
+                          int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))  
+                # x, y = int(np.ceil((prediction[0] - min_x))), int(np.ceil((prediction[1] - min_y)))
                 color = camera_colors[cameras.index(camera)]
                 color = (int(color[0] * 0.5), int(color[1] * 0.5), int(color[2] * 0.5))
                 cv2.circle(camera_map, (x, y), 24, color, -1)
@@ -141,16 +141,12 @@ def main(args):
     # Apply calibration to camera map
     # camera_map = apply_H(camera_map, calibration)[0]
 
-    # Dilate camera map
-    # kernel = np.ones((50, 50), np.uint8)
-    # camera_map = cv2.dilate(camera_map, kernel, iterations=1)
-
     # Resize camera map to fit in the output video
     # camera_map = cv2.resize(camera_map, (1920, 1080))
 
     # Draw predictions in a video
-    # video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, camera_map.shape[:2][::-1])
-    video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, (1920, 1080))
+    video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, camera_map.shape[:2][::-1])
+    # video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, (1920, 1080))
 
     print("Generating video...")
 
@@ -168,11 +164,10 @@ def main(args):
             for prediction in predictions_in_gps[camera][idx_frame]:
                 color = colors[prediction[2] % 100]
                 color = (int(color[0]), int(color[1]), int(color[2]))
-                # y, x = int(np.ceil(prediction[1] - min_y)), int(np.ceil(prediction[0] - min_x))
                 # Map GPS coordinates so that they fit in the camera map image
-                # x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
-                #           int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0])) 
-                x, y = int(np.ceil((prediction[0] - min_x))), int(np.ceil((prediction[1] - min_y)))
+                x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
+                          int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0])) 
+                # x, y = int(np.ceil((prediction[0] - min_x))), int(np.ceil((prediction[1] - min_y)))
                 cv2.circle(map_gps, (x, y), 8, color, -1)
                 # Write the track ID with a white background
                 cv2.putText(map_gps, str(prediction[2]), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
@@ -180,7 +175,7 @@ def main(args):
 
         # cv2.imwrite(os.path.join(args.sequence_path, f'frame_{idx_frame:04d}.jpg'), map_gps)
         # Resize to 640x480, keeping aspect ratio
-        map_gps = resize_image(map_gps, size=(1920, 1080))
+        # map_gps = resize_image(map_gps, size=(1920, 1080))
         video.write(map_gps)
 
     video.release()
