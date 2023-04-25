@@ -99,7 +99,7 @@ def main(args):
 
             for prediction in frame_predictions:
                 # Convert to GPS
-                gps = homography @ np.array([prediction.center_x, prediction.center_y, 1]).T
+                gps = homography @ np.array([prediction.center_x, prediction.center_y, 1])
                 gps = gps / gps[2]
                 predictions_in_gps[camera][idx_frame].append((gps[0], gps[1], prediction.track_id))
 
