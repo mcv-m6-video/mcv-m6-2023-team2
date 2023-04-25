@@ -148,6 +148,8 @@ def main(args):
                 gps = gps / gps[2]
                 predictions_in_gps[camera][idx_frame].append((gps[0], gps[1], prediction.track_id))
 
+    print(f"Found {len(predictions_in_gps[cameras[0]])} frames.")
+
     # Generate 100 random colors
     colors = np.random.randint(0, 255, (100, 3), dtype=np.uint8)
 
@@ -163,6 +165,7 @@ def main(args):
                 max_x = max(max_x, prediction[0])
                 max_y = max(max_y, prediction[1])
     map_size = (int(np.ceil(max_y - min_y)), int(np.ceil(max_x - min_x)), 3)
+    print(f"Map size: {map_size}")
 
     # Draw predictions in a video
     video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 30, (640, 480))
