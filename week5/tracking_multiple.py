@@ -202,7 +202,7 @@ def main(args: argparse.Namespace):
 
                         # Get the path of the image that is the nearest neighbor
                         try:
-                            _, nn_path = dataset[nns[0]-1]
+                            _, nn_path = dataset[nns[0]]
                         except:
                             pass
 
