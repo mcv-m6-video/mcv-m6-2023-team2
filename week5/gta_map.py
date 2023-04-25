@@ -225,9 +225,15 @@ def main(args):
 
     # Apply homography to camera images
     for camera in cameras:
+        # Load ROI image
+        roi = cv2.imread(os.path.join(args.sequence_path, camera, 'roi.jpg'), cv2.IMREAD_GRAYSCALE)
         # Load camera image
         video = cv2.VideoCapture(os.path.join(args.sequence_path, camera, 'vdo.avi'))
         ret, camera_image = video.read()
+        video.release()
+
+        # Apply ROI as mask
+        camera_image = cv2.bitwise_and(camera_image, camera_image, mask=roi)
 
         # Load homography
         homography_file = os.path.join(args.sequence_path, camera, 'calibration.txt')
@@ -235,13 +241,8 @@ def main(args):
             homography_line = f.readline()
             homography = np.array([val.split() for val in homography_line.split(';')]).astype(np.float32)
 
-        # Invert homography                
         homography = LA.inv(homography)
-
-        # Manually apply homography to camera image
         camera_image, (mx, my) = apply_H(camera_image, homography, min_x, min_y, max_x, max_y)
-
-        # Blend camera image with map
         camera_map = cv2.addWeighted(camera_map, 0.5, camera_image, 0.5, 0)
 
     # Write camera name
