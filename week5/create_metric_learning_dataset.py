@@ -12,7 +12,7 @@ def __parse_args() -> argparse.Namespace:
         description='Road Traffic Monitoring Analysis for Video Surveillance. MCV-M6-Project, week 5, Metric Learning Creation Team 2'
     )
 
-    parser.add_argument('--data_path', type=str, default='../datasets/aic19/train/',
+    parser.add_argument('--data_path', type=str, default='../data/aic19/train/',
                         help='Path to the dataset')
     parser.add_argument('--output_path', type=str, default='./metric_learning_dataset/',
                         help='Path to the output folder')
