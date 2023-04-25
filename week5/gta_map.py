@@ -47,79 +47,6 @@ def resize_image(img, size=(28,28)):
     return cv2.resize(mask, size, interpolation)
 
 
-def forward_warping(p: np.ndarray, H: np.ndarray) -> np.ndarray:
-    """
-    Forward warp a point with a given Homography H.
-    """
-    x1, x2, x3 = H @ p.T
-    return x1/x3, x2/x3
-
-
-def backward_warping(p: np.ndarray, H: np.ndarray) -> np.ndarray:
-    """
-    Backward warp a point with a given Homography H.
-    """
-    x1, x2, x3 = LA.inv(H) @ np.array(p)
-    return x1/x3, x2/x3
-    
-
-def find_max_size(m: int, n: int, H: np.ndarray) -> Tuple[int, int, int, int]:
-    corners = np.array([[0, 0, 1], [n, 0, 1], [0, m, 1], [n, m, 1]])
-    corners = np.array(forward_warping(corners, H))
-
-    min_x = np.ceil(corners[0].min())
-    max_x = np.floor(corners[0].max())
-    min_y = np.ceil(corners[1].min())
-    max_y = np.floor(corners[1].max())
-
-    return max_x, min_x, max_y, min_y
-
-
-def apply_H(I: np.ndarray, H: np.ndarray) -> Tuple[np.uint, tuple]:
-    """
-    Applies a homography to an image.
-
-    Args:
-        I (np.array): Image to be transformed.
-        H (np.array): Homography matrix. The homography is defined as
-            H = [[h11, h12, h13],
-                [h21, h22, h23],
-                [h31, h32, h33]]
-
-    Returns:
-        np.array: Transformed image.
-    """
-    m, n, C = I.shape
-    max_x, min_x, max_y, min_y = find_max_size(m, n, H)
-
-    # Compute size of output image
-    width_canvas, height_canvas = max_x - min_x, max_y - min_y
-
-    # Create grid in the output space
-    X, Y = np.meshgrid(np.arange(min_x, max_x), np.arange(min_y, max_y))
-    X_flat, Y_flat = X.flatten(), Y.flatten()
-
-    # Generate matrix with output points in homogenous coordinates
-    dest_points = np.array([X_flat, Y_flat, np.ones_like(X_flat)])
-
-    # Backward warp output points to their source points
-    source_x, source_y = backward_warping(dest_points, H)
-
-    # Get src_x and src_y in meshgrid-like coordinates
-    source_x = np.reshape(source_x, X.shape)
-    source_y = np.reshape(source_y, Y.shape)
-
-    # Set up output image.
-    out = np.zeros((int(height_canvas), int(width_canvas), 3))
-
-    # Map source coordinates to their corresponding value.
-    # Interpolation is needed as coordinates may be real numbers.
-    for i in range(C):
-        out[:,:,i] = map_coordinates(I[:,:,i], [source_y, source_x])
-
-    return np.uint8(out), (min_x, min_y)
-
-
 def filter_points(predictions_per_camera: dict, threshold_factor: float = 3) -> None:    
     all_points = []
     for camera_name, camera_predictions in predictions_per_camera.items():
@@ -179,7 +106,6 @@ def main(args):
     colors = np.random.randint(0, 255, (100, 3), dtype=np.uint8)
 
     # Create map 
-    camera_map = np.zeros((1080, 1920, 3), dtype=np.uint8)
 
     min_x, min_y, max_x, max_y = 0, 0, 0, 0
     max_frame = 0
@@ -192,24 +118,28 @@ def main(args):
                 max_x = max(max_x, prediction[0])
                 max_y = max(max_y, prediction[1])
 
+    map_size = (int(np.ceil(max_y - min_y)), int(np.ceil(max_x - min_x)), 3)
+    print(f"Map size: {map_size}")
+
+    camera_map = np.zeros((map_size[0], map_size[1], 3), dtype=np.uint8)
+
     # Draw grayish background for all predictions
     camera_colors = np.random.randint(0, 255, (len(cameras), 3), dtype=np.uint8)
     for camera in cameras:
         for frame_predictions in predictions_in_gps[camera]:
             for prediction in frame_predictions:
-                x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
-                          int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))  
+                # x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
+                #           int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))  
+                x, y = int(np.ceil((prediction[0] - min_x))), int(np.ceil((prediction[1] - min_y)))
                 color = camera_colors[cameras.index(camera)]
                 color = (int(color[0] * 0.5), int(color[1] * 0.5), int(color[2] * 0.5))
                 cv2.circle(camera_map, (x, y), 24, color, -1)
                 # Write camera name
-                cv2.putText(camera_map, camera, (x - 20, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
-
-    map_size = (int(np.ceil(max_y - min_y)), int(np.ceil(max_x - min_x)), 3)
-    print(f"Map size: {map_size}")
+                # cv2.putText(camera_map, camera, (x - 20, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
     # Draw predictions in a video
-    video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, camera_map.shape[:2][::-1])
+    # video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, camera_map.shape[:2][::-1])
+    video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, (map_size[1], map_size[0]))
 
     # camera_map = cv2.VideoCapture(os.path.join(args.sequence_path, camera, 'vdo.avi')).read()[1]
     # Apply calibration to camera map
@@ -240,8 +170,9 @@ def main(args):
                 color = (int(color[0]), int(color[1]), int(color[2]))
                 # y, x = int(np.ceil(prediction[1] - min_y)), int(np.ceil(prediction[0] - min_x))
                 # Map GPS coordinates so that they fit in the camera map image
-                x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
-                          int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))                
+                # x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
+                #           int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0])) 
+                x, y = int(np.ceil((prediction[0] - min_x))), int(np.ceil((prediction[1] - min_y)))
                 cv2.circle(map_gps, (x, y), 8, color, -1)
                 # Write the track ID with a white background
                 cv2.putText(map_gps, str(prediction[2]), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
