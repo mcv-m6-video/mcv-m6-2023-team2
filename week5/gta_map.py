@@ -85,6 +85,7 @@ def main(args):
             homography = np.array([val.split() for val in homography_line.split(';')]).astype(np.float32)
             calibration = f.readline()
             if calibration:
+                print(camera, calibration)
                 calibration = np.array([val.split() for val in calibration.split(';')]).astype(np.float32)
                 homography = homography @ calibration
             
