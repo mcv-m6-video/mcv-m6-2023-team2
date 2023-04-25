@@ -39,9 +39,9 @@ def create_siamese_dataset(args, sequence, camera):
         ret, frame = video.read()
 
         if not ret:
-            break
+            continue
 
-        frame_name = f"frame{idx_frame:04d}.jpg"
+        frame_name = f"frame_{camera}_{idx_frame:04d}.jpg"
 
         for detection in detections[idx_frame]:
             xtl, ytl, w, h = detection.coordinates_dim
