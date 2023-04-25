@@ -84,6 +84,8 @@ def main(args):
             line = f.readline()
             calibration = np.array([val.split() for val in line.split(';')]).astype(np.float32)
 
+        calibration = LA.inv(calibration)
+
         predictions = load_predictions(os.path.join(args.sequence_path, camera, 'gt/gt.txt'))
         predictions = group_annotations_by_frame(predictions)
 
