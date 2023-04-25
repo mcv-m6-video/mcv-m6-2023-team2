@@ -1,6 +1,7 @@
 absl-py==1.4.0
 aiofiles==23.1.0
 alembic @ file:///croot/alembic_1666725231996/work
+annoy==1.17.2
 antlr4-python3-runtime==4.9.3
 anyio==3.6.2
 appdirs==1.4.4
