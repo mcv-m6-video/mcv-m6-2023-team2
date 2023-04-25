@@ -122,26 +122,41 @@ def apply_H(I: np.ndarray, H: np.ndarray) -> Tuple[np.uint, tuple]:
 
 def filter_points(predictions_per_camera: dict, threshold_factor: float = 3) -> None:    
     # Loop through each camera
+    # for camera_name, camera_predictions in predictions_per_camera.items():
+    #     # Extract the (x, y) coordinates of each point
+    #     points = [(x, y) for preds in camera_predictions for (x, y, _) in preds]
+        
+    #     # Calculate the centroid of the points
+    #     centroid = np.mean(points, axis=0)
+        
+    #     # Calculate the distance between each point and the centroid
+    #     distances = [np.linalg.norm(np.array(point) - centroid) for point in points]
+        
+    #     # Calculate the median distance
+    #     median_distance = np.median(distances)
+        
+    #     # Remove all points that are further away than the threshold
+    #     for preds in camera_predictions:
+    #         preds[:] = [pred for pred, distance in zip(preds, distances) if distance <= threshold_factor * median_distance]
+    # Collect all points from all cameras
+    all_points = []
     for camera_name, camera_predictions in predictions_per_camera.items():
-        # Extract the (x, y) coordinates of each point
-        points = [(x, y) for preds in camera_predictions for (x, y, _) in preds]
-        
-        # Calculate the centroid of the points
-        centroid = np.mean(points, axis=0)
-        
-        # Calculate the distance between each point and the centroid
-        distances = [np.linalg.norm(np.array(point) - centroid) for point in points]
-        
-        # Calculate the median distance
-        median_distance = np.median(distances)
-        
-        # Remove all points that are further away than the threshold
-        # filtered_points = [point for point, distance in zip(camera_predictions[1], distances) if distance <= threshold_factor * median_distance]
+        camera_points = [(x, y) for preds in camera_predictions for (x, y, _) in preds]
+        all_points.extend(camera_points)
+    
+    # Calculate the centroid of all points
+    centroid = np.mean(all_points, axis=0)
+    
+    # Calculate the distance between each point and the centroid
+    distances = [np.linalg.norm(np.array(point) - centroid) for point in all_points]
+    
+    # Calculate the median distance
+    median_distance = np.median(distances)
+    
+    # Remove all points that are further away than the threshold
+    for camera_name, camera_predictions in predictions_per_camera.items():
         for preds in camera_predictions:
             preds[:] = [pred for pred, distance in zip(preds, distances) if distance <= threshold_factor * median_distance]
-        
-        # Update the camera predictions with the filtered points
-        # predictions_per_camera[camera_name][1] = filtered_points
 
 
 def main(args):
@@ -204,7 +219,7 @@ def main(args):
                           int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))  
                 color = camera_colors[cameras.index(camera)]
                 color = (int(color[0] * 0.5), int(color[1] * 0.5), int(color[2] * 0.5))
-                cv2.circle(camera_map, (x, y), 50, color, -1)
+                cv2.circle(camera_map, (x, y), 24, color, -1)
 
     map_size = (int(np.ceil(max_y - min_y)), int(np.ceil(max_x - min_x)), 3)
     print(f"Map size: {map_size}")
