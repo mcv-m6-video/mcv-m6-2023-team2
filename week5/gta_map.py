@@ -78,13 +78,17 @@ def main(args):
     predictions_in_gps = {}
     for camera in cameras:
         predictions_in_gps[camera] = []
-        calibration_file = os.path.join(args.sequence_path, camera, 'calibration.txt')
+        homography_file = os.path.join(args.sequence_path, camera, 'calibration.txt')
         # Calibration file format: x y z;x y z;x y z;x y z
-        with open(calibration_file, 'r') as f:
-            line = f.readline()
-            calibration = np.array([val.split() for val in line.split(';')]).astype(np.float32)
-
-        calibration = LA.inv(calibration)
+        with open(homography_file, 'r') as f:
+            homography_line = f.readline()
+            homography = np.array([val.split() for val in homography_line.split(';')]).astype(np.float32)
+            calibration = f.readline()
+            if calibration:
+                calibration = np.array([val.split() for val in calibration.split(';')]).astype(np.float32)
+                homography = homography @ calibration
+            
+        # homography = LA.inv(homography)
 
         predictions = load_predictions(os.path.join(args.sequence_path, camera, 'gt/gt.txt'))
         predictions = group_annotations_by_frame(predictions)
@@ -94,7 +98,7 @@ def main(args):
 
             for prediction in frame_predictions:
                 # Convert to GPS
-                gps = calibration @ np.array([prediction.center_x, prediction.center_y, 1]).T
+                gps = homography @ np.array([prediction.center_x, prediction.center_y, 1]).T
                 gps = gps / gps[2]
                 predictions_in_gps[camera][idx_frame].append((gps[0], gps[1], prediction.track_id))
 
@@ -149,8 +153,8 @@ def main(args):
                     cv2.putText(camera_map, camera, (x - 20, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
     # camera_map = cv2.VideoCapture(os.path.join(args.sequence_path, camera, 'vdo.avi')).read()[1]
-    # Apply calibration to camera map
-    # camera_map = apply_H(camera_map, calibration)[0]
+    # Apply homography to camera map
+    # camera_map = apply_H(camera_map, homography)[0]
 
     # Resize camera map to fit in the output video
     # camera_map = cv2.resize(camera_map, (1920, 1080))
