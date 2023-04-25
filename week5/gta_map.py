@@ -134,8 +134,17 @@ def main(args):
                 color = camera_colors[cameras.index(camera)]
                 color = (int(color[0] * 0.5), int(color[1] * 0.5), int(color[2] * 0.5))
                 cv2.circle(camera_map, (x, y), 24, color, -1)
-                # Write camera name
-                # cv2.putText(camera_map, camera, (x - 20, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+
+    # Write camera name
+    camera_plotted = []
+    for camera in cameras:
+        for frame_predictions in predictions_in_gps[camera]:
+            for prediction in frame_predictions:
+                if camera not in camera_plotted:
+                    x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
+                          int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))  
+                    camera_plotted.append(camera)
+                    cv2.putText(camera_map, camera, (x - 20, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
     # camera_map = cv2.VideoCapture(os.path.join(args.sequence_path, camera, 'vdo.avi')).read()[1]
     # Apply calibration to camera map
