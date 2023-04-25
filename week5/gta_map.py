@@ -121,24 +121,6 @@ def apply_H(I: np.ndarray, H: np.ndarray) -> Tuple[np.uint, tuple]:
 
 
 def filter_points(predictions_per_camera: dict, threshold_factor: float = 3) -> None:    
-    # Loop through each camera
-    # for camera_name, camera_predictions in predictions_per_camera.items():
-    #     # Extract the (x, y) coordinates of each point
-    #     points = [(x, y) for preds in camera_predictions for (x, y, _) in preds]
-        
-    #     # Calculate the centroid of the points
-    #     centroid = np.mean(points, axis=0)
-        
-    #     # Calculate the distance between each point and the centroid
-    #     distances = [np.linalg.norm(np.array(point) - centroid) for point in points]
-        
-    #     # Calculate the median distance
-    #     median_distance = np.median(distances)
-        
-    #     # Remove all points that are further away than the threshold
-    #     for preds in camera_predictions:
-    #         preds[:] = [pred for pred, distance in zip(preds, distances) if distance <= threshold_factor * median_distance]
-    # Collect all points from all cameras
     all_points = []
     for camera_name, camera_predictions in predictions_per_camera.items():
         camera_points = [(x, y) for preds in camera_predictions for (x, y, _) in preds]
@@ -156,7 +138,7 @@ def filter_points(predictions_per_camera: dict, threshold_factor: float = 3) -> 
     # Remove all points that are further away than the threshold
     for camera_name, camera_predictions in predictions_per_camera.items():
         for preds in camera_predictions:
-            preds[:] = [pred for pred, distance in zip(preds, distances) if distance <= threshold_factor * median_distance]
+            preds[:] = [pred for pred in preds if np.linalg.norm(np.array((pred[0], pred[1])) - centroid) < threshold_factor * median_distance]
 
 
 def main(args):
