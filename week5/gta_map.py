@@ -184,9 +184,6 @@ def main(args):
     for idx_frame in tqdm(range(max_frame)):
         map_gps = camera_map.copy()
 
-        if idx_frame > 400: # TODO REMOVE!!
-            break
-
         # Draw predictions as circles
         for camera in cameras:
             if idx_frame >= len(predictions_in_gps[camera]):
