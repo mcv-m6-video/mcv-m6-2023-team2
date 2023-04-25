@@ -199,7 +199,7 @@ def main(args):
                 # Map GPS coordinates so that they fit in the camera map image
                 x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
                           int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))                
-                cv2.circle(map_gps, (x, y), 32, color, -1)
+                cv2.circle(map_gps, (x, y), 4, color, -1)
 
         # cv2.imwrite(os.path.join(args.sequence_path, f'frame_{idx_frame:04d}.jpg'), map_gps)
         # Resize to 640x480, keeping aspect ratio
