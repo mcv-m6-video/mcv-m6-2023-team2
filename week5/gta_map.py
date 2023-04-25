@@ -84,10 +84,10 @@ def main(args):
         # Second line (distortion coefficients, optional): k1 k2 p1 p2
         with open(homography_file, 'r') as f:
             homography_line = f.readline()
-            homography = np.array([val.split() for val in homography_line.split(';')]).astype(np.float32).T
+            homography = np.array([val.split() for val in homography_line.split(';')]).astype(np.float32)
             distorion_coeffs = f.readline()
             if distorion_coeffs:
-                distorion_coeffs = np.array(distorion_coeffs.split()).astype(np.float32)
+                continue
                 
         # homography = LA.inv(homography)
 
