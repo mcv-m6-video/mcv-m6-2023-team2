@@ -79,16 +79,16 @@ def main(args):
     for camera in cameras:
         predictions_in_gps[camera] = []
         homography_file = os.path.join(args.sequence_path, camera, 'calibration.txt')
-        # Calibration file format: x y z;x y z;x y z;x y z
+        # Calibration file format
+        # First line (homography): x y z;x y z;x y z;x y z
+        # Second line (distortion coefficients, optional): k1 k2 p1 p2
         with open(homography_file, 'r') as f:
             homography_line = f.readline()
-            homography = np.array([val.split() for val in homography_line.split(';')]).astype(np.float32)
-            calibration = f.readline()
-            if calibration:
-                print(camera, calibration)
-                calibration = np.array([val.split() for val in calibration.split(';')]).astype(np.float32)
-                homography = homography @ calibration
-            
+            homography = np.array([val.split() for val in homography_line.split(';')]).astype(np.float32).T
+            distorion_coeffs = f.readline()
+            if distorion_coeffs:
+                distorion_coeffs = np.array(distorion_coeffs.split()).astype(np.float32)
+                
         # homography = LA.inv(homography)
 
         predictions = load_predictions(os.path.join(args.sequence_path, camera, 'gt/gt.txt'))
