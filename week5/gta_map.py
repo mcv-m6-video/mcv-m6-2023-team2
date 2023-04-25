@@ -270,7 +270,7 @@ def main(args):
     for idx_frame in tqdm(range(max_frame)):
         map_gps = camera_map.copy()
 
-        if idx_frame > 10:
+        if idx_frame > 200:
             break
 
         # Draw predictions as circles
