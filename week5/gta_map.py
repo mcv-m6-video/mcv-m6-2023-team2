@@ -120,9 +120,9 @@ def apply_H(I: np.ndarray, H: np.ndarray) -> Tuple[np.uint, tuple]:
     return np.uint8(out), (min_x, min_y)
 
 
-def filter_points(camera_detections: dict, threshold_factor: float = 3) -> None:    
+def filter_points(predictions_per_camera: dict, threshold_factor: float = 3) -> None:    
     # Loop through each camera
-    for camera_name, camera_predictions in camera_detections.items():
+    for camera_name, camera_predictions in predictions_per_camera.items():
         # Extract the (x, y) coordinates of each point
         points = [(x, y) for _, (x, y, _) in camera_predictions[1]]
         
@@ -139,7 +139,7 @@ def filter_points(camera_detections: dict, threshold_factor: float = 3) -> None:
         filtered_points = [point for point, distance in zip(camera_predictions[1], distances) if distance <= threshold_factor * median_distance]
         
         # Update the camera predictions with the filtered points
-        camera_detections[camera_name][1] = filtered_points
+        predictions_per_camera[camera_name][1] = filtered_points
 
 
 def main(args):
