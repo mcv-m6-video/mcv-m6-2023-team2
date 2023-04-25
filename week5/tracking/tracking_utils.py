@@ -1,8 +1,12 @@
 import cv2
 import numpy as np
 from typing import List, Dict
+import time
+import os
+from tqdm import tqdm
 
 from bounding_box import BoundingBox
+from week5.utils import load_optical_flow
 
 
 class Track(object):
@@ -91,6 +95,140 @@ class TrackHandlerOverlap(TrackHandler):
         # Add new tracks to live tracks
         for new_track in new_tracks:
             self.live_tracks.append(new_track)
+
+
+def post_tracking(cfg, video_width, video_height, fps, trackers_list, frames_list):
+    if cfg["filter_by_area"]:
+        trackers_list = filter_by_area(cfg, trackers_list)
+    if cfg["filter_parked"]:
+        trackers_list = filter_parked(cfg, trackers_list)
+
+    store_trackers_list(trackers_list, cfg["save_tracking_path"])
+    # visualize tracking
+    viz_tracking(cfg["save_video_path"], video_width, video_height, fps, trackers_list, frames_list)
+
+
+def tracking_by_maximum_overlap(
+    cfg: Dict,
+    detections: List[BoundingBox],
+    max_frame_skip: int = 0,
+    min_iou: float = 0.5,
+):
+    track_handler = TrackHandlerOverlap(max_frame_skip=max_frame_skip, min_iou=min_iou)
+    video = cv2.VideoCapture(cfg["path_sequence"])
+    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    video_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    video_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(video.get(cv2.CAP_PROP_FPS))
+
+    total_time = 0.0
+    trackers_list = []
+    frames_list = []
+
+    for frame_id in tqdm(range(total_frames-1)):
+        ret, frame = video.read()
+        if not ret:
+            break
+
+        # Read detections
+        if len(detections) <= frame_id:
+            frame_detections = []
+        else:
+            frame_detections = detections[frame_id]
+
+        start_time = time.time()
+        track_handler.update_tracks(frame_detections, frame_id)
+        cycle_time = time.time() - start_time
+        total_time += cycle_time
+
+        # Visualize tracking
+        frame_detections = []
+        for track in track_handler.live_tracks:
+            detection, _ = track.last_detection()
+            frame_detections.append(detection)
+        trackers_list.append(frame_detections)
+        frames_list.append(frame)
+
+        total_frames += 1
+
+    print("Total Tracking took: %.3f for %d frames, @ %.1f FPS" % (total_time, total_frames, total_frames/total_time))
+    post_tracking(cfg, video_width, video_height, fps, trackers_list, frames_list)
+
+
+def tracking_by_kalman_filter(
+    cfg,
+    detections,
+    video_max_frames: int = 9999,
+    video_frame_sampling: int = 1,
+    tracking_max_age: int = 1,
+    tracking_min_hits: int = 3,
+    tracking_iou_threshold: float = 0.3,
+    of_use: bool = False,
+    of_data_path: str = None,
+):
+    # Reference: https://github.com/telecombcn-dl/2017-persontyle/blob/master/sessions/tracking/tracking_kalman.ipynb
+
+    total_time = 0.0
+    trackers_list = []
+    frames_list = []
+
+    # Only for display
+
+    video = cv2.VideoCapture(cfg["path_sequence"])
+    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    video_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    video_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(video.get(cv2.CAP_PROP_FPS))
+    max_frames = min(video_max_frames, total_frames)
+
+    if of_use:
+        from sort_of import Sort
+        print("Imported SORT with Optical Flow.")
+    else:
+        from sort import Sort
+        print("Imported SORT.")
+    mot_tracker = Sort(max_age=tracking_max_age, min_hits=tracking_min_hits, iou_threshold=tracking_iou_threshold)
+
+    for idx_frame in tqdm(range(0, max_frames-1, video_frame_sampling), desc="Computing tracking..."):
+        # read the frame
+        ret, frame = video.read()
+
+        if not ret:
+            break
+
+        # Read detections
+        if len(detections) <= idx_frame:
+            dets = []
+        else:
+            dets = detections[idx_frame]
+
+        # Convert to proper array for the tracker input
+        dets = np.array([d.coordinates for d in dets])
+        # If no detections, add empty array
+        if len(dets) == 0:
+            dets = np.empty((0, 5))
+
+        start_time = time.time()
+        # Update tracker
+        if of_use and of_data_path is not None:
+            pred_flow = load_optical_flow(os.path.join(of_data_path, f"{idx_frame}.png"))
+
+            # Update tracker
+            trackers = mot_tracker.update(dets, pred_flow)
+        else:
+            # Update tracker
+            trackers = mot_tracker.update(dets)
+        cycle_time = time.time() - start_time
+        total_time += cycle_time
+
+        trackers = [BoundingBox(*t, int(idx_frame)) for t in trackers]
+        trackers_list.append(trackers)
+        frames_list.append(frame)
+
+        total_frames += 1
+
+    print("Total Tracking took: %.3f for %d frames, @ %.1f FPS" % (total_time, total_frames, total_frames/total_time))
+    post_tracking(cfg, video_width, video_height, fps, trackers_list, frames_list)
 
 
 def viz_tracking(
