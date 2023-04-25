@@ -358,7 +358,7 @@ class TrackingViz:
 def store_trackers_list(trackers_list: List[List[BoundingBox]], save_tracking_path: str):
     # trackers_list is a list of lists, where each list contains the bounding boxes of a frame
     used_frame_track = set()
-    results_file = open(save_tracking_path, "w")
+    results_file = open(save_tracking_path, "a")
     for trackers in trackers_list:
         for d in trackers:
             # Save tracking with bounding boxes in MOT Challenge format:
