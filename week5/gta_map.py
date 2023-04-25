@@ -89,7 +89,7 @@ def main(args):
             if distorion_coeffs:
                 continue
                 
-        # homography = LA.inv(homography)
+        homography = LA.inv(homography)
 
         predictions = load_predictions(os.path.join(args.sequence_path, camera, 'gt/gt.txt'))
         predictions = group_annotations_by_frame(predictions)
@@ -99,22 +99,23 @@ def main(args):
 
             for prediction in frame_predictions:
                 # Convert to GPS
-                gps = homography @ np.array([prediction.center_x, prediction.center_y, 1])
-                gps = gps / gps[2]
+                gps = homography @ np.array([prediction.center_x, prediction.center_y, 1]).T
+                gps = gps / gps[2] * 1000
                 predictions_in_gps[camera][idx_frame].append((gps[0], gps[1], prediction.track_id))
 
     print(f"Found {len(predictions_in_gps[cameras[0]])} frames.")
 
     # Filter points
-    print("Filtering points...")
-    filter_points(predictions_in_gps)
+    # print("Filtering points...")
+    # filter_points(predictions_in_gps)
+
 
     # Generate 100 random colors
     colors = np.random.randint(0, 255, (100, 3), dtype=np.uint8)
 
     # Create map 
     camera_map = np.zeros((1080, 1920, 3), dtype=np.uint8)
-    min_x, min_y, max_x, max_y = 0, 0, 0, 0
+    min_x, min_y, max_x, max_y = np.inf, np.inf, -np.inf, -np.inf
     max_frame = 0
     for camera in cameras:
         max_frame = max(max_frame, len(predictions_in_gps[camera]))
@@ -125,8 +126,8 @@ def main(args):
                 max_x = max(max_x, prediction[0])
                 max_y = max(max_y, prediction[1])
 
-    map_size = (int(np.ceil(max_y - min_y)), int(np.ceil(max_x - min_x)), 3)
-    print(f"Map size: {map_size}")
+    # map_size = (int(np.ceil(max_y - min_y)), int(np.ceil(max_x - min_x)), 3)
+    # print(f"Map size: {map_size}")
 
     # camera_map = np.zeros((map_size[0], map_size[1], 3), dtype=np.uint8)
 
