@@ -120,6 +120,28 @@ def apply_H(I: np.ndarray, H: np.ndarray) -> Tuple[np.uint, tuple]:
     return np.uint8(out), (min_x, min_y)
 
 
+def filter_points(camera_detections: dict, threshold_factor: float = 3) -> None:    
+    # Loop through each camera
+    for camera_name, camera_predictions in camera_detections.items():
+        # Extract the (x, y) coordinates of each point
+        points = [(x, y) for _, (x, y, _) in camera_predictions[1]]
+        
+        # Calculate the centroid of the points
+        centroid = np.mean(points, axis=0)
+        
+        # Calculate the distance between each point and the centroid
+        distances = [np.linalg.norm(np.array(point) - centroid) for point in points]
+        
+        # Calculate the median distance
+        median_distance = np.median(distances)
+        
+        # Remove all points that are further away than the threshold
+        filtered_points = [point for point, distance in zip(camera_predictions[1], distances) if distance <= threshold_factor * median_distance]
+        
+        # Update the camera predictions with the filtered points
+        camera_detections[camera_name][1] = filtered_points
+
+
 def main(args):
     cameras = os.listdir(args.sequence_path)
     cameras = [camera for camera in cameras if camera.startswith('c')]
@@ -149,6 +171,10 @@ def main(args):
                 predictions_in_gps[camera][idx_frame].append((gps[0], gps[1], prediction.track_id))
 
     print(f"Found {len(predictions_in_gps[cameras[0]])} frames.")
+
+    # Filter points
+    print("Filtering points...")
+    filter_points(predictions_in_gps)
 
     # Generate 100 random colors
     colors = np.random.randint(0, 255, (100, 3), dtype=np.uint8)
