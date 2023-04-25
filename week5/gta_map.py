@@ -137,10 +137,6 @@ def main(args):
                 # Write camera name
                 # cv2.putText(camera_map, camera, (x - 20, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
-    # Draw predictions in a video
-    # video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, camera_map.shape[:2][::-1])
-    video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, (map_size[1], map_size[0]))
-
     # camera_map = cv2.VideoCapture(os.path.join(args.sequence_path, camera, 'vdo.avi')).read()[1]
     # Apply calibration to camera map
     # camera_map = apply_H(camera_map, calibration)[0]
@@ -150,7 +146,11 @@ def main(args):
     # camera_map = cv2.dilate(camera_map, kernel, iterations=1)
 
     # Resize camera map to fit in the output video
-    # camera_map = cv2.resize(camera_map, (1920, 1080))
+    camera_map = cv2.resize(camera_map, (1920, 1080))
+
+    # Draw predictions in a video
+    # video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, camera_map.shape[:2][::-1])
+    video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, (map_size[1], map_size[0]))
 
     print("Generating video...")
 
