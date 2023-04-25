@@ -241,6 +241,9 @@ def main(args):
                 x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
                           int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))                
                 cv2.circle(map_gps, (x, y), 8, color, -1)
+                # Write the track ID with a white background
+                cv2.putText(map_gps, str(prediction[2]), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
+                cv2.putText(map_gps, str(prediction[2]), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
         # cv2.imwrite(os.path.join(args.sequence_path, f'frame_{idx_frame:04d}.jpg'), map_gps)
         # Resize to 640x480, keeping aspect ratio
