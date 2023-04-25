@@ -169,7 +169,7 @@ def main(args):
 
     # Draw predictions in a video
     camera_map = np.zeros((1080, 1920, 3), dtype=np.uint8)
-    video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, camera_map.shape[::-1], 0)
+    video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, camera_map.shape[:2][::-1])
 
     # camera_map = cv2.VideoCapture(os.path.join(args.sequence_path, 'vdo.avi')).read()[1]
     # Apply calibration to camera map
