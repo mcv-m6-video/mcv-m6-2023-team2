@@ -236,8 +236,8 @@ def main(args):
             except: v=data[1]
             data[1] = reversed_uuid[v]
             rows.append(','.join(data))
-        print(args.detections_path + f'/{cam}/gt/' + 'gt.txt')
-        open(args.detections_path + f'/{cam}/gt/' + 'gt.txt', 'w').writelines(rows)
+        print(args.detections_path + f'/{cam}/gt/' + 'gt_bis.txt')
+        open(args.detections_path + f'/{cam}/gt/' + 'gt_bis.txt', 'w').writelines(rows)
 
 
 if __name__ == '__main__':
