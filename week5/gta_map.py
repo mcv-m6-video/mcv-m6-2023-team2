@@ -213,38 +213,38 @@ def main(args):
                 max_y = max(max_y, prediction[1])
 
     # Draw grayish background for all predictions
-    # camera_colors = np.random.randint(0, 255, (len(cameras), 3), dtype=np.uint8)
-    # for camera in cameras:
-    #     for frame_predictions in predictions_in_gps[camera]:
-    #         for prediction in frame_predictions:
-    #             x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
-    #                       int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))  
-    #             color = camera_colors[cameras.index(camera)]
-    #             color = (int(color[0] * 0.5), int(color[1] * 0.5), int(color[2] * 0.5))
-    #             cv2.circle(camera_map, (x, y), 24, color, -1)
+    camera_colors = np.random.randint(0, 255, (len(cameras), 3), dtype=np.uint8)
+    for camera in cameras:
+        for frame_predictions in predictions_in_gps[camera]:
+            for prediction in frame_predictions:
+                x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
+                          int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))  
+                color = camera_colors[cameras.index(camera)]
+                color = (int(color[0] * 0.5), int(color[1] * 0.5), int(color[2] * 0.5))
+                cv2.circle(camera_map, (x, y), 24, color, -1)
 
     # Apply homography to camera images
-    for camera in cameras:
-        # Load ROI image
-        roi = cv2.imread(os.path.join(args.sequence_path, camera, 'roi.jpg'), cv2.IMREAD_GRAYSCALE)
-        # Load camera image
-        video = cv2.VideoCapture(os.path.join(args.sequence_path, camera, 'vdo.avi'))
-        ret, camera_image = video.read()
-        video.release()
+    # for camera in cameras:
+    #     # Load ROI image
+    #     roi = cv2.imread(os.path.join(args.sequence_path, camera, 'roi.jpg'), cv2.IMREAD_GRAYSCALE)
+    #     # Load camera image
+    #     video = cv2.VideoCapture(os.path.join(args.sequence_path, camera, 'vdo.avi'))
+    #     ret, camera_image = video.read()
+    #     video.release()
 
-        # Apply ROI as mask
-        camera_image = cv2.bitwise_and(camera_image, camera_image, mask=roi)
+    #     # Apply ROI as mask
+    #     camera_image = cv2.bitwise_and(camera_image, camera_image, mask=roi)
 
-        # Load homography
-        homography_file = os.path.join(args.sequence_path, camera, 'calibration.txt')
-        with open(homography_file, 'r') as f:
-            homography_line = f.readline()
-            homography = np.array([val.split() for val in homography_line.split(';')]).astype(np.float32)
+    #     # Load homography
+    #     homography_file = os.path.join(args.sequence_path, camera, 'calibration.txt')
+    #     with open(homography_file, 'r') as f:
+    #         homography_line = f.readline()
+    #         homography = np.array([val.split() for val in homography_line.split(';')]).astype(np.float32)
 
-        homography = LA.inv(homography)
-        camera_image, (mx, my) = apply_H(camera_image, homography, min_x, min_y, max_x, max_y)
-        # Add camera image to map by max x and y
-        camera_map = np.maximum(camera_map, camera_image)
+    #     homography = LA.inv(homography)
+    #     camera_image, (mx, my) = apply_H(camera_image, homography, min_x, min_y, max_x, max_y)
+    #     # Add camera image to map by max x and y
+    #     camera_map = np.maximum(camera_map, camera_image)
 
     # Write camera name
     camera_plotted = []
