@@ -154,46 +154,43 @@ def main(args):
 
     # {c010: cotxe1: {1: V, 2: V, 3: V}}
     correspondences = {}
+    a = []
     THR = 0.975
     dot, norm = np.dot, np.linalg.norm # nah nah nah truquitos que poca gente sabe
-    camcars = {}
+    done = []
     for cam in cameras:
-        camcars[cam] = {'cars': [], 'feats': []}
-        for frame in range(max_frame):
-            #if not frame in correspondences: correspondences[frame] = {}
+        for cam_2 in cameras:
+            if cam == cam_2 or (f"{cam_2}-{cam}" in done): continue
+            done.append(f"{cam}-{cam_2}" )
+            for frame in range(max_frame):
+                if not frame in correspondences: correspondences[frame] = {}
 
 
-            ## ARA VULL TOTS ELS COTXES D'AQUELL FRAME A CADA CAMERA ###
-            cam1_candidates = [car for car in cars_features[cam] if frame in cars_features[cam][car]]
-            cam1_vectors = [cars_features[cam][car][frame] for car in cam1_candidates]
+                ## ARA VULL TOTS ELS COTXES D'AQUELL FRAME A CADA CAMERA ###
 
-            camcars[cam]['cars'].extend(cam1_candidates)
-            camcars[cam]['feats'].extend(cam1_vectors)
-    
-    cormatrices = {}
-    for cam1 in camcars:
-        cormatrices[cam1] = {}
-        for cam2 in camcars:
-            if (cam1==cam2) or (cam2 in cormatrices): continue # Crec que és així la forma més eficient de fer la meitat 
-            
-            arr1 = camcars[cam1]['feats']
-            arr2 = camcars[cam2]['feats']
+                cam1_candidates = [car for car in cars_features[cam] if frame in cars_features[cam][car]]
+                cam2_candidates = [car for car in cars_features[cam_2] if frame in cars_features[cam_2][car]]
 
-            cormatrix = np.zeros((len(arr1), len(arr2)))
+                # [car1, car2, car3]
+                # [car4, car5]
+                if not (len(cam1_candidates) * len(cam2_candidates)): continue
 
-            for i in range(len(arr1)):
-                for j in range(len(arr2)):
-                    dot_product = arr1[i].dot(arr2[j])
-                    x_norm = np.linalg.norm(arr1[i])
-                    y_norm = np.linalg.norm(arr2[j])
-                    cormatrix[i][j] = dot_product / (x_norm * y_norm + 1e-3)
+                feats = np.array([cars_features[cam][car][frame] for car in cam1_candidates])
+                feats2 = np.array([cars_features[cam_2][car][frame] for car in cam2_candidates])
 
-            cormatrix *= cormatrix > THR
-            
-            cormatrices[cam1][cam2] = cormatrix
+                coormatrix = np.zeros((len(feats), len(feats2)))
+                for n, f in enumerate(feats):
+                    for m, f2 in enumerate(feats2):
 
+                        coormatrix[n, m] = dot(f, f2) / (norm(f) * norm(f2) + 1e-3)
+                
+                assigned = {}
+                for idx, car_id in enumerate(cam1_candidates):
+                    idx_max = np.argmax(coormatrix[idx])
+                    if coormatrix[idx, idx_max] >= THR and (not idx in assigned):
 
-    print(cormatrices.keys())
+                        correspondences[frame][car_id] = cam2_candidates[idx_max]
+    print(correspondences)
 
 
 
