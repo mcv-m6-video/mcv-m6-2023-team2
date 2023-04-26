@@ -257,13 +257,6 @@ def main(args):
                     camera_plotted.append(camera)
                     cv2.putText(camera_map, camera, (x - 20, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
-    # camera_map = cv2.VideoCapture(os.path.join(args.sequence_path, camera, 'vdo.avi')).read()[1]
-    # Apply homography to camera map
-    # camera_map = apply_H(camera_map, homography)[0]
-
-    # Resize camera map to fit in the output video
-    # camera_map = cv2.resize(camera_map, (1920, 1080))
-
     # Draw predictions in a video
     video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, camera_map.shape[:2][::-1])
 
@@ -272,8 +265,8 @@ def main(args):
     for idx_frame in tqdm(range(max_frame)):
         map_gps = camera_map.copy()
 
-        if idx_frame > 200:
-            break
+        # if idx_frame > 200:
+        #     break
 
         # Draw predictions as circles
         for camera in cameras:
@@ -291,9 +284,6 @@ def main(args):
                 cv2.putText(map_gps, str(prediction[2]), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
                 cv2.putText(map_gps, str(prediction[2]), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
-        # cv2.imwrite(os.path.join(args.sequence_path, f'frame_{idx_frame:04d}.jpg'), map_gps)
-        # Resize to 640x480, keeping aspect ratio
-        # map_gps = resize_image(map_gps, size=(1920, 1080))
         video.write(map_gps)
 
     video.release()
