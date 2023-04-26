@@ -5,8 +5,7 @@ import cv2
 
 from tqdm import tqdm
 
-from utils import load_timestamps
-from homographies import apply_H
+from utils import load_timestamps, draw_bounding_box
 from gps_utils import predictions_to_gps
 
 
@@ -93,7 +92,7 @@ def main(args):
     colors = np.random.randint(0, 255, (100, 3), dtype=np.uint8)
 
     # Create map 
-    camera_map = np.zeros((1080, 1920, 3), dtype=np.uint8)
+    camera_map = np.zeros((1080+256, 1920, 3), dtype=np.uint8)
     min_x, min_y, max_x, max_y = np.inf, np.inf, -np.inf, -np.inf
     max_frame = 0
     for camera in cameras:
@@ -176,10 +175,6 @@ def main(args):
 
             # Draw camera frame in map
             _, camera_image = camera_videos[camera].read()
-            # Space cameras evenly
-            camera_image = cv2.resize(camera_image, (int(camera_map.shape[1] // num_cameras), 256))
-            camera_image = cv2.cvtColor(camera_image, cv2.COLOR_BGR2RGB)
-            map_gps[map_gps.shape[0] - camera_image.shape[0]:, idx_camera * camera_image.shape[1]:(idx_camera + 1) * camera_image.shape[1]] = camera_image
 
             for prediction in predictions_in_gps[camera][idx_frame_camera]:
                 color = colors[prediction[2] % 100]
@@ -191,6 +186,12 @@ def main(args):
                 # Write the track ID with a white background
                 cv2.putText(map_gps, f"{camera} - {str(prediction[2])}", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
                 cv2.putText(map_gps, f"{camera} - {str(prediction[2])}", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+                # Draw bounding box
+                draw_bounding_box(camera_image, prediction[3], f"{camera} - {str(prediction[2])}")
+                
+            # Space cameras evenly
+            camera_image = cv2.resize(camera_image, (int(camera_map.shape[1] // num_cameras), 256))
+            map_gps[map_gps.shape[0] - camera_image.shape[0]:, idx_camera * camera_image.shape[1]:(idx_camera + 1) * camera_image.shape[1]] = camera_image
 
         video.write(map_gps)
 

@@ -155,11 +155,10 @@ def load_timestamps(timestamps_path: str):
     return start_timestamps
 
 
-def draw_bounding_box(image: np.ndarray, bbox: BoundingBox, track_id: int = None):
-    TRACKER_NAMES = ['John Wick', 'Viggo Tarasov', 'Iosef Tarasov', 'Marcus', 'Winston', 'Ms. Perkins', 'Aurelio', 'Charon', 'Harry', 'Jimmy', 'Francisco', 'Kirill', 'Abram Tarasov', 'Wolfgang', 'Perkins', 'Avi', 'Wick\'s neighbor', 'Priest', 'Helen Wick', 'Julius', 'Mrs. Tarasov', 'Baba Yaga', 'Viggo\'s lawyer', 'Mrs. Perkins', 'Doctor', 'Continental hotel clerk', 'Continental hotel doctor', 'Continental hotel sommelier', 'Continental hotel bartender', 'Continental hotel concierge', 'Continental hotel housekeeper', 'Continental hotel doorman', 'Continental hotel security']
-    x1, y1, x2, y2 = bbox.coordinates
+def draw_bounding_box(image: np.ndarray, bbox: tuple, track_id: str = "unknown"):
+    x1, y1, x2, y2 = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
     cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-    name_text = TRACKER_NAMES[track_id-1]            
+    name_text = f"Track {track_id}"      
     text_size, _ = cv2.getTextSize(name_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
     text_width, text_height = text_size
     # Draw filled rectangle behind text for better visibility
