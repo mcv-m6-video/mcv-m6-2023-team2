@@ -142,3 +142,14 @@ def load_optical_flow(file_path: str):
 def return_image_full_range(image):
     return (torch.clamp(K.Normalize(mean=[-0.4850, -0.4560, -0.4060], std=[1/0.2290, 1/0.2240, 1/0.2250])(image), min = 0, max = 1) * 255).squeeze().cpu().numpy().astype(np.uint8).transpose(1, 2,  0)
 
+
+def load_timestamps(timestamps_path: str):
+    start_timestamps = {}
+
+    with open(timestamps_path, 'r') as f:
+        for line in f:
+            camera, timestamp = line.split()
+            fps = 10 if camera != 'c015' else 8
+            start_timestamps[camera] = float(timestamp) * fps
+
+    return start_timestamps

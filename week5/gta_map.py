@@ -8,7 +8,8 @@ from tqdm import tqdm
 from typing import Tuple
 from scipy.ndimage import map_coordinates
 
-from utils import load_predictions, group_annotations_by_frame
+from utils import load_timestamps
+from gps_utils import predictions_to_gps
 
 
 def __parse_args() -> argparse.Namespace:
@@ -152,43 +153,10 @@ def main(args):
     print('Cameras:', cameras)
 
     # Load timestamps
-    start_timestamps = {}
-    with open(args.timestamps_path, 'r') as f:
-        for line in f:
-            camera, timestamp = line.split()
-            fps = 10 if camera != 'c015' else 8
-            start_timestamps[camera] = float(timestamp) * fps
+    start_timestamps = load_timestamps(args.timestamps_path)
 
     print("Mapping predictions to GPS coordinates...")
-    predictions_in_gps = {}
-    for camera in cameras:
-        predictions_in_gps[camera] = []
-        homography_file = os.path.join(args.sequence_path, camera, 'calibration.txt')
-        # Calibration file format
-        # First line (homography): x y z;x y z;x y z;x y z
-        # Second line (distortion coefficients, optional): k1 k2 p1 p2
-        with open(homography_file, 'r') as f:
-            homography_line = f.readline()
-            homography = np.array([val.split() for val in homography_line.split(';')]).astype(np.float32)
-            # distorion_coeffs = f.readline()
-            # if distorion_coeffs:
-            #     continue
-
-        # Invert homography                
-        homography = LA.inv(homography)
-
-        # Load predictions
-        predictions = load_predictions(os.path.join(args.sequence_path, camera, 'gt/gt.txt'))
-        predictions = group_annotations_by_frame(predictions)
-
-        for idx_frame, frame_predictions in enumerate(predictions):
-            predictions_in_gps[camera].append([])
-
-            for prediction in frame_predictions:
-                # Convert to GPS
-                gps = homography @ np.array([prediction.center_x, prediction.center_y, 1]).T
-                gps = gps / gps[2]
-                predictions_in_gps[camera][idx_frame].append((gps[0], gps[1], prediction.track_id))
+    predictions_in_gps = predictions_to_gps(cameras, args.sequence_path)
 
     print(f"Found {len(predictions_in_gps[cameras[0]])} frames.")
 
