@@ -2,7 +2,7 @@ import numpy as np
 import argparse
 import os
 import cv2
-
+import networkx as nx
 from tqdm import tqdm
 
 from utils import load_timestamps
@@ -196,18 +196,45 @@ def main(args):
     THR_MIN_VALUE = 10
     for frame in correspondences:
         for cor in correspondences[frame]:
-            key = f"{cor}-{correspondences[frame][cor]}"
+            key = f"{cor}||{correspondences[frame][cor]}"
             if not key in hits: 
-                key = f"{correspondences[frame][cor]}-{cor}"
+                key = f"{correspondences[frame][cor]}||{cor}"
                 if not key in hits: 
-                    key = f"{cor}-{correspondences[frame][cor]}"
+                    key = f"{cor}||{correspondences[frame][cor]}"
                     hits[key] = 0 # Jefazo
         
             hits[key] += 1
 
     hits_final = {x: hits[x] for x in hits if hits[x]>THR_MIN_VALUE}
-    print(hits_final)
+    tots = set()
+    for camera in cameras:
+        for car in cars[camera]: 
+            tots.add(car)
+    
+    g = nx.Graph()
+    for hit in hits_final:
 
+        g.add_edge( hit.split('||')[0], hit.split('||')[1] ) 
+
+    for car in tots:
+        if not car in g.nodes(): g.add_node(car)
+
+    uuids = {str(uuid.uuid4()): list(x) for x in list(nx.connected_components(g))}
+    reversed_uuid = {}
+    for unique in uuids:
+        for car in uuids[unique]:
+            reversed_uuid[car] = unique
+
+    print(reversed_uuid)
+    for cam in cameras:
+        rows = []
+        for r in open(args.detections_path + f'/{cam}/gt/gt.txt' if args.sequence_path == args.detections_path else '/detections.txt', 'r').readlines():
+            data = r.split(',')
+            try: v = int(data[1])
+            except: v=data[1]
+            data[1] = reversed_uuid[v]
+            rows.append(','.join(data))
+        open(f'out-gta-track-{cam}.txt', 'w').writelines(rows)
 
 
 if __name__ == '__main__':
