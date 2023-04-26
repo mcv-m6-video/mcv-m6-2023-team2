@@ -14,11 +14,11 @@ def __parse_args() -> argparse.Namespace:
         description='Road Traffic Monitoring Analysis for Video Surveillance. MCV-M6-Project, week 5, Metric Learning Creation Team 2'
     )
 
-    parser.add_argument('--sequence_path', type=str, default='./data/aic19/train/S03',
+    parser.add_argument('--sequence_path', type=str, default='/home/adri/Desktop/master/M6/mcv-m6-2023-team2/week5/aic19/train/S03',
                         help='Path to the sequence')
-    parser.add_argument('--detections_path', type=str, default='./data/aic19/train/S03',
+    parser.add_argument('--detections_path', type=str, default='/home/adri/Desktop/master/M6/mcv-m6-2023-team2/week5/aic19/train/S03',
                         help='Path to the sequence')
-    parser.add_argument('--timestamps_path', type=str, default='./data/aic19/cam_timestamp/S03.txt',
+    parser.add_argument('--timestamps_path', type=str, default='/home/adri/Desktop/master/M6/mcv-m6-2023-team2/week5/aic19/cam_timestamp/S03.txt',
                         help='Path to the timestamps file')
 
     args = parser.parse_args()
@@ -165,8 +165,8 @@ def main(args):
     for idx_frame in tqdm(range(max_frame)):
         map_gps = camera_map.copy()
 
-        if idx_frame > 200:
-            break
+        #if idx_frame > 200:
+        #    break
 
         # Draw predictions as circles
         for idx_camera, camera in enumerate(cameras):

@@ -12,6 +12,8 @@ import random
 import uuid
 import copy
 
+uuid.uuid4 = lambda: random.randint(0, 1000000)
+
 def __parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description='Road Traffic Monitoring Analysis for Video Surveillance. MCV-M6-Project, week 5, Metric Learning Creation Team 2'
@@ -234,7 +236,8 @@ def main(args):
             except: v=data[1]
             data[1] = reversed_uuid[v]
             rows.append(','.join(data))
-        open(f'out-gta-track-{cam}.txt', 'w').writelines(rows)
+        print(args.detections_path + f'/{cam}/gt/' + 'gt.txt')
+        open(args.detections_path + f'/{cam}/gt/' + 'gt.txt', 'w').writelines(rows)
 
 
 if __name__ == '__main__':
