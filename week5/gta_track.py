@@ -81,6 +81,7 @@ def main(args):
 
     # Load timestamps
     start_timestamps = load_timestamps(args.timestamps_path)
+    print(start_timestamps)
 
     print("Mapping predictions to GPS coordinates...")
     predictions_in_gps = predictions_to_gps(cameras, args.sequence_path, args.detections_path)
@@ -190,7 +191,21 @@ def main(args):
                     if coormatrix[idx, idx_max] >= THR and (not idx in assigned):
 
                         correspondences[frame][car_id] = cam2_candidates[idx_max]
-    print(correspondences)
+
+    hits = {}
+    THR_MIN_VALUE = 10
+    for frame in correspondences:
+        for cor in correspondences[frame]:
+            key = f"{cor}-{correspondences[frame][cor]}"
+            if not key in hits: 
+                key = f"{correspondences[frame][cor]}-{cor}"
+                if not key in hits: 
+                    key = f"{cor}-{correspondences[frame][cor]}"
+                    hits[key] = 0 # Jefazo
+        
+            hits[key] += 1
+
+    print(hits)
 
 
 
