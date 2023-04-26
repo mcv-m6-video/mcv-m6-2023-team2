@@ -5,6 +5,9 @@ from typing import List
 
 from bounding_box import BoundingBox
 
+import torch
+import kornia.augmentation as K
+
 
 def load_config(cfg_path):
     with open(cfg_path, 'r') as f:
@@ -134,3 +137,8 @@ def load_optical_flow(file_path: str):
     # channels arranged as BGR
     img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED).astype(np.double)
     return convert_optical_flow_to_image(img)
+
+
+def return_image_full_range(image):
+    return (torch.clamp(K.Normalize(mean=[-0.4850, -0.4560, -0.4060], std=[1/0.2290, 1/0.2240, 1/0.2250])(image), min = 0, max = 1) * 255).squeeze().cpu().numpy().astype(np.uint8).transpose(1, 2,  0)
+
