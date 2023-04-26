@@ -297,6 +297,8 @@ class TrackingViz:
 
         for tracker in trackers:
             track_id = tracker.track_id
+            if isinstance(track_id, str):
+                track_id = int(track_id)
             track_idx = track_id % self.max_trackers
 
             self.frame_trajectories[-1].append((tracker.center_x, tracker.center_y, track_id))
