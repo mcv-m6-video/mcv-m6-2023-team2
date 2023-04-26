@@ -1,7 +1,7 @@
 import cv2
 import yaml
 import numpy as np
-from typing import List
+from typing import List, Dict
 
 from bounding_box import BoundingBox
 
@@ -13,6 +13,26 @@ def load_config(cfg_path):
     with open(cfg_path, 'r') as f:
         config_yaml = yaml.safe_load(f)
     return config_yaml
+
+
+def group_annotations_by_track(annotations: List[BoundingBox]) -> Dict[int, List[BoundingBox]]:
+    """
+    Groups the given list of annotations by track.
+
+    Parameters:
+    annotations (list): List of annotations to group by track.
+
+    Returns:
+    A list of lists of annotations grouped by track.
+    """
+    group_annotations = dict()
+    for annotation in annotations:
+        if annotation.track_id not in group_annotations:
+            group_annotations[annotation.track_id] = []
+        else:
+            group_annotations[annotation.track_id].append(annotation)
+
+    return group_annotations
 
 
 def group_annotations_by_frame(annotations: List[BoundingBox]) -> List[List[BoundingBox]]:
