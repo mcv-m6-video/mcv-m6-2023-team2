@@ -1,7 +1,7 @@
 import cv2
 import yaml
 import numpy as np
-from typing import List
+from typing import List, Dict
 
 from bounding_box import BoundingBox
 
@@ -13,6 +13,26 @@ def load_config(cfg_path):
     with open(cfg_path, 'r') as f:
         config_yaml = yaml.safe_load(f)
     return config_yaml
+
+
+def group_annotations_by_track(annotations: List[BoundingBox]) -> Dict[int, List[BoundingBox]]:
+    """
+    Groups the given list of annotations by track.
+
+    Parameters:
+    annotations (list): List of annotations to group by track.
+
+    Returns:
+    A list of lists of annotations grouped by track.
+    """
+    group_annotations = dict()
+    for annotation in annotations:
+        if annotation.track_id not in group_annotations:
+            group_annotations[annotation.track_id] = []
+        else:
+            group_annotations[annotation.track_id].append(annotation)
+
+    return group_annotations
 
 
 def group_annotations_by_frame(annotations: List[BoundingBox]) -> List[List[BoundingBox]]:
@@ -153,3 +173,15 @@ def load_timestamps(timestamps_path: str):
             start_timestamps[camera] = float(timestamp) * fps
 
     return start_timestamps
+
+
+def draw_bounding_box(image: np.ndarray, bbox: tuple, track_id: str = "unknown", color: tuple = (0, 255, 0)):
+    x1, y1, x2, y2 = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
+    cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
+    name_text = f"Track {track_id}"      
+    text_size, _ = cv2.getTextSize(name_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+    text_width, text_height = text_size
+    # Draw filled rectangle behind text for better visibility
+    cv2.rectangle(image, (x1, y1 - text_height - 4), (x1 + text_width, y1), (0, 0, 0), cv2.FILLED)
+    # Draw text shadow in contrasting color
+    cv2.putText(image, name_text, (x1 + 1, y1 - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)

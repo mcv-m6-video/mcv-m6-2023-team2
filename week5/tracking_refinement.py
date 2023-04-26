@@ -15,6 +15,7 @@ from methods.annoyers import Annoyer
 from utils import (
     load_config,
     load_predictions,
+    group_annotations_by_track,
     group_annotations_by_frame,
     filter_annotations,
     non_maxima_suppression,
@@ -43,7 +44,7 @@ def __parse_args() -> argparse.Namespace:
     parser.add_argument('--path_tracking_data', type=str,
                         default="./data/trackers/mot_challenge/parabellum-train",
                         help='The path to the directory where the results will be stored.')
-    parser.add_argument('--experiment', type=str, default='kalman_filtAreaFalse_filtParkedFalse',
+    parser.add_argument('--experiment', type=str, default='kalman_filtAreaTrue_filtParkedTrue',
                         help='Path to the results of single camera tracking.')
     # Metric learning config
     parser.add_argument('--model', type=str, default='resnet_18',
@@ -81,7 +82,154 @@ class MyDataset(torch.utils.data.Dataset):
         return self.augmentations(img), self.img_list[idx]
 
 
+def load_tracks(seq_name: str, args: argparse.Namespace):
+    track_files = os.listdir(os.path.join(args.path_tracking_data, args.experiment, 'data'))
+    filtered_track_files = [track_file for track_file in track_files if seq_name in track_file]
+    # Crate a list of trackers
+    trackers_list = dict()
+    for track_file in filtered_track_files:
+        # Get camera name from track file name
+        camera_name = track_file.split('.')[0].split('_')[1]
+        # Read the track file
+        track_file_path = os.path.join(args.path_tracking_data, args.experiment, 'data', track_file)
+        trackers = load_predictions(track_file_path)
+        group_annotations = group_annotations_by_track(trackers)
+
+        # for ann in trackers:
+        #     ann.seq = seq_name
+        #     ann.cam = camera_name
+
+        # Convert group annotations a list of lists
+        new_list = []
+        for key in group_annotations.keys():
+            new_list.append(group_annotations[key])
+
+
+        trackers_list[track_file] = group_annotations
+        # trackers_list += new_list
+
+    return trackers_list
+
+
+
+def load_model(args: argparse.Namespace):
+    # Model loading
+    if args.model.split("_")[0] == 'resnet':
+        model = ResNetWithEmbedder(resnet=args.model.split("_")[1], embed_size=args.embedding_size)
+    elif args.model == 'vgg':
+        model = VGG19()
+    else:
+        raise ValueError(f'Unknown model: {args.model}')
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.load_state_dict(torch.load(args.model_weights_path, map_location=torch.device(device)))
+    model.eval()
+    torch.set_grad_enabled(False)
+
+    return model
+
+
+def pre_compute_embeddings(trackers_list: dict, args: argparse.Namespace):
+
+    transform = transforms.Compose(
+        [
+            transforms.Resize((224, 224), antialias=True),
+            # transforms.ConvertImageDtype(torch.float32),
+            transforms.Normalize(
+                mean=[0.4850, 0.4560, 0.4060],
+                std=[0.2290, 0.2240, 0.2250]),
+            # transforms.ToTensor(),
+        ])
+
+    model = load_model(args)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    # Compute and store the embeddings of every cam and track
+    # Save it into a dict: key: cam, value: dict: key: track, value: embedding
+    embeddings_dict = dict()
+    for cam in trackers_list.keys():
+        for track in trackers_list[cam].keys():
+            ann = trackers_list[cam][track][0]
+
+            xtl, ytl, w, h = ann.coordinates_dim
+            xtl, ytl, w, h = int(xtl), int(ytl), int(w), int(h)
+
+            cam_name = cam.split('.')[0].split('_')[1]
+            seq_name = cam.split('.')[0].split('_')[0]
+            cam_name = 'c010'  # TODO: remove this line
+
+            # Open the video at the current frame
+            video_path = os.path.join(args.dataset_path, seq_name.upper(), cam_name, 'vdo.avi')
+            video = cv2.VideoCapture(video_path)
+            video.set(cv2.CAP_PROP_POS_FRAMES, ann.frame)
+            ret, frame = video.read()
+            if not ret:
+                raise ValueError(f'Could not read frame {ann.frame} from video {video_path}')
+
+            # Crop the frame
+            cropped_frame = frame[ytl:ytl + h, xtl:xtl + w]
+
+            # Get embedding of the cropped frame by using the 'model'
+            embedding = model(transform(
+                torch.tensor(cropped_frame, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0).to(device))).squeeze()
+
+            # Store the embedding
+            if cam_name not in embeddings_dict.keys():
+                embeddings_dict[cam_name] = dict()
+            embeddings_dict[cam_name][track] = embedding
+
+
+
 def main(args: argparse.Namespace):
+
+    trackers_list = load_tracks('s03', args)
+
+    embeddings_dict = pre_compute_embeddings(trackers_list, args)
+
+
+
+
+    new_track_idx = 1
+    seen_cameras = set()
+    for cam in trackers_list.keys():
+        for track in trackers_list[cam].keys():
+            ref_ann = trackers_list[cam][track][0]
+            for other_cam in trackers_list.keys():
+                if other_cam != cam and other_cam not in seen_cameras:
+
+                    # Get other camera name and other seq name
+                    other_camera_name = other_cam.split('.')[0].split('_')[1]
+                    other_seq_name = other_cam.split('.')[0].split('_')[0]
+
+
+                    for other_track in trackers_list[other_cam].keys():
+                            # Get the embedding of the ref_ann
+                            ref_embedding = embeddings_dict[cam][track]
+                            # Get the embedding of the other_ann
+                            other_embedding = embeddings_dict[other_camera_name][other_track]
+
+                            # Compute the distance between the two embeddings
+                            distance = torch.dist(ref_embedding, other_embedding, p=2)
+
+                            # If the distance is smaller than a threshold, then the two tracks are the same
+                            if distance < args.threshold:
+                                # Add the other track to the ref track
+                                trackers_list[cam][track].extend(trackers_list[other_cam][other_track])
+                                # Remove the other track
+                                del trackers_list[other_cam][other_track]
+
+
+
+            new_track_idx += 1
+        seen_cameras.add(cam)
+
+
+
+
+
+
+
+
 
     # Group images by frame
     images_dict = dict()  # key: frame number, value: list of images

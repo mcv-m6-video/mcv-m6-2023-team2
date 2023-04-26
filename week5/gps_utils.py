@@ -20,8 +20,8 @@ def predictions_to_gps(cameras: List[str], sequence_path: str, predictions_path:
         predictions_in_gps: Dictionary with the predictions in GPS coordinates for each camera.
         {
             'camera_00': [
-                [(x, y, track_id), (x, y, track_id), ...],  # frame 0
-                [(x, y, track_id), (x, y, track_id), ...],  # frame 1
+                [(x, y, track_id, (x1, y1, x2, y2)), ...], # frame 0
+                [(x, y, track_id, (x1, y1, x2, y2)), ...], # frame 1
                 ...
             ],
         }
@@ -56,6 +56,6 @@ def predictions_to_gps(cameras: List[str], sequence_path: str, predictions_path:
                 # Convert to GPS
                 gps = homography @ np.array([prediction.center_x, prediction.center_y, 1]).T
                 gps = gps / gps[2]
-                predictions_in_gps[camera][idx_frame].append((gps[0], gps[1], prediction.track_id))
+                predictions_in_gps[camera][idx_frame].append((gps[0], gps[1], prediction.track_id, prediction.coordinates))
 
     return predictions_in_gps
