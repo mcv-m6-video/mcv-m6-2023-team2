@@ -28,7 +28,6 @@ def __parse_args() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-
 def resize_image(img, size=(28,28)):
     h, w = img.shape[:2]
     c = img.shape[2] if len(img.shape)>2 else 1
@@ -155,22 +154,45 @@ def main(args):
 
     # {c010: cotxe1: {1: V, 2: V, 3: V}}
     correspondences = {}
+    a = []
+    THR = 0.975
+    dot, norm = np.dot, np.linalg.norm # nah nah nah truquitos que poca gente sabe
+    done = []
     for cam in cameras:
         for cam_2 in cameras:
-            if cam == cam_2: continue
+            if cam == cam_2 or (f"{cam_2}-{cam}" in done): continue
+            done.append(f"{cam}-{cam_2}" )
             for frame in range(max_frame):
-                if not frame in correspondences: correspondences[frame] = {}
+                #if not frame in correspondences: correspondences[frame] = {}
 
 
                 ## ARA VULL TOTS ELS COTXES D'AQUELL FRAME A CADA CAMERA ###
 
                 cam1_candidates = [car for car in cars_features[cam] if frame in cars_features[cam][car]]
-                #cam2_candidates = [car for car in cars_features[cam_2] if frame in cars_features[cam_2][car]]
+                cam2_candidates = [car for car in cars_features[cam_2] if frame in cars_features[cam_2][car]]
 
+                # [car1, car2, car3]
+                # [car4, car5]
+                if not (len(cam1_candidates) * len(cam2_candidates)): continue
 
+                feats = np.array([cars_features[cam][car][frame] for car in cam1_candidates])
+                feats2 = np.array([cars_features[cam_2][car][frame] for car in cam2_candidates])
 
+                coormatrix = np.zeros((len(feats), len(feats2)))
+                for n, f in enumerate(feats):
+                    for m, f2 in enumerate(feats2):
 
-    print(max_frame)
+                        coormatrix[n, m] = dot(f, f2) / (norm(f) * norm(f2) + 1e-3)
+                
+                assigned = {}
+                for idx, car_id in enumerate(cam1_candidates):
+                    idx_max = np.argmax(coormatrix[idx])
+                    if coormatrix[idx, idx_max] >= THR and (not idx in assigned):
+
+                        correspondences[car_id] = cam2_candidates[idx_max]
+
+    print(correspondences)
+
 if __name__ == '__main__':
     args = __parse_args()
     main(args)
