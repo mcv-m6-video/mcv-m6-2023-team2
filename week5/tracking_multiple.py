@@ -179,11 +179,9 @@ def main(args: argparse.Namespace):
                 annoy.fit()
 
             # Iterate over all detections
-
             for cam, cam_detections in detections.items():
                 if cam_detections:
 
-                    frames_list = []
                     for detection in cam_detections:
                         xtl, ytl, w, h = detection.coordinates_dim
                         xtl, ytl, w, h = int(xtl), int(ytl), int(w), int(h)
@@ -192,13 +190,9 @@ def main(args: argparse.Namespace):
                         video_path = os.path.join(args.dataset_path, cam.split("_")[0].upper(), cam.split("_")[1], "vdo.avi")
                         video = cv2.VideoCapture(video_path)
                         video.set(cv2.CAP_PROP_POS_FRAMES, idx_frame)
-                        video_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
-                        video_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                        fps = int(video.get(cv2.CAP_PROP_FPS))
                         ret, frame = video.read()
                         if not ret:
                             raise ValueError(f'Could not read frame {idx_frame} from video {video_path}')
-                        frames_list.append(frame)
 
                         # Crop the frame
                         cropped_frame = frame[ytl:ytl + h, xtl:xtl + w]
@@ -227,8 +221,6 @@ def main(args: argparse.Namespace):
                                                       f"{seq.lower()}_{cam}" + ".txt")
                     os.makedirs(os.path.dirname(save_tracking_path), exist_ok=True)
                     store_trackers_list([cam_detections], save_tracking_path)
-
-                    viz_tracking(video_path, video_width, video_height, fps, [cam_detections], frames_list)
 
 
 if __name__ == "__main__":
