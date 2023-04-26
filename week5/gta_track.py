@@ -163,7 +163,7 @@ def main(args):
             if cam == cam_2 or (f"{cam_2}-{cam}" in done): continue
             done.append(f"{cam}-{cam_2}" )
             for frame in range(max_frame):
-                #if not frame in correspondences: correspondences[frame] = {}
+                if not frame in correspondences: correspondences[frame] = {}
 
 
                 ## ARA VULL TOTS ELS COTXES D'AQUELL FRAME A CADA CAMERA ###
@@ -189,7 +189,7 @@ def main(args):
                     idx_max = np.argmax(coormatrix[idx])
                     if coormatrix[idx, idx_max] >= THR and (not idx in assigned):
 
-                        correspondences[car_id] = cam2_candidates[idx_max]
+                        correspondences[frame][car_id] = {"car": cam2_candidates[idx_max], "score": coormatrix[idx, idx_max]}
 
     print(correspondences)
 
