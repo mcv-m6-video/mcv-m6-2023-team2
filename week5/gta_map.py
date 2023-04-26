@@ -165,7 +165,7 @@ def main(args):
     for idx_frame in tqdm(range(max_frame)):
         map_gps = camera_map.copy()
 
-        if idx_frame > 100:
+        if idx_frame > 200:
             break
 
         # Draw predictions as circles
@@ -177,6 +177,9 @@ def main(args):
 
             # Draw camera frame in map
             _, camera_image = camera_videos[camera].read()
+            # Write camera name with a black background
+            cv2.rectangle(camera_image, (0, 0), (camera_image.shape[1], 40), (0, 0, 0), -1)
+            cv2.putText(camera_image, camera, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
             for prediction in predictions_in_gps[camera][idx_frame_camera]:
                 color = colors[prediction[2] % 100]
