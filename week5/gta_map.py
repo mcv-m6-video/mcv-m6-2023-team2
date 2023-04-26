@@ -154,22 +154,34 @@ def main(args):
     video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, camera_map.shape[:2][::-1])
 
     # Read camera videos
-    camera_videos = {}
+    camera_videos = {
+        camera: cv2.VideoCapture(os.path.join(args.sequence_path, camera, 'vdo.avi')) for camera in cameras
+    }
 
     print("Generating video...")
 
+    num_cameras = len(cameras)
     for idx_frame in tqdm(range(max_frame)):
         map_gps = camera_map.copy()
 
-        # if idx_frame > 200:
-        #     break
+        if idx_frame > 500:
+            break
 
         # Draw predictions as circles
-        for camera in cameras:
+        for idx_camera, camera in enumerate(cameras):
             if idx_frame >= len(predictions_in_gps[camera]) or start_timestamps[camera] > idx_frame:
                 continue
 
-            for prediction in predictions_in_gps[camera][int(idx_frame-start_timestamps[camera])]:
+            idx_frame_camera = int(idx_frame - start_timestamps[camera])
+
+            # Draw camera frame in map
+            _, camera_image = camera_videos[camera].read()
+            # Space cameras evenly
+            camera_image = cv2.resize(camera_image, (int(camera_map.shape[1] // num_cameras), 256))
+            camera_image = cv2.cvtColor(camera_image, cv2.COLOR_BGR2RGB)
+            map_gps[map_gps.shape[0] - camera_image.shape[0]:, idx_camera * camera_image.shape[1]:(idx_camera + 1) * camera_image.shape[1]] = camera_image
+
+            for prediction in predictions_in_gps[camera][idx_frame_camera]:
                 color = colors[prediction[2] % 100]
                 color = (int(color[0]), int(color[1]), int(color[2]))
                 # Map GPS coordinates so that they fit in the camera map image
