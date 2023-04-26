@@ -25,6 +25,8 @@ def __parse_args() -> argparse.Namespace:
                         help='Path to the sequence')
     parser.add_argument('--timestamps_path', type=str, default='/home/adri/Desktop/master/M6/mcv-m6-2023-team2/week5/aic19/cam_timestamp/S03.txt',
                         help='Path to the timestamps file')
+    parser.add_argument('--path_tracking_data', type=str, default="./data/trackers/mot_challenge/",
+                    help='The path to the directory where the results will be stored.')
     parser.add_argument('-v', '--vel_window', default=5)
 
     args = parser.parse_args()
@@ -230,14 +232,18 @@ def main(args):
     print(reversed_uuid)
     for cam in cameras:
         rows = []
+
         for r in open(args.detections_path + f'/{cam}/gt/gt.txt' if args.sequence_path == args.detections_path else '/detections.txt', 'r').readlines():
             data = r.split(',')
             try: v = int(data[1])
             except: v=data[1]
             data[1] = reversed_uuid[v]
             rows.append(','.join(data))
-        print(args.detections_path + f'/{cam}/gt/' + 'gt_bis.txt')
-        open(args.detections_path + f'/{cam}/gt/' + 'gt_bis.txt', 'w').writelines(rows)
+
+        # Output path is like: args.path_tracking_data/parabellum-sXX-train/gta/data/sXX_cYYY.txt
+        sequence_name = str.lower(args.sequence_path.split('/')[-1])
+        output_path = os.path.join(args.path_tracking_data, f"parabellum-{sequence_name}-train", 'gta', 'data', f'{sequence_name}_{cam}.txt')
+        open(output_path, 'w').writelines(rows)
 
 
 if __name__ == '__main__':
