@@ -6,7 +6,6 @@ import os
 from tqdm import tqdm
 
 from bounding_box import BoundingBox
-from week5.utils import load_optical_flow
 
 
 class Track(object):
@@ -297,6 +296,8 @@ class TrackingViz:
 
         for tracker in trackers:
             track_id = tracker.track_id
+            if isinstance(track_id, str):
+                track_id = int(track_id)
             track_idx = track_id % self.max_trackers
 
             self.frame_trajectories[-1].append((tracker.center_x, tracker.center_y, track_id))
@@ -355,10 +356,14 @@ class TrackingViz:
             self.frame_trajectories.pop(0)
 
 
-def store_trackers_list(trackers_list: List[List[BoundingBox]], save_tracking_path: str):
+def store_trackers_list(
+    trackers_list: List[List[BoundingBox]],
+    save_tracking_path: str,
+    file_mode: str = "a",
+    ):
     # trackers_list is a list of lists, where each list contains the bounding boxes of a frame
     used_frame_track = set()
-    results_file = open(save_tracking_path, "w")
+    results_file = open(save_tracking_path, file_mode)
     for trackers in trackers_list:
         for d in trackers:
             # Save tracking with bounding boxes in MOT Challenge format:
@@ -421,3 +426,60 @@ def filter_parked(cfg: Dict, trackers_list: List[List[BoundingBox]]):
     # Finally, store only the tracks that are not parked
     filtered_trackers_list = filter_by_id(keep_id, trackers_list)
     return filtered_trackers_list
+
+
+def group_annotations_by_frame(annotations: List[BoundingBox]) -> List[List[BoundingBox]]:
+    """
+    Groups the given list of annotations by frame.
+
+    Parameters:
+    annotations (list): List of annotations to group by frame.
+
+    Returns:
+    A list of lists of annotations grouped by frame.
+    """
+    grouped_annotations = []
+
+    for box in annotations:
+        if len(grouped_annotations) <= box.frame:
+            for _ in range(box.frame - len(grouped_annotations) + 1):
+                grouped_annotations.append([])
+
+        grouped_annotations[box.frame].append(box)
+
+    return grouped_annotations
+
+
+def load_predictions(csv_file_path: str, grouped: bool = False) -> List[BoundingBox]:
+    """
+    Loads the predictions from the given CSV file.
+
+    Format: <frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, <conf>, <x>, <y>, <z>
+    We checked the format in https://github.com/mcv-m6-video/mcv-m6-2021-team4/blob/main/W1/aicity_reader.py
+    Also, solved the frame-1 issue :)
+    """
+    with open(csv_file_path) as f:
+        lines = f.readlines()
+
+    bboxes = []
+
+    for line in lines:
+        frame, track_id, xtl, ytl, width, height, confidence, _, _, _ = line.split(',')
+        xbr = float(xtl) + float(width)
+        ybr = float(ytl) + float(height)
+        bboxes.append(BoundingBox(
+            x1=float(xtl),
+            y1=float(ytl),
+            x2=xbr,
+            y2=ybr,
+            frame=int(frame)-1,
+            track_id=int(track_id),
+            label='car',
+            parked=False,
+            confidence=float(confidence),
+        ))
+
+    if grouped:
+        return group_annotations_by_frame(bboxes)
+
+    return bboxes
