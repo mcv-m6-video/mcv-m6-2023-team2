@@ -14,5 +14,5 @@ for seq_cam in os.listdir(MOT_DIR):
     # copy sXX_cYYY.txt to sXX/cYYY/predictions.txt
     with open(os.path.join(MOT_DIR, seq_cam), "r") as f:
         lines = f.readlines()
-    with open(os.path.join(cam_dir, "predictions.txt"), "w") as f:
+    with open(os.path.join(cam_dir, "detections.txt"), "w") as f:
         f.writelines(lines)
