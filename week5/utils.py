@@ -162,3 +162,26 @@ def load_optical_flow(file_path: str):
 def return_image_full_range(image):
     return (torch.clamp(K.Normalize(mean=[-0.4850, -0.4560, -0.4060], std=[1/0.2290, 1/0.2240, 1/0.2250])(image), min = 0, max = 1) * 255).squeeze().cpu().numpy().astype(np.uint8).transpose(1, 2,  0)
 
+
+def load_timestamps(timestamps_path: str):
+    start_timestamps = {}
+
+    with open(timestamps_path, 'r') as f:
+        for line in f:
+            camera, timestamp = line.split()
+            fps = 10 if camera != 'c015' else 8
+            start_timestamps[camera] = float(timestamp) * fps
+
+    return start_timestamps
+
+
+def draw_bounding_box(image: np.ndarray, bbox: tuple, track_id: str = "unknown", color: tuple = (0, 255, 0)):
+    x1, y1, x2, y2 = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
+    cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
+    name_text = f"Track {track_id}"      
+    text_size, _ = cv2.getTextSize(name_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+    text_width, text_height = text_size
+    # Draw filled rectangle behind text for better visibility
+    cv2.rectangle(image, (x1, y1 - text_height - 4), (x1 + text_width, y1), (0, 0, 0), cv2.FILLED)
+    # Draw text shadow in contrasting color
+    cv2.putText(image, name_text, (x1 + 1, y1 - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
