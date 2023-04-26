@@ -232,8 +232,10 @@ def main(args):
     print(reversed_uuid)
     for cam in cameras:
         rows = []
+        path_to_txt = 'gt/gt.txt' if args.sequence_path == args.detections_path else 'detections.txt'
+        predictions_path = os.path.join(args.detections_path, cam, path_to_txt)
 
-        for r in open(args.detections_path + f'/{cam}/gt/gt.txt' if args.sequence_path == args.detections_path else '/detections.txt', 'r').readlines():
+        for r in open(predictions_path, 'r').readlines():
             data = r.split(',')
             try: v = int(data[1])
             except: v=data[1]
@@ -243,6 +245,7 @@ def main(args):
         # Output path is like: args.path_tracking_data/parabellum-sXX-train/gta/data/sXX_cYYY.txt
         sequence_name = str.lower(args.sequence_path.split('/')[-1])
         output_path = os.path.join(args.path_tracking_data, f"parabellum-{sequence_name}-train", 'gta', 'data', f'{sequence_name}_{cam}.txt')
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         open(output_path, 'w').writelines(rows)
 
 
