@@ -8,7 +8,7 @@ from typing import Dict, List
 from utils import load_predictions, group_annotations_by_frame
 
 
-def predictions_to_gps(cameras: List[str], sequence_path: str) -> Dict[str, List[List[tuple]]]:
+def predictions_to_gps(cameras: List[str], sequence_path: str, predictions_path: str) -> Dict[str, List[List[tuple]]]:
     """
     Convert predictions from image coordinates to GPS coordinates.
     
@@ -45,7 +45,8 @@ def predictions_to_gps(cameras: List[str], sequence_path: str) -> Dict[str, List
         homography = LA.inv(homography)
 
         # Load predictions
-        predictions = load_predictions(os.path.join(sequence_path, camera, 'gt/gt.txt'))
+        path_to_txt = 'gt/gt.txt' if sequence_path == predictions_path else 'detections.txt'
+        predictions = load_predictions(os.path.join(predictions_path, camera, path_to_txt))
         predictions = group_annotations_by_frame(predictions)
 
         for idx_frame, frame_predictions in enumerate(predictions):
