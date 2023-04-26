@@ -6,7 +6,6 @@ import os
 from tqdm import tqdm
 
 from bounding_box import BoundingBox
-from week5.utils import load_optical_flow
 
 
 class Track(object):
