@@ -243,7 +243,8 @@ def main(args):
 
         homography = LA.inv(homography)
         camera_image, (mx, my) = apply_H(camera_image, homography, min_x, min_y, max_x, max_y)
-        camera_map = cv2.addWeighted(camera_map, 0.5, camera_image, 0.5, 0)
+        # Add camera image to map by max x and y
+        camera_map = np.maximum(camera_map, camera_image)
 
     # Write camera name
     camera_plotted = []
