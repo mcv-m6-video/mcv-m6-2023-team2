@@ -205,7 +205,8 @@ def main(args):
         
             hits[key] += 1
 
-    print(hits)
+    hits_final = {x: hits[x] for x in hits if hits[x]>THR_MIN_VALUE}
+    print(hits_final)
 
 
 
