@@ -92,7 +92,9 @@ def main(args):
     colors = np.random.randint(0, 255, (100, 3), dtype=np.uint8)
 
     # Create map 
-    camera_map = np.zeros((1080+256, 1920, 3), dtype=np.uint8)
+    subcamera_size = 400
+    camera_size = (1080, 1920)
+    camera_map = np.zeros((camera_size[0]+subcamera_size, camera_size[1], 3), dtype=np.uint8)
     min_x, min_y, max_x, max_y = np.inf, np.inf, -np.inf, -np.inf
     max_frame = 0
     for camera in cameras:
@@ -109,8 +111,8 @@ def main(args):
     for camera in cameras:
         for frame_predictions in predictions_in_gps[camera]:
             for prediction in frame_predictions:
-                x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
-                          int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))  
+                x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_size[1])), \
+                          int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_size[0]))  
                 color = camera_colors[cameras.index(camera)]
                 color = (int(color[0] * 0.5), int(color[1] * 0.5), int(color[2] * 0.5))
                 cv2.circle(camera_map, (x, y), 24, color, -1)
@@ -139,15 +141,15 @@ def main(args):
     #     camera_map = np.maximum(camera_map, camera_image)
 
     # Write camera name
-    camera_plotted = []
-    for camera in cameras:
-        for frame_predictions in predictions_in_gps[camera]:
-            for prediction in frame_predictions:
-                if camera not in camera_plotted:
-                    x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
-                          int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0]))  
-                    camera_plotted.append(camera)
-                    cv2.putText(camera_map, camera, (x - 20, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+    # camera_plotted = []
+    # for camera in cameras:
+    #     for frame_predictions in predictions_in_gps[camera]:
+    #         for prediction in frame_predictions:
+    #             if camera not in camera_plotted:
+    #                 x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_size[1])), \
+    #                       int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_size[0]))  
+    #                 camera_plotted.append(camera)
+    #                 cv2.putText(camera_map, camera, (x - 20, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
     # Draw predictions in a video
     video = cv2.VideoWriter('map.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, camera_map.shape[:2][::-1])
@@ -163,7 +165,7 @@ def main(args):
     for idx_frame in tqdm(range(max_frame)):
         map_gps = camera_map.copy()
 
-        if idx_frame > 500:
+        if idx_frame > 100:
             break
 
         # Draw predictions as circles
@@ -180,17 +182,17 @@ def main(args):
                 color = colors[prediction[2] % 100]
                 color = (int(color[0]), int(color[1]), int(color[2]))
                 # Map GPS coordinates so that they fit in the camera map image
-                x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_map.shape[1])), \
-                          int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_map.shape[0])) 
+                x, y = int(np.ceil((prediction[0] - min_x) / (max_x - min_x) * camera_size[1])), \
+                          int(np.ceil((prediction[1] - min_y) / (max_y - min_y) * camera_size[0])) 
                 cv2.circle(map_gps, (x, y), 8, color, -1)
                 # Write the track ID with a white background
                 cv2.putText(map_gps, f"{camera} - {str(prediction[2])}", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
                 cv2.putText(map_gps, f"{camera} - {str(prediction[2])}", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
                 # Draw bounding box
-                draw_bounding_box(camera_image, prediction[3], f"{camera} - {str(prediction[2])}")
+                draw_bounding_box(camera_image, prediction[3], f"{camera} - {str(prediction[2])}", color)
                 
             # Space cameras evenly
-            camera_image = cv2.resize(camera_image, (int(camera_map.shape[1] // num_cameras), 256))
+            camera_image = cv2.resize(camera_image, (int(camera_size[1] // num_cameras), subcamera_size))
             map_gps[map_gps.shape[0] - camera_image.shape[0]:, idx_camera * camera_image.shape[1]:(idx_camera + 1) * camera_image.shape[1]] = camera_image
 
         video.write(map_gps)

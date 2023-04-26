@@ -155,9 +155,9 @@ def load_timestamps(timestamps_path: str):
     return start_timestamps
 
 
-def draw_bounding_box(image: np.ndarray, bbox: tuple, track_id: str = "unknown"):
+def draw_bounding_box(image: np.ndarray, bbox: tuple, track_id: str = "unknown", color: tuple = (0, 255, 0)):
     x1, y1, x2, y2 = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
-    cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
     name_text = f"Track {track_id}"      
     text_size, _ = cv2.getTextSize(name_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
     text_width, text_height = text_size
