@@ -90,6 +90,11 @@ def main(args):
     print("Mapping predictions to GPS coordinates...")
     predictions_in_gps = predictions_to_gps(cameras, args.sequence_path, args.detections_path)
 
+    # Add start_timestamps to predictions
+    for camera in cameras:
+        for _ in range(int(start_timestamps[camera])):
+            predictions_in_gps[camera].insert(0, [])
+
     print(f"Found {len(predictions_in_gps[cameras[0]])} frames.")
 
     # Filter points
