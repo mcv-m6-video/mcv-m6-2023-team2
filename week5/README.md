@@ -26,6 +26,10 @@ The results will be stored in `<path_results>/<seq>/<camera>`.
 ## 3. Perform individual tracking.
 In `config/tracking_single.yaml` the tracking method (`kalman`, `kalman_of`, `overlap`) and the `<detections_dir>`, as well as `filter_by_area` and `filter_parked` can be specified. The thresholds `filter_area_threshold` and `filter_parked_threshold` have been empirically determined but can be adapted to new sequences.
 
+### 3.5. De-Duplicate detections on th MTMC setup  
+
+You can use `python gta_track.py`specifying the `--sequence_path`, the `--detections_path` from the output of the previous step and `--path_tracking_data` for the output. This output may be used by the same parameters to visualize in the GPS projection with `gta_map.py`. 
+
 ## 4. Evalaute individual tracking.
 The ground truth data must be in the appropiate format expected by the `TrackEval` library. See the [docs](https://github.com/JonathonLuiten/TrackEval/tree/master/docs/MOTChallenge-Official) for the MOTChallenge format that we follow here.
 
