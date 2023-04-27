@@ -26,7 +26,7 @@ The results will be stored in `<path_results>/<seq>/<camera>`.
 ## 3. Perform individual tracking
 In `config/tracking_single.yaml` the tracking method (`kalman`, `kalman_of`, `overlap`) and the `<detections_dir>`, as well as `filter_by_area` and `filter_parked` can be specified. The thresholds `filter_area_threshold` and `filter_parked_threshold` have been empirically determined but can be adapted to new sequences.
 
-## 4. De-Duplicate detections on th MTMC setup
+## 4. De-Duplicate detections on the MTMC setup
 
 ### Metric Learning Re-ID
 
