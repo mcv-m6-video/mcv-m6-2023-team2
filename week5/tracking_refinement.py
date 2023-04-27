@@ -47,7 +47,7 @@ def __parse_args() -> argparse.Namespace:
                         help='Path to the results of single camera tracking.')
     parser.add_argument('--output_path', type=str, default='./results_metric_learning',
                         help='Path to the results of metric learning ID reassignment.')
-    parser.add_argument('--sequence_name', type=str, default='S01',
+    parser.add_argument('--sequence_name', type=str, default='S04',
                         help='Sequence name: S01, S03 or S04.')
     parser.add_argument('--threshold', type=float, default=0.90,
                         help='Max distance threshold for two tracks to be considered the same.')
@@ -185,7 +185,7 @@ def store_trackers_dict(args, trackers_dict):
 
         save_tracking_path_data = "./data/trackers/mot_challenge/parabellum"+f"-{seq_name.lower()}"+"-train"
         # save_tracking_path = os.path.join(args.path_tracking_data+f"-{seq_name.lower()}", "metric_learning", "data", f"{seq_name.lower()}_{cam_name}" + ".txt")
-        save_tracking_path = os.path.join(args.path_tracking_data+f"-{seq_name.lower()}", "metric_learning", "data", f"{seq_name.lower()}_{cam_name}" + ".txt")
+        save_tracking_path = os.path.join(save_tracking_path_data, "metric_learning", "data", f"{seq_name.lower()}_{cam_name}" + ".txt")
         os.makedirs(os.path.dirname(save_tracking_path), exist_ok=True)
 
         store_trackers_list(tracks_list, save_tracking_path, file_mode="w")
