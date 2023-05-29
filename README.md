@@ -1,5 +1,7 @@
 # Single and Multicamera Car Tracking in Residential Scenes
 
+<div style="text-align:center"><img src="imgs/yolov8_finetuned.gif" /></div> <div style="text-align:center"><img src="imgs/gta_map.gif" /></div>
+
 [Technical report](https://www.overleaf.com/read/hnjfbrdhxthm)
 
 [Presentation slides](https://docs.google.com/presentation/d/1hg9thDKc_7l_s6baSpfchy_lweMLz2qlxcxIUtgE6I0/edit?usp=sharing)
